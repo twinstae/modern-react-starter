@@ -4,9 +4,12 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
+import { pandacss } from "@pandacss/vite";
 // import path from "node:path";
 // import { fileURLToPath } from "node:url";
 import { playwright } from "@vitest/browser-playwright";
+
+import { fakeAliases } from "./fake-aliases.ts";
 // const dirname =
 //   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +25,12 @@ const config = defineConfig({
         external: [/^@sentry\//],
       },
     }),
-    tanstackStart(),
+    pandacss(),
+    tanstackStart({
+      spa: {
+        enabled: true,
+      },
+    }),
     viteReact(),
   ],
   test: {
@@ -30,9 +38,12 @@ const config = defineConfig({
       {
         extends: true,
         plugins: [],
+        resolve: { alias: fakeAliases },
         test: {
           setupFiles: ["src/setupTest.ts"],
           name: "browser",
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: ["src/domain/**", "src/application/**", "src/persistence/**", "src/api/**"],
           browser: {
             enabled: true,
             headless: true,
@@ -43,6 +54,22 @@ const config = defineConfig({
               },
             ],
           },
+        },
+      },
+      {
+        extends: true,
+        plugins: [],
+        test: {
+          name: "server",
+          environment: "node",
+          // DB 테스트는 매번 PGlite를 띄우고 마이그레이션한다 — 부하가 있으면 기본 5초를 넘는다.
+          testTimeout: 15_000,
+          include: [
+            "src/domain/**/*.test.ts",
+            "src/application/**/*.test.ts",
+            "src/persistence/**/*.test.ts",
+            "src/api/**/*.test.ts",
+          ],
         },
       },
     ],

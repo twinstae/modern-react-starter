@@ -1,9 +1,13 @@
 export { AbsoluteCenter, type AbsoluteCenterProps } from "./absolute-center";
+export { Badge, type BadgeProps } from "./badge";
 export { Button, ButtonGroup, type ButtonGroupProps, type ButtonProps } from "./button";
 export * as Card from "./card";
 export * as Checkbox from "./checkbox";
+export * as Clipboard from "./clipboard";
+export * as Collapsible from "./collapsible";
 export * as Field from "./field";
 export * as Fieldset from "./fieldset";
+export * as FileUpload from "./file-upload";
 export { Group, type GroupProps } from "./group";
 export { IconButton, type IconButtonProps } from "./icon-button";
 export { Input, type InputProps } from "./input";

@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { css } from "../../styled-system/css";
-import { Button } from "@/components/ui";
+
+import { styled } from "styled-system/jsx";
 
 export const Route = createFileRoute("/")({ component: App });
 
+const CenterMain = styled("main", {
+  base: {
+    minHeight: "screen",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    px: "4",
+  },
+});
+
 function App() {
-  return (
-    <main className={css({ color: "red.500" })}>
-      <h1>test</h1>
-      <Button>test</Button>
-    </main>
-  );
+  return <CenterMain></CenterMain>;
 }
