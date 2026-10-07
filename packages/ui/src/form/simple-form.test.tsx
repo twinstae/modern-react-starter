@@ -60,4 +60,28 @@ describe("SimpleForm", () => {
       assertions.textContent(query.status("제목 글자 수"), "4"),
     );
   });
+
+  it("useSimpleField로 필드 값을 바꾸면 그 필드만 바뀌고 다른 필드는 그대로이며, 바뀐 값이 제출된다", async () => {
+    let result: NoteValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <NoteForm
+          {...Stories.WithTitleSetter.args}
+          onSubmit={async (values) => {
+            result = values;
+          }}
+        />,
+      ),
+      actions.fill(query.textbox("제목"), "처음 제목"),
+      actions.fill(query.textbox("메모"), "쓰던 메모"),
+      assertions.visible(query.button("제목 바꾸기 (지금: 처음 제목)")),
+      actions.click(query.button(/^제목 바꾸기/)),
+      assertions.value(query.textbox("제목"), "바깥에서 바꾼 제목"),
+      assertions.value(query.textbox("메모"), "쓰던 메모"),
+      actions.click(query.button("저장")),
+    );
+
+    expect(result).toStrictEqual({ title: "바깥에서 바꾼 제목", memo: "쓰던 메모" });
+  });
 });
