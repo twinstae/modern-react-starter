@@ -3,6 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSyncExternalStore } from "react";
 import { styled } from "styled-system/jsx";
 
+import { ConflictNotice } from "../components/conflict-notice.tsx";
 import { CharacterPanel } from "../components/character-panel.tsx";
 import { MessageInput } from "../components/message-input.tsx";
 import { SessionLog } from "../components/session-log.tsx";
@@ -80,6 +81,7 @@ function SessionPage() {
           onArchive={controller.archiveCharacter}
         />
       </Header>
+      <ConflictNotice message={view.notice} />
       <LogScroll>
         <SessionLog entries={view.entries} />
       </LogScroll>
