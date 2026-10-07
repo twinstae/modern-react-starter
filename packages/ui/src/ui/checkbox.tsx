@@ -1,5 +1,5 @@
 "use client";
-import { Checkbox, useCheckboxContext } from "@ark-ui/react/checkbox";
+import { Checkbox, useCheckboxContext } from "@ark-ui/react";
 import { type ComponentProps, forwardRef } from "react";
 import { createSlotRecipeContext, styled } from "styled-system/jsx";
 import { checkbox } from "styled-system/recipes";
@@ -20,7 +20,7 @@ export const HiddenInput = Checkbox.HiddenInput;
 export {
   type CheckboxCheckedState as CheckedState,
   CheckboxGroupProvider as GroupProvider,
-} from "@ark-ui/react/checkbox";
+} from "@ark-ui/react";
 
 export const Indicator = forwardRef<SVGSVGElement, HTMLStyledProps<"svg">>(
   function Indicator(props, ref) {

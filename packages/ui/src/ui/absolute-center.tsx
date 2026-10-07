@@ -1,4 +1,4 @@
-import { ark } from "@ark-ui/react/factory";
+import { ark } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { styled } from "styled-system/jsx";
 import { absoluteCenter } from "styled-system/recipes";

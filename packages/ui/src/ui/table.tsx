@@ -1,5 +1,5 @@
 "use client";
-import { ark } from "@ark-ui/react/factory";
+import { ark } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
 import { table } from "styled-system/recipes";

@@ -1,5 +1,5 @@
 "use client";
-import { Clipboard } from "@ark-ui/react/clipboard";
+import { Clipboard } from "@ark-ui/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { type ComponentProps, forwardRef } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
@@ -15,7 +15,7 @@ export const Input = withContext(Clipboard.Input, "input");
 export const Label = withContext(Clipboard.Label, "label");
 export const Trigger = withContext(Clipboard.Trigger, "trigger");
 
-export { ClipboardContext as Context } from "@ark-ui/react/clipboard";
+export { ClipboardContext as Context } from "@ark-ui/react";
 
 type IndicatorProps = ComponentProps<typeof StyledIndicator>;
 

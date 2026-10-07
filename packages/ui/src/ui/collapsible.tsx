@@ -1,5 +1,5 @@
 "use client";
-import { Collapsible } from "@ark-ui/react/collapsible";
+import { Collapsible } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
 import { collapsible } from "styled-system/recipes";
@@ -13,4 +13,4 @@ export const Content = withContext(Collapsible.Content, "content");
 export const Indicator = withContext(Collapsible.Indicator, "indicator");
 export const Trigger = withContext(Collapsible.Trigger, "trigger");
 
-export { CollapsibleContext as Context } from "@ark-ui/react/collapsible";
+export { CollapsibleContext as Context } from "@ark-ui/react";

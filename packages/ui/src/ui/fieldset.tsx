@@ -1,6 +1,5 @@
 "use client";
-import { ark } from "@ark-ui/react/factory";
-import { Fieldset } from "@ark-ui/react/fieldset";
+import { ark, Fieldset } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
 import { fieldset } from "styled-system/recipes";
@@ -16,4 +15,4 @@ export const ErrorText = withContext(Fieldset.ErrorText, "errorText");
 export const Content = withContext(ark.div, "content");
 export const Control = withContext(ark.div, "control");
 
-export { FieldsetContext as Context } from "@ark-ui/react/fieldset";
+export { FieldsetContext as Context } from "@ark-ui/react";

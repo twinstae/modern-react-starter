@@ -1,5 +1,5 @@
 "use client";
-import { FileUpload, useFileUploadContext } from "@ark-ui/react/file-upload";
+import { FileUpload, useFileUploadContext } from "@ark-ui/react";
 import { FileIcon, XIcon } from "lucide-react";
 import { type ComponentProps, forwardRef, useMemo } from "react";
 import { createSlotRecipeContext, type HTMLStyledProps, Stack } from "styled-system/jsx";
@@ -32,7 +32,7 @@ export const ItemSizeText = withContext(FileUpload.ItemSizeText, "itemSizeText")
 export const Label = withContext(FileUpload.Label, "label");
 export const Trigger = withContext(FileUpload.Trigger, "trigger");
 
-export { FileUploadContext as Context } from "@ark-ui/react/file-upload";
+export { FileUploadContext as Context } from "@ark-ui/react";
 
 interface ItemsBaseProps {
   showSize?: boolean | undefined;

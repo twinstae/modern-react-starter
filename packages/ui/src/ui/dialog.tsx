@@ -1,6 +1,5 @@
 "use client";
-import { Dialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react";
+import { Dialog, Portal } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
 import { dialog } from "styled-system/recipes";
@@ -21,6 +20,6 @@ export const Header = withContext("div", "header");
 export const Body = withContext("div", "body");
 export const Footer = withContext("div", "footer");
 
-export { DialogContext as Context } from "@ark-ui/react/dialog";
+export { DialogContext as Context } from "@ark-ui/react";
 
 export { Portal };

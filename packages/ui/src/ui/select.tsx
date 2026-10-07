@@ -1,11 +1,11 @@
 "use client";
 import {
+  Portal,
   Select,
   createListCollection,
   type CollectionItem,
   type ListCollection,
-} from "@ark-ui/react/select";
-import { Portal } from "@ark-ui/react";
+} from "@ark-ui/react";
 import { ChevronDownIcon, CheckIcon } from "lucide-react";
 import type { ComponentProps, ReactElement } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
@@ -39,7 +39,7 @@ export const ItemGroupLabel = withContext(Select.ItemGroupLabel, "itemGroupLabel
 export const HiddenSelect = Select.HiddenSelect;
 
 export { createListCollection, Portal };
-export { SelectContext as Context } from "@ark-ui/react/select";
+export { SelectContext as Context } from "@ark-ui/react";
 
 /** 트리거 오른쪽의 화살표 */
 export function ChevronIndicator() {

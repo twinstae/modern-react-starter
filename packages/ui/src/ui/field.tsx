@@ -1,5 +1,5 @@
 "use client";
-import { Field } from "@ark-ui/react/field";
+import { Field } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext, styled } from "styled-system/jsx";
 import { field } from "styled-system/recipes";
@@ -19,4 +19,4 @@ export const HelperText = withContext(Field.HelperText, "helperText");
 export const Label = withContext(Field.Label, "label");
 export const RequiredIndicator = withContext(Field.RequiredIndicator, "requiredIndicator");
 
-export { FieldContext as Context } from "@ark-ui/react/field";
+export { FieldContext as Context } from "@ark-ui/react";

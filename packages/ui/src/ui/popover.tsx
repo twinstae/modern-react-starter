@@ -1,6 +1,5 @@
 "use client";
-import { Popover } from "@ark-ui/react/popover";
-import { Portal } from "@ark-ui/react";
+import { Popover, Portal } from "@ark-ui/react";
 import type { ComponentProps } from "react";
 import { createSlotRecipeContext } from "styled-system/jsx";
 import { popover } from "styled-system/recipes";
@@ -22,6 +21,6 @@ export const CloseTrigger = withContext(Popover.CloseTrigger, "closeTrigger");
 export const Arrow = withContext(Popover.Arrow, "arrow");
 export const ArrowTip = withContext(Popover.ArrowTip, "arrowTip");
 
-export { PopoverContext as Context } from "@ark-ui/react/popover";
+export { PopoverContext as Context } from "@ark-ui/react";
 
 export { Portal };
