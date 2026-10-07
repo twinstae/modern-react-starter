@@ -101,6 +101,13 @@ export class RuleViolation extends Error {
   }
 }
 
+/** 짧은 글 규칙을 지킨 글을 돌려주고, 어기면 사용자에게 보여 줄 메시지로 RuleViolation을 던진다. */
+function parseShortText(text: string): string {
+  const parsed = v.safeParse(ShortText, text);
+  if (!parsed.success) throw new RuleViolation(parsed.issues[0].message);
+  return parsed.output;
+}
+
 export class Session extends Entity(sessionSchema, sessionReducer, { generateId: () => uuidv7() }) {
   /** 화자는 활성 캐릭터여야 한다. */
   #assertActiveSpeaker(characterId: string) {
@@ -109,19 +116,16 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
   }
 
   postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {
-    const content = v.safeParse(ShortText, text);
-    if (!content.success) throw new RuleViolation(content.issues[0].message);
+    const content = parseShortText(text);
     this.#assertActiveSpeaker(as);
-    dispatch("session:message_posted", { side, as, content: content.output });
+    dispatch("session:message_posted", { side, as, content });
   });
 
   /** 이미 굴린 결과를 판정으로 남긴다. 라벨이 없으면 생략한다. */
   rollDice = mutation(
     this,
     (dispatch, side: Side, as: string, notation: string, result: RollResult, label?: string) => {
-      const parsedLabel = label === undefined ? undefined : v.safeParse(ShortText, label);
-      if (parsedLabel && !parsedLabel.success)
-        throw new RuleViolation(parsedLabel.issues[0].message);
+      const parsedLabel = label === undefined ? undefined : parseShortText(label);
       this.#assertActiveSpeaker(as);
       dispatch("session:dice_rolled", {
         side,
@@ -129,7 +133,7 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
         notation,
         terms: result.terms,
         total: result.total,
-        ...(parsedLabel && { label: parsedLabel.output }),
+        ...(parsedLabel !== undefined && { label: parsedLabel }),
       });
     },
   );
