@@ -99,7 +99,6 @@
         "@storybook/addon-a11y": "^10.6.1",
         "@storybook/addon-docs": "^10.6.1",
         "@storybook/react-vite": "^10.6.1",
-        "@tanstack/router-cli": "^1.167.40",
         "@testing-library/dom": "^10.4.2",
         "@testing-library/react": "^16.3.3",
         "@types/node": "^26.6.4",
