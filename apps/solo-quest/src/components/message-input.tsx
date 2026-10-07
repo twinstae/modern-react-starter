@@ -1,9 +1,7 @@
-import { useId, useState } from "react";
-import { Button, Field, Textarea } from "@repo/ui";
-import { styled } from "styled-system/jsx";
+import { SimpleForm, SimpleSelect, SimpleTextarea, SimpleWatch, SubmitButton } from "@repo/ui";
 import * as v from "valibot";
 
-import type { Character, Side } from "../domain/session.ts";
+import { DEFAULT_SPEAKER, type Character, type Side } from "../domain/session.ts";
 import { remainingGraphemes, ShortText } from "../domain/short-text.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
@@ -14,17 +12,16 @@ export interface MessageValues {
   text: string;
 }
 
-const Speakers = styled("fieldset", {
-  base: { display: "flex", flexWrap: "wrap", gap: "3", borderWidth: "0", p: "0" },
+const MessageSchema = v.object({
+  as: v.pipe(v.string(), v.minLength(1, "화자를 골라주세요")),
+  text: ShortText,
 });
-
-const Form = styled("form", { base: { display: "flex", flexDirection: "column", gap: "2" } });
 
 interface MessageInputProps {
   side: Side;
   characters: Character[];
-  speakerId: string;
-  onSpeakerChange: (characterId: string) => void;
+  /** 처음 골라져 있는 화자. 정하지 않으면 편의 기본 화자다. 이후 화자는 폼이 들고 있다. */
+  defaultSpeakerId?: string;
   /** 오류 메시지를 돌려주면 입력을 유지하고 보여 준다. 성공하면 undefined를 돌려준다. */
   onSubmit: (values: MessageValues) => Promise<string | undefined>;
 }
@@ -32,63 +29,34 @@ interface MessageInputProps {
 export function MessageInput({
   side,
   characters,
-  speakerId,
-  onSpeakerChange,
+  defaultSpeakerId = DEFAULT_SPEAKER[side],
   onSubmit,
 }: MessageInputProps) {
-  const [text, setText] = useState("");
-  const [error, setError] = useState<string>();
-  const errorId = useId();
   const label = SIDE_LABEL[side];
-  const parsed = v.safeParse(ShortText, text);
-  const remaining = remainingGraphemes(text);
 
   return (
-    <Form
+    <SimpleForm
       aria-label={`${label} 입력`}
-      onSubmit={async (event) => {
-        event.preventDefault();
-        if (!parsed.success) return;
-        const message = await onSubmit({ side, as: speakerId, text: parsed.output });
-        setError(message);
-        if (!message) setText("");
-      }}
+      schema={MessageSchema}
+      defaultValues={{ as: defaultSpeakerId, text: "" }}
+      // 성공하면 대화만 비우고 화자는 그대로 둔다
+      resetOnSuccess={["text"]}
+      onSubmit={(values) => onSubmit({ side, ...values })}
     >
-      <Speakers>
-        <legend>{label} 화자</legend>
-        {characters.map((character) => (
-          <label key={character.id}>
-            <input
-              type="radio"
-              name={`${side}-speaker`}
-              value={character.id}
-              checked={character.id === speakerId}
-              onChange={() => onSpeakerChange(character.id)}
-            />
-            {character.name}
-          </label>
-        ))}
-      </Speakers>
-      <Field.Root>
-        <Field.Label>{label} 대화</Field.Label>
-        <Textarea
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          aria-invalid={!!error}
-          aria-errormessage={error ? errorId : undefined}
-        />
-        {error && (
-          <Field.ErrorText id={errorId} role="alert" aria-label={error}>
-            {error}
-          </Field.ErrorText>
+      <SimpleSelect
+        name="as"
+        label={`${label} 화자`}
+        items={characters.map((character) => ({ label: character.name, value: character.id }))}
+      />
+      <SimpleTextarea name="text" label={`${label} 대화`} />
+      <SimpleWatch name="text">
+        {(text) => (
+          <p role="status" aria-label={`${label} 남은 글자 수`}>
+            {remainingGraphemes(String(text))}
+          </p>
         )}
-      </Field.Root>
-      <p role="status" aria-label={`${label} 남은 글자 수`}>
-        {remaining}
-      </p>
-      <Button type="submit" disabled={!parsed.success}>
-        {label}로 남기기
-      </Button>
-    </Form>
+      </SimpleWatch>
+      <SubmitButton>{label}로 남기기</SubmitButton>
+    </SimpleForm>
   );
 }

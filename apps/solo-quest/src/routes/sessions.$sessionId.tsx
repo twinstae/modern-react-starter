@@ -1,11 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { styled } from "styled-system/jsx";
 
 import { MessageInput } from "../components/message-input.tsx";
 import { SessionLog } from "../components/session-log.tsx";
-import { DEFAULT_SPEAKER, type Side } from "../domain/session.ts";
+import type { Side } from "../domain/session.ts";
 import { sessionQueries } from "../queries.ts";
 import { ApiError } from "../unwrap.ts";
 
@@ -54,7 +54,6 @@ function SessionPage() {
   const { data: session } = useSuspenseQuery(sessionQueries.detail(sessionId));
   const { data: controller } = useSuspenseQuery(sessionQueries.controller(sessionId));
   const view = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
-  const [speakerIds, setSpeakerIds] = useState(DEFAULT_SPEAKER);
 
   return (
     <Main>
@@ -66,10 +65,6 @@ function SessionPage() {
             key={side}
             side={side}
             characters={view.characters}
-            speakerId={speakerIds[side]}
-            onSpeakerChange={(characterId) =>
-              setSpeakerIds((previous) => ({ ...previous, [side]: characterId }))
-            }
             onSubmit={controller.submit}
           />
         ))}

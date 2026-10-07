@@ -11,7 +11,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const callbacks = {
-  onSpeakerChange: () => {},
   onSubmit: async (values: unknown) => {
     console.log(values);
     return undefined;
@@ -19,8 +18,8 @@ const callbacks = {
 };
 
 export const Master: Story = {
-  args: { side: "master", characters: DEFAULT_CHARACTERS, speakerId: "gm", ...callbacks },
+  args: { side: "master", characters: DEFAULT_CHARACTERS, ...callbacks },
 };
 export const Player: Story = {
-  args: { side: "player", characters: DEFAULT_CHARACTERS, speakerId: "player", ...callbacks },
+  args: { side: "player", characters: DEFAULT_CHARACTERS, ...callbacks },
 };

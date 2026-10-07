@@ -37,7 +37,7 @@ describe("MessageInput", () => {
       actions.fill(query.textbox("마스터 대화"), "문이 열린다"),
       actions.click(query.button("마스터로 남기기")),
       assertions.value(query.textbox("마스터 대화"), "문이 열린다"),
-      assertions.errormessage(query.textbox("마스터 대화"), "다른 곳에서 먼저 기록했습니다"),
+      assertions.visible(query.alert("다른 곳에서 먼저 기록했습니다")),
     );
   });
 
@@ -50,7 +50,7 @@ describe("MessageInput", () => {
     );
   });
 
-  it("빈 입력과 공백만 있는 입력은 제출할 수 없다", async () => {
+  it("빈 입력과 공백만 있는 입력은 제출되지 않고 오류가 보인다", async () => {
     let result: MessageValues | undefined;
 
     await runSiheom(
@@ -63,15 +63,17 @@ describe("MessageInput", () => {
           }}
         />,
       ),
-      assertions.disabled(query.button("마스터로 남기기")),
+      actions.click(query.button("마스터로 남기기")),
+      assertions.errormessage(query.textbox("마스터 대화"), "내용을 입력해주세요"),
       actions.fill(query.textbox("마스터 대화"), "   "),
       actions.click(query.button("마스터로 남기기")),
+      assertions.errormessage(query.textbox("마스터 대화"), "내용을 입력해주세요"),
     );
 
     expect(result).toBeUndefined();
   });
 
-  it("140자를 넘으면 제출할 수 없고 남은 글자 수가 음수로 보인다", async () => {
+  it("140자를 넘으면 제출되지 않고 남은 글자 수가 음수로 보인다", async () => {
     let result: MessageValues | undefined;
 
     await runSiheom(
@@ -86,29 +88,37 @@ describe("MessageInput", () => {
       ),
       actions.fill(query.textbox("마스터 대화"), "가".repeat(141)),
       assertions.textContent(query.status("마스터 남은 글자 수"), "-1"),
-      assertions.disabled(query.button("마스터로 남기기")),
       actions.click(query.button("마스터로 남기기")),
+      assertions.errormessage(query.textbox("마스터 대화"), "140자 이하로 입력해주세요"),
     );
 
     expect(result).toBeUndefined();
   });
 
-  it("화자 목록에서 기본 화자가 골라져 있고 다른 캐릭터를 고르면 onSpeakerChange로 그 id가 넘어간다", async () => {
-    let chosen: string | undefined;
+  it("기본 화자가 골라져 있고, 다른 캐릭터를 고르면 그 화자로 제출되며, 제출한 뒤에도 화자가 유지된다", async () => {
+    let result: MessageValues | undefined;
 
     await runSiheom(
       given.render(
         <MessageInput
           {...Stories.Master.args}
-          onSpeakerChange={(characterId) => {
-            chosen = characterId;
+          onSubmit={async (values) => {
+            result = values;
+            return undefined;
           }}
         />,
       ),
-      assertions.checked(query.radio("GM")),
-      actions.click(query.radio("Player")),
+      assertions.textContent(query.combobox("마스터 화자"), "GM"),
+      actions.click(query.combobox("마스터 화자")),
+      actions.click(query.option("Player")),
+      assertions.not.expanded(query.combobox("마스터 화자")),
+      actions.fill(query.textbox("마스터 대화"), "안으로 들어간다"),
+      assertions.value(query.textbox("마스터 대화"), "안으로 들어간다"),
+      actions.click(query.button("마스터로 남기기")),
+      assertions.value(query.textbox("마스터 대화"), ""),
+      assertions.textContent(query.combobox("마스터 화자"), "Player"),
     );
 
-    expect(chosen).toBe("player");
+    expect(result).toStrictEqual({ side: "master", as: "player", text: "안으로 들어간다" });
   });
 });
