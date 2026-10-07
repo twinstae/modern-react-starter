@@ -12,9 +12,10 @@ export interface EventLogStore {
 export class VersionConflictError extends Error {
   constructor(
     readonly expectedVersion: number,
-    readonly actualVersion: number,
+    /** 서버가 알려 주지 않으면 알 수 없다 */
+    readonly actualVersion?: number,
   ) {
-    super(`버전 충돌: 기대 ${expectedVersion}, 실제 ${actualVersion}`);
+    super(`버전 충돌: 기대 ${expectedVersion}, 실제 ${actualVersion ?? "알 수 없음"}`);
     this.name = "VersionConflictError";
   }
 }
