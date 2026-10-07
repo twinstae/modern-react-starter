@@ -107,11 +107,11 @@ function RollBody({ entry }: { entry: RollEntry }) {
   );
 }
 
-/** 바로 앞 기록과 편과 화자가 같으면 이름을 다시 보이지 않는다. */
+/** 바로 앞 기록과 편과 화자가 같으면 이름을 다시 보이지 않는다. 화자는 이름이 아니라 캐릭터 id로 가른다. */
 const continuesPrevious = (entries: LogEntry[], index: number) => {
   const previous = entries[index - 1];
   const entry = entries[index];
-  return previous?.side === entry?.side && previous?.speakerName === entry?.speakerName;
+  return previous?.side === entry?.side && previous?.speakerId === entry?.speakerId;
 };
 
 export function SessionLog({ entries }: { entries: LogEntry[] }) {

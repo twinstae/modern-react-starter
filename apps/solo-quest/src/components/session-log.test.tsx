@@ -76,4 +76,14 @@ describe("SessionLog", () => {
     });
     expect(shown).toStrictEqual(["GM", "", "Player", "GM", "GM"]);
   });
+
+  it("이름이 같아도 다른 캐릭터가 이어 말하면 묶음이 나뉘어 이름이 다시 보인다", async () => {
+    await runSiheom(given.render(<SessionLog {...Stories.ArchivedSpeaker.args} />));
+
+    const shown = Stories.ArchivedSpeaker.args.entries.map((entry, index) => {
+      const item = screen.getAllByRole("listitem")[index];
+      return entry.kind === "message" ? item?.textContent?.split(entry.content)[0] : undefined;
+    });
+    expect(shown).toStrictEqual(["경비병", "", "경비병", ""]);
+  });
 });

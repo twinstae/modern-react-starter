@@ -87,3 +87,18 @@ export const Consecutive: Story = {
     ],
   },
 };
+
+/**
+ * 보관된 캐릭터(guard-1)의 지난 기록과, 같은 이름으로 새로 추가한 캐릭터(guard-2)의 기록.
+ * 로그는 보관 여부를 모르고 이름만 보인다. 이름이 같아도 다른 캐릭터이므로 묶음은 나뉜다.
+ */
+export const ArchivedSpeaker: Story = {
+  args: {
+    entries: [
+      { ...entry(1), speakerId: "guard-1", speakerName: "경비병", content: "멈춰라" },
+      { ...entry(3), speakerId: "guard-1", speakerName: "경비병", content: "누구냐" },
+      { ...entry(5), speakerId: "guard-2", speakerName: "경비병", content: "교대할 시간이다" },
+      { ...entry(7), speakerId: "guard-2", speakerName: "경비병", content: "조용하군" },
+    ],
+  },
+};
