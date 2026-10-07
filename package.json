@@ -1,5 +1,5 @@
 {
-  "name": "qr-quest",
+  "name": "modern-react-starter",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,8 +16,6 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun run src/persistence/drizzle/migrate.ts",
-    "seed:admin": "bun run src/api/seed-admin.ts",
     "ci": "bun run lint:fix && bun run format && bun run typecheck && bun run test run"
   },
   "dependencies": {
@@ -43,8 +41,6 @@
     "@yudiel/react-qr-scanner": "^2.6.0",
     "better-auth": "^1.7.7",
     "bunja": "^3.0.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.3",
     "elysia": "^1.4.30",
     "jotai": "^3.0.1",
@@ -61,7 +57,7 @@
     "valibot": "^1.5.0"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "latest",
+    "@chromatic-com/storybook": "^5.4.0",
     "@pandacss/dev": "^2.1.1",
     "@pandacss/preset-base": "^2.1.1",
     "@pandacss/preset-panda": "^2.1.1",
@@ -82,8 +78,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/browser-playwright": "latest",
-    "@vitest/coverage-v8": "latest",
+    "@vitest/browser-playwright": "^5.0.3",
+    "@vitest/coverage-v8": "^5.0.3",
     "drizzle-kit": "^0.31.11",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
@@ -91,7 +87,7 @@
     "storybook": "^10.6.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.2",
-    "vitest": "latest"
+    "vitest": "^5.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -27,8 +27,6 @@
         "@yudiel/react-qr-scanner": "^2.6.0",
         "better-auth": "^1.7.7",
         "bunja": "^3.0.1",
-        "class-variance-authority": "^0.7.1",
-        "clsx": "^2.1.1",
         "drizzle-orm": "^0.45.3",
         "elysia": "^1.4.30",
         "jotai": "^3.0.1",
@@ -45,7 +43,7 @@
         "valibot": "^1.5.0",
       },
       "devDependencies": {
-        "@chromatic-com/storybook": "latest",
+        "@chromatic-com/storybook": "^5.4.0",
         "@pandacss/dev": "^2.1.1",
         "@pandacss/preset-base": "^2.1.1",
         "@pandacss/preset-panda": "^2.1.1",
@@ -66,8 +64,8 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "@vitejs/plugin-react": "^6.1.1",
-        "@vitest/browser-playwright": "latest",
-        "@vitest/coverage-v8": "latest",
+        "@vitest/browser-playwright": "^5.0.3",
+        "@vitest/coverage-v8": "^5.0.3",
         "drizzle-kit": "^0.31.11",
         "oxfmt": "^0.71.0",
         "oxlint": "^1.86.0",
@@ -75,7 +73,7 @@
         "storybook": "^10.6.1",
         "typescript": "^7.0.2",
         "vite": "^8.3.2",
-        "vitest": "latest",
+        "vitest": "^5.0.3",
       },
     },
   },
@@ -1053,8 +1051,6 @@
     "chromatic": ["chromatic@18.11.0", "", { "dependencies": { "semver": "^7.3.5" }, "peerDependencies": { "@chromatic-com/cypress": "^0.*.* || ^1.0.0", "@chromatic-com/playwright": "^0.*.* || ^1.0.0", "@chromatic-com/vitest": "^0.*.* || ^1.0.0" }, "optionalPeers": ["@chromatic-com/cypress", "@chromatic-com/playwright", "@chromatic-com/vitest"], "bin": { "chroma": "dist/bin.cjs", "chromatic": "dist/bin.cjs", "chromatic-cli": "dist/bin.cjs" } }, "sha512-gn5wXxt26Lr1ZMa7Bp0epTvcN0t+33ZEJaPtpbtnnNH8jtoS4EA0xsLuThukKoI2zpu64lFVUN3TMYqZYHMcgQ=="],
 
     "citty": ["citty@0.2.2", "", {}, "sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w=="],
-
-    "class-variance-authority": ["class-variance-authority@0.7.1", "", { "dependencies": { "clsx": "^2.1.1" } }, "sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg=="],
 
     "cliui": ["cliui@8.0.1", "", { "dependencies": { "string-width": "^4.2.0", "strip-ansi": "^6.0.1", "wrap-ansi": "^7.0.0" } }, "sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ=="],
 
