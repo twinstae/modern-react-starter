@@ -151,4 +151,15 @@ describe("세션", () => {
     expect(session.version).toBe(1);
     expect(session.state.characters).toStrictEqual(DEFAULT_CHARACTERS);
   });
+
+  it.each([
+    ["기본 캐릭터와 같은 이름", "GM"],
+    ["추가한 활성 캐릭터와 같은 이름(앞뒤 공백은 무시)", " 경비병 "],
+  ])("%s은 거부된다", (_name, name) => {
+    const session = startSession();
+    session.addCharacter("경비병");
+
+    expect(() => session.addCharacter(name)).toThrow(RuleViolation);
+    expect(session.version).toBe(2);
+  });
 });
