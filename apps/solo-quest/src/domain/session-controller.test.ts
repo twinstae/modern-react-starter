@@ -82,7 +82,11 @@ describe("세션 컨트롤러", () => {
     const snapshot = controller.getSnapshot();
     expect(snapshot.characters).toStrictEqual(DEFAULT_CHARACTERS);
     expect(
-      snapshot.entries.map((entry) => [entry.side, entry.speakerName, entry.content]),
+      snapshot.entries.map((entry) => [
+        entry.side,
+        entry.speakerName,
+        entry.kind === "message" ? entry.content : undefined,
+      ]),
     ).toStrictEqual([
       ["master", "GM", "문이 열린다"],
       ["player", "Player", "안으로 들어간다"],

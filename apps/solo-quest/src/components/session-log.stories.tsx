@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { LogEntry } from "../domain/log-entries.ts";
+import type { MessageEntry } from "../domain/log-entries.ts";
 import { SessionLog } from "./session-log.tsx";
 
 const meta = {
@@ -11,7 +11,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** 홀수 번째는 마스터 편 GM, 짝수 번째는 플레이어 편 Player */
-const entry = (n: number): LogEntry => ({
+const entry = (n: number): MessageEntry => ({
   kind: "message",
   id: `event-${n}`,
   side: n % 2 === 1 ? "master" : "player",

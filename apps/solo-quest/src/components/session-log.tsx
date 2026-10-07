@@ -53,7 +53,7 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                 <strong>{entry.speakerName}</strong>
                 <time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</time>
               </Meta>
-              <Content>{entry.content}</Content>
+              {entry.kind === "message" && <Content>{entry.content}</Content>}
             </Item>
           ))}
         </List>
