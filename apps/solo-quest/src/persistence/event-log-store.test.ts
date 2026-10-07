@@ -61,6 +61,37 @@ function describeEventLogStore(name: string, makeStore: () => Promise<EventLogSt
       );
       expect(await store.read("s-1")).toStrictEqual([started("s-1")]);
     });
+
+    it("다른 세션의 이벤트와 섞이지 않는다", async () => {
+      const store = await makeStore();
+
+      await store.append("s-1", 0, [started("s-1")]);
+      await store.append("s-2", 0, [started("s-2")]);
+      await store.append("s-2", 1, [posted("s-2", 2, "둘째 세션")]);
+
+      expect(await store.read("s-1")).toStrictEqual([started("s-1")]);
+      expect(await store.read("s-2")).toStrictEqual([
+        started("s-2"),
+        posted("s-2", 2, "둘째 세션"),
+      ]);
+    });
+
+    it("같은 세션에 동시에 추가하면 하나만 성공하고 이벤트가 섞이지 않는다", async () => {
+      const store = await makeStore();
+      await store.append("s-1", 0, [started("s-1")]);
+      const contents = Array.from({ length: 20 }, (_, i) => `동시 ${i}`);
+
+      const results = await Promise.allSettled(
+        contents.map((content) =>
+          store.append("s-1", 1, [posted("s-1", 2, content), posted("s-1", 3, content)]),
+        ),
+      );
+
+      expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+      const log = await store.read("s-1");
+      expect(log.map((event) => event.version)).toStrictEqual([1, 2, 3]);
+      expect(log[1]?.body).toStrictEqual(log[2]?.body);
+    });
   });
 }
 
