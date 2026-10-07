@@ -93,4 +93,17 @@ describe("SessionLog", () => {
       assertions.count(query.listitem(/^마스터 경비병$/), 4),
     );
   });
+
+  it("저장 중인 기록과 저장하지 못한 기록에는 각각 표시가 보이고, 저장된 기록에는 없다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.Unsaved.args} />),
+      assertions.textContent(query.listitem("플레이어 Player"), "저장 중"),
+    );
+
+    // 표시는 저장 중인 것과 실패한 것, 둘뿐이다(siheom 0.3.0은 부재를 확인하지 못해 직접 센다)
+    expect(screen.getAllByRole("status").map((mark) => mark.textContent)).toStrictEqual([
+      "저장 중",
+      "실패",
+    ]);
+  });
 });

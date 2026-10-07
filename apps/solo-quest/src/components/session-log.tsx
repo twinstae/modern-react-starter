@@ -54,6 +54,12 @@ const Bubble = styled("div", {
       player: { bg: "gray.a3", "& time": { right: "100%", mr: "2" } },
     },
     groupStart: { true: {}, false: {} },
+    // 저장 중인 말풍선은 흐리게, 저장하지 못한 말풍선은 점선 테두리로 보인다
+    status: {
+      committed: {},
+      pending: { opacity: "0.6" },
+      failed: { borderWidth: "1px", borderStyle: "dashed", borderColor: "red.9" },
+    },
   },
   // 묶음 안에서 이어지는 말풍선은 편 쪽 위 모서리를 덜 둥글게 해 앞 말풍선과 이어 보이게 한다
   compoundVariants: [
@@ -61,6 +67,19 @@ const Bubble = styled("div", {
     { side: "player", groupStart: false, css: { borderTopRightRadius: "l1" } },
   ],
 });
+
+/** 저장 상태는 말풍선 아래에 작게 붙는다. 저장된 기록에는 없다. */
+const StatusMark = styled("span", {
+  base: { px: "1", fontSize: "xs" },
+  variants: {
+    status: {
+      pending: { color: "fg.subtle" },
+      failed: { color: "red.11", fontWeight: "semibold" },
+    },
+  },
+});
+
+const STATUS_TEXT = { pending: "저장 중", failed: "실패" } as const;
 
 /** 화자 이름은 묶음 위에 한 번, 작고 흐리게 보인다. */
 const Speaker = styled("strong", {
@@ -134,6 +153,7 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                 <Bubble
                   side={entry.side}
                   groupStart={groupStart}
+                  status={entry.status}
                   title={formatInstant(entry.createdAt)}
                 >
                   <Content>
@@ -141,6 +161,11 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                   </Content>
                   <time dateTime={entry.createdAt}>{formatTime(entry.createdAt)}</time>
                 </Bubble>
+                {entry.status !== "committed" && (
+                  <StatusMark role="status" status={entry.status}>
+                    {STATUS_TEXT[entry.status]}
+                  </StatusMark>
+                )}
               </Item>
             );
           })}

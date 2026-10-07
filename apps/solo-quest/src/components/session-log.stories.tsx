@@ -105,3 +105,34 @@ export const ArchivedSpeaker: Story = {
     ],
   },
 };
+
+/** 저장된 기록 뒤에 저장 중인 기록과 저장하지 못한 기록이 이어진다. 저장된 기록에는 표시가 없다. */
+export const Unsaved: Story = {
+  args: {
+    entries: [
+      { ...entry(1), content: "문이 열린다" },
+      { ...entry(2), status: "pending", content: "안으로 들어간다" },
+      { ...entry(3), status: "failed", content: "안은 어둡다" },
+    ],
+  },
+};
+
+/** 판정도 같은 방식으로 저장 중이다 */
+export const PendingRoll: Story = {
+  args: {
+    entries: [
+      {
+        kind: "roll",
+        id: "event-1",
+        status: "pending",
+        side: "player",
+        speakerId: "player",
+        speakerName: "Player",
+        notation: "d20",
+        terms: [{ type: "dice", sign: 1, sides: 20, values: [17] }],
+        total: 17,
+        createdAt: "2026-10-07T12:01:00Z",
+      } satisfies RollEntry,
+    ],
+  },
+};
