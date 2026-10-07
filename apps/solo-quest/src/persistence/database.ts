@@ -25,19 +25,27 @@ const toSummary = (row: typeof schema.sessions.$inferSelect): SessionSummary => 
   createdAt: Temporal.Instant.fromEpochMilliseconds(row.createdAt.getTime()).toString(),
 });
 
-export function createDrizzleSessionListStore(db: Database): SessionListStore {
+/** DB가 아직 열리는 중이어도(Promise) 저장소를 바로 만들 수 있다. */
+export function createDrizzleSessionListStore(
+  database: Database | Promise<Database>,
+): SessionListStore {
+  const ready = Promise.resolve(database);
+
   return {
     async add(session) {
+      const db = await ready;
       await db.insert(schema.sessions).values({
         ...session,
         createdAt: new Date(Temporal.Instant.from(session.createdAt).epochMilliseconds),
       });
     },
     async get(id) {
+      const db = await ready;
       const [row] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, id));
       return row ? toSummary(row) : null;
     },
     async list() {
+      const db = await ready;
       const rows = await db.select().from(schema.sessions).orderBy(desc(schema.sessions.createdAt));
       return rows.map(toSummary);
     },
