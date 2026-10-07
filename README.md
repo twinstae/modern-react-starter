@@ -9,6 +9,7 @@ bun workspaces + Turborepo 모노레포.
 ```
 apps/
   demo/        # TanStack Start 템플릿 앱 (@repo/demo)
+  solo-quest/  # 템플릿을 부딪혀 보는 실험장, 솔로 TRPG 기록 앱 (@repo/solo-quest) — 용어는 CONTEXT-MAP.md
 packages/
   ui/          # 디자인 시스템: Panda preset(토큰·레시피) + 컴포넌트 + Storybook (@repo/ui)
 ```
