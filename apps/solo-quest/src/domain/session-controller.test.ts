@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
+import { createFakeEventLog } from "./event-log-store.fake.ts";
 import { postedEvent } from "./session.fixture.ts";
 import { createSessionController } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
@@ -81,7 +82,7 @@ describe("세션 컨트롤러", () => {
     expect((await controller.load()).events).toStrictEqual(await memory.read("s-1"));
   });
 
-  it("구독자는 불러오기와 제출이 끝날 때마다 알림을 받고, 스냅샷에서 로그 항목과 캐릭터를 읽는다", async () => {
+  it("구독자는 불러오기와 제출, 저장이 끝날 때마다 알림을 받고, 스냅샷에서 로그 항목과 캐릭터를 읽는다", async () => {
     const controller = createSessionController({
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
@@ -101,7 +102,8 @@ describe("세션 컨트롤러", () => {
     unsubscribe();
     await controller.submit({ side: "player", as: "player", text: "안으로 들어간다" });
 
-    expect(notified).toStrictEqual([0, 1]);
+    // 불러오기, 제출(저장 중), 저장 끝
+    expect(notified).toStrictEqual([0, 1, 1]);
     const snapshot = controller.getSnapshot();
     expect(snapshot.characters).toStrictEqual(DEFAULT_CHARACTERS);
     expect(
@@ -291,5 +293,28 @@ describe("세션 컨트롤러", () => {
     expect(await controller.addCharacter({ name: "  " })).toBe("내용을 입력해주세요");
     expect(await controller.archiveCharacter("gm")).toBe("기본 캐릭터는 보관할 수 없습니다");
     expect(controller.getSnapshot()).toBe(before);
+  });
+
+  it("제출 직후 저장이 끝나기 전에는 새 이벤트가 pending이고, 끝나면 committed가 된다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    log.hold();
+
+    const submitting = controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
+      "pending",
+    ]);
+
+    log.releaseNext();
+    await submitting;
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
+      "committed",
+    ]);
   });
 });

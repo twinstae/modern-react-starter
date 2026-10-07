@@ -1,9 +1,13 @@
 import type { RolledTerm } from "./dice.ts";
 import type { Side, SessionEvent } from "./session.ts";
 
+/** 저장된 기록인지, 저장을 기다리는 중인지, 저장하지 못했는지 */
+export type EntryStatus = "committed" | "pending" | "failed";
+
 /** 어느 항목이든 가진 값 */
 interface BaseEntry {
   id: string;
+  status: EntryStatus;
   side: Side;
   /** 화자 캐릭터 id. 이름이 같은 다른 캐릭터와 구분한다. */
   speakerId: string;
@@ -33,11 +37,16 @@ export type LogEntry = MessageEntry | RollEntry;
  * 이벤트 로그를 화면 항목으로 바꾼다. 화자 이름은 시작할 때 넘겨받았거나 나중에 추가한 캐릭터에서
  * id로 찾는다. 보관해도 이름은 남으므로 보관된 캐릭터의 지난 기록도 이름이 그대로 보인다.
  */
-export function toLogEntries(events: SessionEvent[]): LogEntry[] {
+export function toLogEntries(
+  events: SessionEvent[],
+  /** 저장되지 않은 이벤트의 상태. 여기 없는 이벤트는 저장된 것이다. */
+  unsaved: ReadonlyMap<string, EntryStatus> = new Map(),
+): LogEntry[] {
   const names = new Map<string, string>();
   const entries: LogEntry[] = [];
   const baseOf = (event: Extract<SessionEvent, { body: { side: Side; as: string } }>) => ({
     id: event.eventId,
+    status: unsaved.get(event.eventId) ?? "committed",
     side: event.body.side,
     speakerId: event.body.as,
     speakerName: names.get(event.body.as) ?? event.body.as,

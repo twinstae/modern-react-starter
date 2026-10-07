@@ -1,7 +1,7 @@
 import { parseNotation, roll, type Random } from "./dice.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import { parseInput } from "./parse-input.ts";
-import { toLogEntries, type LogEntry } from "./log-entries.ts";
+import { toLogEntries, type EntryStatus, type LogEntry } from "./log-entries.ts";
 import {
   createSessionRepository,
   DEFAULT_CHARACTERS,
@@ -45,9 +45,35 @@ export function createSessionController({
   const adapter = createEventLogAdapter(eventLog, (events) => {
     committed = events;
   });
-  const repository = createSessionRepository(adapter);
+
+  /** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들. 저장이 끝나기를 기다린다. */
+  let unsaved: Array<{ events: SessionEvent[] }> = [];
+  /** 저장을 한 번에 하나씩 순서대로 하도록 줄 세우는 꼬리 */
+  let tail: Promise<void> = Promise.resolve();
+  /**
+   * 저장소를 감싸 저장을 줄 세운다. ventyd는 commit 안에서 이 `append`를 바로 부르므로,
+   * 저장 전 묶음은 mutation 직후 여기서 등록된다.
+   */
+  const queuedStore: EventLogStore = {
+    read: eventLog.read,
+    append(id, expectedVersion, batch) {
+      const entry = { events: batch };
+      unsaved.push(entry);
+      const saving = tail.then(async () => {
+        await eventLog.append(id, expectedVersion, batch);
+        events = [...events, ...batch];
+        unsaved = unsaved.filter((other) => other !== entry);
+        publish();
+      });
+      tail = saving.catch(() => {});
+      return saving;
+    },
+  };
+  const repository = createSessionRepository(createEventLogAdapter(queuedStore));
+  const startRepository = createSessionRepository(adapter);
 
   let session: Session | undefined;
+  /** 저장된 이벤트 */
   let events: SessionEvent[] = [];
   let loading: Promise<void> | undefined;
 
@@ -55,9 +81,13 @@ export function createSessionController({
   let snapshot = EMPTY_VIEW;
   const listeners = new Set<() => void>();
   const publish = () => {
+    const all = [...events, ...unsaved.flatMap((entry) => entry.events)];
+    const statuses = new Map<string, EntryStatus>(
+      unsaved.flatMap((entry) => entry.events.map((event) => [event.eventId, "pending"] as const)),
+    );
     snapshot = {
-      events,
-      entries: toLogEntries(events),
+      events: all,
+      entries: toLogEntries(all, statuses),
       characters: session?.state.characters ?? [],
     };
     for (const listener of listeners) listener();
@@ -71,11 +101,12 @@ export function createSessionController({
 
   /** 로그를 읽어 엔티티와 목록을 새로 만든다. 로그가 비어 있으면 기본 캐릭터로 시작한다. */
   async function readLog() {
+    unsaved = [];
     events = await eventLog.read(sessionId);
     session = (await restore(events)) ?? undefined;
     if (!session) {
       session = Session.create({ entityId: sessionId, body: { characters: DEFAULT_CHARACTERS } });
-      await repository.commit(session);
+      await startRepository.commit(session);
       events = committed;
     }
     publish();
@@ -90,9 +121,9 @@ export function createSessionController({
     const current = session;
     try {
       record(current);
-      await repository.commit(current);
-      events = [...events, ...committed];
+      const saving = repository.commit(current);
       publish();
+      await saving;
     } catch (error) {
       if (error instanceof RuleViolation) return error.message;
       if (error instanceof VersionConflictError) {
@@ -100,6 +131,7 @@ export function createSessionController({
         return "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
       }
       // 저장하지 못한 이벤트가 엔티티 큐에 남지 않게 메모리의 목록으로 되돌린다
+      unsaved = [];
       session = (await restore(events)) ?? undefined;
       throw error;
     }

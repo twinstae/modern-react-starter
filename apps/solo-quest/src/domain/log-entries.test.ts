@@ -21,6 +21,7 @@ describe("이벤트를 로그 항목으로", () => {
       {
         kind: "message",
         id: "s-1-event-2",
+        status: "committed",
         side: "master",
         speakerId: "gm",
         speakerName: "GM",
@@ -30,6 +31,7 @@ describe("이벤트를 로그 항목으로", () => {
       {
         kind: "message",
         id: "s-1-event-3",
+        status: "committed",
         side: "player",
         speakerId: "player",
         speakerName: "Player",
@@ -53,6 +55,7 @@ describe("이벤트를 로그 항목으로", () => {
     expect(entries[1]).toStrictEqual({
       kind: "roll",
       id: "s-1-event-3",
+      status: "committed",
       side: "master",
       speakerId: "gm",
       speakerName: "GM",

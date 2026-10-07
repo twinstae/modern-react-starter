@@ -14,6 +14,7 @@ type Story = StoryObj<typeof meta>;
 const entry = (n: number): MessageEntry => ({
   kind: "message",
   id: `event-${n}`,
+  status: "committed",
   side: n % 2 === 1 ? "master" : "player",
   speakerId: n % 2 === 1 ? "gm" : "player",
   speakerName: n % 2 === 1 ? "GM" : "Player",
@@ -45,6 +46,7 @@ export const Mixed: Story = {
       {
         kind: "roll",
         id: "event-2",
+        status: "committed",
         side: "player",
         speakerId: "player",
         speakerName: "Player",
@@ -60,6 +62,7 @@ export const Mixed: Story = {
       {
         kind: "roll",
         id: "event-3",
+        status: "committed",
         side: "master",
         speakerId: "guard",
         speakerName: "경비병",
