@@ -67,6 +67,10 @@ export interface RollResult {
 /** 0 이상 1 미만의 값을 내는 함수 */
 export type Random = () => number;
 
+/** 굴린 항이 합계에 더하는 값. 빼는 항은 음수다. */
+const termTotal = (term: RolledTerm) =>
+  term.sign * (term.type === "constant" ? term.value : term.values.reduce((a, b) => a + b, 0));
+
 /** 항을 굴린다. 난수는 주입받는다. 실제 앱은 `crypto.getRandomValues` 기반 난수를 넘긴다. */
 export function roll(terms: DiceTerm[], random: Random): RollResult {
   const rolled = terms.map((term): RolledTerm => {
@@ -74,11 +78,5 @@ export function roll(terms: DiceTerm[], random: Random): RollResult {
     const values = Array.from({ length: term.count }, () => Math.floor(random() * term.sides) + 1);
     return { type: "dice", sign: term.sign, sides: term.sides, values };
   });
-  const total = rolled.reduce(
-    (sum, term) =>
-      sum +
-      term.sign * (term.type === "constant" ? term.value : term.values.reduce((a, b) => a + b, 0)),
-    0,
-  );
-  return { terms: rolled, total };
+  return { terms: rolled, total: rolled.reduce((sum, term) => sum + termTotal(term), 0) };
 }
