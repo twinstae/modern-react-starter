@@ -92,4 +92,23 @@ describe("MessageInput", () => {
 
     expect(result).toBeUndefined();
   });
+
+  it("화자 목록에서 기본 화자가 골라져 있고 다른 캐릭터를 고르면 onSpeakerChange로 그 id가 넘어간다", async () => {
+    let chosen: string | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.Master.args}
+          onSpeakerChange={(characterId) => {
+            chosen = characterId;
+          }}
+        />,
+      ),
+      assertions.checked(query.radio("GM")),
+      actions.click(query.radio("Player")),
+    );
+
+    expect(chosen).toBe("player");
+  });
 });

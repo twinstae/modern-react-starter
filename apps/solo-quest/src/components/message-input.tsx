@@ -14,6 +14,10 @@ export interface MessageValues {
   text: string;
 }
 
+const Speakers = styled("fieldset", {
+  base: { display: "flex", flexWrap: "wrap", gap: "3", borderWidth: "0", p: "0" },
+});
+
 const Form = styled("form", { base: { display: "flex", flexDirection: "column", gap: "2" } });
 
 interface MessageInputProps {
@@ -25,7 +29,13 @@ interface MessageInputProps {
   onSubmit: (values: MessageValues) => Promise<string | undefined>;
 }
 
-export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
+export function MessageInput({
+  side,
+  characters,
+  speakerId,
+  onSpeakerChange,
+  onSubmit,
+}: MessageInputProps) {
   const [text, setText] = useState("");
   const [error, setError] = useState<string>();
   const errorId = useId();
@@ -44,6 +54,21 @@ export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
         if (!message) setText("");
       }}
     >
+      <Speakers>
+        <legend>{label} 화자</legend>
+        {characters.map((character) => (
+          <label key={character.id}>
+            <input
+              type="radio"
+              name={`${side}-speaker`}
+              value={character.id}
+              checked={character.id === speakerId}
+              onChange={() => onSpeakerChange(character.id)}
+            />
+            {character.name}
+          </label>
+        ))}
+      </Speakers>
       <Field.Root>
         <Field.Label>{label} 대화</Field.Label>
         <Textarea
