@@ -17,4 +17,24 @@ describe("CharacterPanel", () => {
     expect(screen.queryByRole("button", { name: "GM 보관" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Player 보관" })).toBeNull();
   });
+
+  it("추가한 캐릭터의 보관 버튼을 누르면 onArchive에 그 캐릭터 id가 넘어간다", async () => {
+    let archived: string | undefined;
+
+    await runSiheom(
+      given.render(
+        <CharacterPanel
+          {...Stories.One.args}
+          onArchive={async (characterId) => {
+            archived = characterId;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.click(query.button(/^캐릭터/)),
+      actions.click(query.button("경비병 보관")),
+    );
+
+    expect(archived).toBe("npc-1");
+  });
 });
