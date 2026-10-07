@@ -40,4 +40,56 @@ describe("MessageInput", () => {
       assertions.errormessage(query.textbox("마스터 대화"), "다른 곳에서 먼저 기록했습니다"),
     );
   });
+
+  it("입력하는 동안 남은 글자 수가 줄어든다", async () => {
+    await runSiheom(
+      given.render(<MessageInput {...Stories.Master.args} />),
+      assertions.textContent(query.status("마스터 남은 글자 수"), "140"),
+      actions.fill(query.textbox("마스터 대화"), "문이 열린다"),
+      assertions.textContent(query.status("마스터 남은 글자 수"), "134"),
+    );
+  });
+
+  it("빈 입력과 공백만 있는 입력은 제출할 수 없다", async () => {
+    let result: MessageValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.Master.args}
+          onSubmit={async (values) => {
+            result = values;
+            return undefined;
+          }}
+        />,
+      ),
+      assertions.disabled(query.button("마스터로 남기기")),
+      actions.fill(query.textbox("마스터 대화"), "   "),
+      actions.click(query.button("마스터로 남기기")),
+    );
+
+    expect(result).toBeUndefined();
+  });
+
+  it("140자를 넘으면 제출할 수 없고 남은 글자 수가 음수로 보인다", async () => {
+    let result: MessageValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.Master.args}
+          onSubmit={async (values) => {
+            result = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.fill(query.textbox("마스터 대화"), "가".repeat(141)),
+      assertions.textContent(query.status("마스터 남은 글자 수"), "-1"),
+      assertions.disabled(query.button("마스터로 남기기")),
+      actions.click(query.button("마스터로 남기기")),
+    );
+
+    expect(result).toBeUndefined();
+  });
 });

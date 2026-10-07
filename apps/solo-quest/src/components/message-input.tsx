@@ -1,8 +1,10 @@
 import { useId, useState } from "react";
 import { Button, Field, Textarea } from "@repo/ui";
 import { styled } from "styled-system/jsx";
+import * as v from "valibot";
 
 import type { Character, Side } from "../domain/session.ts";
+import { countGraphemes, SHORT_TEXT_MAX, ShortText } from "../domain/short-text.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
 export interface MessageValues {
@@ -28,13 +30,16 @@ export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
   const [error, setError] = useState<string>();
   const errorId = useId();
   const label = SIDE_LABEL[side];
+  const parsed = v.safeParse(ShortText, text);
+  const remaining = SHORT_TEXT_MAX - countGraphemes(text.trim());
 
   return (
     <Form
       aria-label={`${label} 입력`}
       onSubmit={async (event) => {
         event.preventDefault();
-        const message = await onSubmit({ side, as: speakerId, text: text.trim() });
+        if (!parsed.success) return;
+        const message = await onSubmit({ side, as: speakerId, text: parsed.output });
         setError(message);
         if (!message) setText("");
       }}
@@ -53,7 +58,12 @@ export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
           </Field.ErrorText>
         )}
       </Field.Root>
-      <Button type="submit">{label}로 남기기</Button>
+      <p role="status" aria-label={`${label} 남은 글자 수`}>
+        {remaining}
+      </p>
+      <Button type="submit" disabled={!parsed.success}>
+        {label}로 남기기
+      </Button>
     </Form>
   );
 }
