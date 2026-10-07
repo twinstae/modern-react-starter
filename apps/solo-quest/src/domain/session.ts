@@ -1,4 +1,4 @@
-import { defineReducer, defineSchema, Entity, mutation, type InferEventFromSchema } from "ventyd";
+import { defineReducer, defineSchema, Entity, mutation } from "ventyd";
 import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
@@ -27,22 +27,44 @@ export const DEFAULT_CHARACTERS: Character[] = [
 /** 편마다 기본 화자 */
 export const DEFAULT_SPEAKER: Record<Side, string> = { master: "gm", player: "player" };
 
+const eventBodies = {
+  started: v.object({ characters: v.array(Character) }),
+  message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
+};
+
 /**
  * 세션 하나가 엔티티 하나다. 브라우저와 서버가 이 스키마를 공유한다.
  * 상태는 캐릭터 목록뿐이고, 대화는 상태를 바꾸지 않는다.
  */
 export const sessionSchema = defineSchema("session", {
   schema: valibot({
-    event: {
-      started: v.object({ characters: v.array(Character) }),
-      message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
-    },
+    event: eventBodies,
     state: v.object({ characters: v.array(Character) }),
   }),
   initialEventName: "session:started",
 });
 
-export type SessionEvent = InferEventFromSchema<typeof sessionSchema>;
+const eventOf = <Name extends keyof typeof eventBodies>(name: Name) =>
+  v.object({
+    eventId: v.string(),
+    eventName: v.literal(`session:${name}`),
+    eventCreatedAt: v.string(),
+    entityName: v.literal("session"),
+    entityId: v.string(),
+    version: v.number(),
+    body: eventBodies[name],
+  });
+
+/**
+ * 서버가 받은 이벤트를 검증하는 스키마. 이벤트 본문은 도메인 스키마와 같은 정의를 쓰고,
+ * 저장된 이벤트에는 버전이 반드시 있다.
+ */
+export const SessionEventSchema = v.variant("eventName", [
+  eventOf("started"),
+  eventOf("message_posted"),
+]);
+
+export type SessionEvent = v.InferOutput<typeof SessionEventSchema>;
 
 const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
   switch (event.eventName) {

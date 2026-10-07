@@ -1,5 +1,6 @@
 import { createApiClient } from "../api-client.ts";
 import { createApp, type AppDeps } from "./app.ts";
+import { createMemoryEventLogStore } from "./event-log-store.ts";
 import { createMemorySessionListStore } from "./session-list-store.ts";
 
 export const TEST_NOW = "2026-10-07T12:00:00Z";
@@ -12,6 +13,7 @@ export const TEST_ID = "session-1";
 export function createTestClient(deps: Partial<AppDeps> = {}) {
   const app = createApp({
     sessionListStore: createMemorySessionListStore(),
+    eventLogStore: createMemoryEventLogStore(),
     now: () => TEST_NOW,
     generateId: () => TEST_ID,
     ...deps,
