@@ -1,4 +1,12 @@
-import { SimpleForm, SimpleSelect, SimpleTextarea, SimpleWatch, SubmitButton } from "@repo/ui";
+import {
+  SimpleForm,
+  SimpleSelect,
+  SimpleTextarea,
+  SimpleWatch,
+  SubmitButton,
+  useSimpleField,
+} from "@repo/ui";
+import { useEffect } from "react";
 import { SendHorizontal } from "lucide-react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
@@ -45,6 +53,19 @@ const Remaining = styled("p", {
 /** 남은 글자 수는 덜 중요한 정보라, 이만큼 남았을 때부터 보인다. */
 const SHOW_REMAINING_AT = 20;
 
+/**
+ * 고른 화자가 더 이상 활성이 아니면(보관되면) 그 편의 기본 캐릭터로 되돌린다.
+ * 화자는 폼이 들고 있으므로 폼 안에서 바로잡는다. 쓰던 글은 건드리지 않는다.
+ */
+function SpeakerFallback({ activeIds, fallback }: { activeIds: string[]; fallback: string }) {
+  const [speakerId, setSpeakerId] = useSimpleField("as");
+  const stale = !activeIds.includes(String(speakerId));
+  useEffect(() => {
+    if (stale) setSpeakerId(fallback);
+  });
+  return null;
+}
+
 export function MessageInput({
   side,
   characters,
@@ -52,6 +73,7 @@ export function MessageInput({
   onSubmit,
 }: MessageInputProps) {
   const label = SIDE_LABEL[side];
+  const active = characters.filter((character) => !character.archived);
 
   return (
     <SimpleForm
@@ -69,9 +91,11 @@ export function MessageInput({
             label={`${label} 화자`}
             hideLabel
             size="sm"
-            items={characters
-              .filter((character) => !character.archived)
-              .map((character) => ({ label: character.name, value: character.id }))}
+            items={active.map((character) => ({ label: character.name, value: character.id }))}
+          />
+          <SpeakerFallback
+            activeIds={active.map((character) => character.id)}
+            fallback={DEFAULT_SPEAKER[side]}
           />
         </Speaker>
         <Row>

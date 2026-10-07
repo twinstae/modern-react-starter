@@ -1,9 +1,30 @@
 import { screen } from "@testing-library/dom";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
+import type { Side } from "../domain/session.ts";
+import { SIDE_LABEL } from "./side-label.ts";
 import { MessageInput, type MessageValues } from "./message-input.tsx";
 import * as Stories from "./message-input.stories.tsx";
+
+/** 입력창이 보는 중에 경비병이 보관되는 상황을 만든다. 보관은 화면 밖(세션)의 일이라 버튼으로 흉내 낸다. */
+function GuardGetsArchived({ side }: { side: Side }) {
+  const [characters, setCharacters] = useState(Stories.WithArchived.args.characters);
+  return (
+    <>
+      <MessageInput side={side} characters={characters} onSubmit={async () => undefined} />
+      <button
+        type="button"
+        onClick={() =>
+          setCharacters(characters.map((c) => (c.id === "guard" ? { ...c, archived: true } : c)))
+        }
+      >
+        경비병 보관
+      </button>
+    </>
+  );
+}
 
 describe("MessageInput", () => {
   it("텍스트를 넣고 남기면 편과 화자와 앞뒤 공백을 뺀 텍스트가 제출되고 입력이 비워진다", async () => {
@@ -182,4 +203,26 @@ describe("MessageInput", () => {
 
     expect(result).toStrictEqual({ side: "master", as: "guard", text: "멈춰라" });
   });
+
+  it.each([
+    ["master", "GM"],
+    ["player", "Player"],
+  ] as const)(
+    "고른 화자가 보관되면 %s 입력창의 화자는 그 편의 기본 캐릭터로 돌아가고 쓰던 글은 남는다",
+    async (side, defaultName) => {
+      const label = SIDE_LABEL[side];
+
+      await runSiheom(
+        given.render(<GuardGetsArchived side={side} />),
+        actions.click(query.combobox(`${label} 화자`)),
+        actions.click(query.option("경비병")),
+        assertions.not.expanded(query.combobox(`${label} 화자`)),
+        actions.fill(query.textbox(`${label} 대화`), "쓰던 글"),
+        assertions.textContent(query.combobox(`${label} 화자`), "경비병"),
+        actions.click(query.button("경비병 보관")),
+        assertions.textContent(query.combobox(`${label} 화자`), defaultName),
+        assertions.value(query.textbox(`${label} 대화`), "쓰던 글"),
+      );
+    },
+  );
 });

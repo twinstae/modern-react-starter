@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useForm, useWatch, FormProvider, type FieldValues } from "react-hook-form";
+import { useForm, useFormContext, useWatch, FormProvider, type FieldValues } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { styled } from "styled-system/jsx";
@@ -71,4 +71,14 @@ export function SimpleWatch({
   children: (value: unknown) => ReactNode;
 }) {
   return <>{children(useWatch({ name }))}</>;
+}
+
+/**
+ * SimpleForm 안에서 필드의 현재 값을 읽고 바꾸는 hook. 폼 바깥의 변화(예: 고를 수 있는 항목이 줄어듦)에
+ * 맞춰 값을 바로잡을 때 쓴다. 사용자가 입력한 다른 필드는 건드리지 않는다.
+ */
+export function useSimpleField(name: string): [unknown, (value: unknown) => void] {
+  const { setValue } = useFormContext();
+  const value = useWatch({ name });
+  return [value, (next) => setValue(name, next)];
 }
