@@ -21,6 +21,7 @@ const MessageSchema = v.object({
 
 interface MessageInputProps {
   side: Side;
+  /** 모든 캐릭터. 화자 목록에는 이 중 활성 캐릭터만 나온다. */
   characters: Character[];
   /** 처음 골라져 있는 화자. 정하지 않으면 편의 기본 화자다. 이후 화자는 폼이 들고 있다. */
   defaultSpeakerId?: string;
@@ -68,10 +69,9 @@ export function MessageInput({
             label={`${label} 화자`}
             hideLabel
             size="sm"
-            items={characters.map((character) => ({
-              label: character.name,
-              value: character.id,
-            }))}
+            items={characters
+              .filter((character) => !character.archived)
+              .map((character) => ({ label: character.name, value: character.id }))}
           />
         </Speaker>
         <Row>

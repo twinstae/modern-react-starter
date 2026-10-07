@@ -149,4 +149,37 @@ describe("MessageInput", () => {
 
     expect(result).toStrictEqual({ side: "master", as: "player", text: "안으로 들어간다" });
   });
+
+  it("화자 목록에는 활성 캐릭터만 나오고, 고른 캐릭터로 제출된다", async () => {
+    let result: MessageValues | undefined;
+    // siheom 0.3.0은 요소가 없음을 확인하지 못해서 직접 확인한다
+    const optionNamed = (name: string) => screen.queryByRole("option", { name });
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithArchived.args}
+          onSubmit={async (values) => {
+            result = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.click(query.combobox("마스터 화자")),
+      assertions.visible(query.option("경비병")),
+    );
+    expect(optionNamed("GM")).not.toBeNull();
+    expect(optionNamed("Player")).not.toBeNull();
+    expect(optionNamed("상인")).toBeNull();
+
+    await runSiheom(
+      actions.click(query.option("경비병")),
+      assertions.not.expanded(query.combobox("마스터 화자")),
+      actions.fill(query.textbox("마스터 대화"), "멈춰라"),
+      actions.click(query.button("마스터로 남기기")),
+      assertions.value(query.textbox("마스터 대화"), ""),
+    );
+
+    expect(result).toStrictEqual({ side: "master", as: "guard", text: "멈춰라" });
+  });
 });
