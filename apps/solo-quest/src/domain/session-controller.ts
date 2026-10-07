@@ -148,7 +148,6 @@ export function createSessionController({
   /** 로그를 읽어 엔티티와 목록을 새로 만든다. 로그가 비어 있으면 기본 캐릭터로 시작한다. */
   async function readLog() {
     unsaved = [];
-    halted = false;
     events = await eventLog.read(sessionId);
     session = (await restore(events)) ?? undefined;
     if (!session) {
@@ -156,6 +155,8 @@ export function createSessionController({
       await startRepository.commit(session);
       events = committed;
     }
+    // 읽는 동안에는 낡은 묶음이 저장하지 못하게 멈춰 둔다. 읽은 뒤에야 새 제출을 받는다.
+    halted = false;
     publish();
   }
 
@@ -164,7 +165,11 @@ export function createSessionController({
     if (error instanceof VersionConflictError) {
       restored = {};
       for (const { input } of unsaved) {
-        if (input) restored[input.side] = { key: ++restoredCount, as: input.as, text: input.text };
+        if (!input) continue;
+        const text = [restored[input.side]?.text, input.text]
+          .filter((t) => t !== undefined)
+          .join("\n");
+        restored[input.side] = { key: ++restoredCount, as: input.as, text };
       }
       await readLog();
     }

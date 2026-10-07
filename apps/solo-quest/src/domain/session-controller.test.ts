@@ -456,4 +456,28 @@ describe("세션 컨트롤러", () => {
     ).toStrictEqual([["committed", "다른 탭"]]);
     expect(restored).toStrictEqual({ player: { key: 1, as: "player", text: " 내 기록 " } });
   });
+
+  it("충돌이 나면 뒤에서 기다리던 제출도 저장하지 않고 버리며, 버려진 글은 줄바꿈으로 이어 돌려준다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
+    log.hold();
+
+    await controller.submit({ side: "player", as: "player", text: "첫째" });
+    await controller.submit({ side: "player", as: "player", text: "둘째" });
+    log.releaseNext();
+    log.releaseNext();
+    await controller.idle();
+
+    expect((await log.otherTab.read("s-1")).map((event) => event.version)).toStrictEqual([1, 2]);
+    const { entries, restored } = controller.getSnapshot();
+    expect(entries.map((entry) => entry.status)).toStrictEqual(["committed"]);
+    expect(restored.player?.text).toBe("첫째\n둘째");
+  });
 });
