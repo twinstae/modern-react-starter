@@ -102,4 +102,13 @@ describe("CharacterPanel", () => {
     // siheom 0.3.0은 요소가 없음을 확인하지 못해서 직접 기다린다
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
+
+  it("캐릭터가 10개여도 모두 보이고, 기본 캐릭터를 뺀 8개에 보관 버튼이 있다", async () => {
+    await runSiheom(
+      given.render(<CharacterPanel {...Stories.Ten.args} />),
+      actions.click(query.button(/^캐릭터 10/)),
+      assertions.count(query.listitem(/./), 10),
+      assertions.count(query.button(/ 보관$/), 8),
+    );
+  });
 });
