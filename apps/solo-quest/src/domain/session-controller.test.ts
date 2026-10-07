@@ -138,7 +138,7 @@ describe("세션 컨트롤러", () => {
     expect((await controller.load()).events).toHaveLength(1);
   });
 
-  it("커밋하는 사이 다른 곳에서 먼저 기록했다면 충돌 안내를 돌려주고 기록은 하나만 남는다", async () => {
+  it("커밋하는 사이 다른 곳에서 먼저 기록했다면 다시 불러와 다른 곳의 기록만 남는다", async () => {
     const memory = createMemoryEventLogStore();
     let otherTabIsWriting = false;
     const racing: EventLogStore = {
@@ -162,9 +162,9 @@ describe("세션 컨트롤러", () => {
     await controller.load();
     otherTabIsWriting = true;
 
-    const result = await controller.submit({ side: "master", as: "gm", text: "내 기록" });
+    await controller.submit({ side: "master", as: "gm", text: "내 기록" });
+    await controller.idle();
 
-    expect(result).toBe("다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다");
     expect((await controller.load()).events.map((event) => event.body)).toStrictEqual([
       { characters: DEFAULT_CHARACTERS },
       { side: "master", as: "gm", content: "다른 탭" },
@@ -237,6 +237,7 @@ describe("세션 컨트롤러", () => {
     expect(
       await controller.submit({ side: "master", as: guard.id, text: "멈춰라" }),
     ).toBeUndefined();
+    await controller.idle();
 
     const reloaded = await createSessionController({
       sessionId: "s-1",
@@ -285,6 +286,7 @@ describe("세션 컨트롤러", () => {
     });
     await controller.load();
     await controller.addCharacter({ name: "경비병" });
+    await controller.idle();
     const before = controller.getSnapshot();
 
     expect(await controller.addCharacter({ name: "경비병" })).toBe(
@@ -313,6 +315,7 @@ describe("세션 컨트롤러", () => {
 
     log.releaseNext();
     await submitting;
+    await controller.idle();
     expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
       "committed",
     ]);
@@ -331,6 +334,7 @@ describe("세션 컨트롤러", () => {
     log.failNext(new Error("네트워크 오류"));
 
     const result = await controller.submit({ side: "master", as: "gm", text: "저장 못 하는 기록" });
+    await controller.idle();
 
     expect(result).toBeUndefined();
     expect(
@@ -361,11 +365,10 @@ describe("세션 컨트롤러", () => {
     expect(statuses()).toStrictEqual(["pending", "pending", "pending"]);
 
     log.releaseNext();
-    await submissions[0];
-    expect(statuses()).toStrictEqual(["committed", "pending", "pending"]);
     log.releaseNext();
     log.releaseNext();
     await Promise.all(submissions);
+    await controller.idle();
 
     expect(statuses()).toStrictEqual(["committed", "committed", "committed"]);
     expect(log.mostAtOnce).toBe(1);
@@ -398,6 +401,7 @@ describe("세션 컨트롤러", () => {
     log.releaseNext();
     log.releaseNext();
     await Promise.all(submissions);
+    await controller.idle();
 
     expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
       "failed",
@@ -406,4 +410,29 @@ describe("세션 컨트롤러", () => {
     ]);
     expect(await log.otherTab.read("s-1")).toHaveLength(1);
   });
+
+  it("제출은 저장을 기다리지 않고 곧바로 돌아오며, 저장은 뒤에서 끝난다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    log.hold();
+
+    // 저장이 풀리지 않았는데도 돌아와야 한다. 저장을 기다린다면 이 테스트는 제한 시간에 걸린다.
+    const result = await controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
+
+    expect(result).toBeUndefined();
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
+      "pending",
+    ]);
+    log.releaseNext();
+    await controller.idle();
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
+      "committed",
+    ]);
+  }, 1000);
 });

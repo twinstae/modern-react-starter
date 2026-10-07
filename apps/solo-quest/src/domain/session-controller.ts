@@ -93,6 +93,8 @@ export function createSessionController({
   /** 저장된 이벤트 */
   let events: SessionEvent[] = [];
   let loading: Promise<void> | undefined;
+  /** 시작한 저장과 그 뒤처리가 모두 끝나면 이루어지는 약속 */
+  let settling: Promise<unknown> = Promise.resolve();
 
   // 바뀔 때만 새로 만든다. useSyncExternalStore는 같은 상태에 같은 스냅샷을 요구한다.
   let snapshot = EMPTY_VIEW;
@@ -132,27 +134,27 @@ export function createSessionController({
     publish();
   }
 
+  /** 저장이 끝난 뒤의 일. 충돌이면 서버의 로그를 다시 불러온다. 실패는 이미 failed로 화면에 있다. */
+  async function afterSave(error: unknown) {
+    if (error instanceof VersionConflictError) await readLog();
+  }
+
   /**
-   * 엔티티에 일을 시키고 커밋한다. 규칙 위반, 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고,
-   * 성공하면 undefined다. 저장하지 못한 것 같은 다른 오류는 다시 던진다.
+   * 엔티티에 일을 시키고 곧바로 화면에 반영한 뒤 저장을 시작한다. 저장을 기다리지 않는다.
+   * 규칙 위반이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 아니면 undefined다.
    */
-  async function commit(record: (current: Session) => void): Promise<string | undefined> {
+  function commit(record: (current: Session) => void): string | undefined {
     if (!session) return "아직 시작되지 않은 세션입니다";
-    const current = session;
     try {
-      record(current);
-      const saving = repository.commit(current);
-      publish();
-      await saving;
+      record(session);
     } catch (error) {
       if (error instanceof RuleViolation) return error.message;
-      if (error instanceof VersionConflictError) {
-        await readLog();
-        return "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
-      }
-      // 저장하지 못한 이벤트는 failed로 화면에 남아 있다
-      return undefined;
+      throw error;
     }
+    const saving = repository.commit(session);
+    publish();
+    settling = Promise.all([settling, saving.catch(afterSave)]);
+    return undefined;
   }
 
   return {
@@ -164,6 +166,11 @@ export function createSessionController({
     },
 
     getSnapshot: (): SessionView => snapshot,
+
+    /** 시작한 저장이 모두 끝날 때까지 기다린다. 테스트와 화면을 떠날 때 쓴다. */
+    idle: async () => {
+      await settling;
+    },
 
     /** 처음 한 번만 로그를 읽는다. 이미 불러왔으면 메모리의 모습을 돌려준다. */
     load(): Promise<SessionView> {
@@ -177,7 +184,8 @@ export function createSessionController({
 
     /**
      * 입력창에 친 글을 해석해 대화나 판정으로 남긴다.
-     * 잘못된 입력, 규칙 위반, 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 성공하면 undefined다.
+     * 잘못된 입력이나 규칙 위반이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 아니면 undefined다.
+     * 저장은 기다리지 않는다. 저장 중, 실패, 충돌은 `getSnapshot()`으로 알린다.
      */
     async submit({
       side,
@@ -202,12 +210,12 @@ export function createSessionController({
       return commit(record);
     },
 
-    /** 캐릭터를 추가한다. 이름 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
-    addCharacter: ({ name }: { name: string }): Promise<string | undefined> =>
+    /** 캐릭터를 추가한다. 이름 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */
+    addCharacter: async ({ name }: { name: string }): Promise<string | undefined> =>
       commit((current) => current.addCharacter(generateId(), name)),
 
-    /** 캐릭터를 보관한다. 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
-    archiveCharacter: (characterId: string): Promise<string | undefined> =>
+    /** 캐릭터를 보관한다. 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */
+    archiveCharacter: async (characterId: string): Promise<string | undefined> =>
       commit((current) => current.archiveCharacter(characterId)),
   };
 }
