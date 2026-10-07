@@ -3,8 +3,8 @@ import * as v from "valibot";
 
 import { SessionEventSchema, type SessionEvent } from "../domain/session.ts";
 import { ShortText } from "../domain/short-text.ts";
-import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
-import type { SessionListStore } from "./session-list-store.ts";
+import { VersionConflictError, type EventLogStore } from "../domain/event-log-store.ts";
+import type { SessionListStore } from "../domain/session-list-store.ts";
 
 export interface AppDeps {
   sessionListStore: SessionListStore;

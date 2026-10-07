@@ -1,5 +1,5 @@
 import type { createApiClient } from "../api-client.ts";
-import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
+import { VersionConflictError, type EventLogStore } from "../domain/event-log-store.ts";
 import { ApiError, unwrap } from "../unwrap.ts";
 
 /**

@@ -8,7 +8,7 @@ import {
   createMemoryEventLogStore,
   VersionConflictError,
   type EventLogStore,
-} from "../server/event-log-store.ts";
+} from "../domain/event-log-store.ts";
 import { createFileEventLogStore } from "./file-event-log-store.ts";
 
 function describeEventLogStore(name: string, makeStore: () => Promise<EventLogStore>) {

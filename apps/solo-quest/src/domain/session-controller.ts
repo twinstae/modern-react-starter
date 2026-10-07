@@ -8,7 +8,7 @@ import {
   type Side,
   type SessionEvent,
 } from "./session.ts";
-import { VersionConflictError, type EventLogStore } from "../server/event-log-store.ts";
+import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
 
 /** 화면이 그리는 세션의 모습. 로그는 이벤트 목록 그대로, 화자 목록은 세션 상태에서 온다. */
 export interface SessionView {

@@ -5,7 +5,7 @@ import { sessions } from "./schema.ts";
 import {
   createMemorySessionListStore,
   type SessionListStore,
-} from "../server/session-list-store.ts";
+} from "../domain/session-list-store.ts";
 
 const OLDER = { id: "s-1", title: "첫 모험", createdAt: "2026-10-01T09:00:00Z" };
 const NEWER = { id: "s-2", title: "두 번째 모험", createdAt: "2026-10-02T09:00:00Z" };

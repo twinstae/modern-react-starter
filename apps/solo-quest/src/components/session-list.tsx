@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { styled } from "styled-system/jsx";
 
 import { formatInstant } from "../format-instant.ts";
-import type { SessionSummary } from "../server/session-list-store.ts";
+import type { SessionSummary } from "../domain/session-list-store.ts";
 
 const List = styled("ul", {
   base: { display: "flex", flexDirection: "column", gap: "2", listStyle: "none", p: "0" },

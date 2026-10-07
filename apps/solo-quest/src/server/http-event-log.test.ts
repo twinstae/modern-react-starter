@@ -4,7 +4,7 @@ import { createEventLogAdapter } from "../domain/event-log-adapter.ts";
 import { createSessionRepository, DEFAULT_CHARACTERS, Session } from "../domain/session.ts";
 import { createHttpEventLog } from "./http-event-log.ts";
 import { unwrap } from "../unwrap.ts";
-import { VersionConflictError } from "./event-log-store.ts";
+import { VersionConflictError } from "../domain/event-log-store.ts";
 import { createTestClient, TEST_ID } from "./test-client.ts";
 
 async function setup() {

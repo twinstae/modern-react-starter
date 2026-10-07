@@ -6,7 +6,7 @@ import {
   lastVersionOf,
   VersionConflictError,
   type EventLogStore,
-} from "../server/event-log-store.ts";
+} from "../domain/event-log-store.ts";
 
 /**
  * 세션마다 `<dir>/<sessionId>.jsonl` 파일에 한 줄에 이벤트 하나를 추가한다.

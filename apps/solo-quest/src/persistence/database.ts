@@ -6,7 +6,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { Temporal } from "temporal-polyfill";
 
-import type { SessionListStore, SessionSummary } from "../server/session-list-store.ts";
+import type { SessionListStore, SessionSummary } from "../domain/session-list-store.ts";
 import * as schema from "./schema.ts";
 
 const migrationsFolder = fileURLToPath(new URL("./migrations", import.meta.url));

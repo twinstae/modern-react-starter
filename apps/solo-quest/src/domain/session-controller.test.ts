@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createMemoryEventLogStore, type EventLogStore } from "../server/event-log-store.ts";
+import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
 import { postedEvent } from "./session.fixture.ts";
 import { createSessionController } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";

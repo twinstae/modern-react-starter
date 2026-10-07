@@ -1,7 +1,7 @@
 import { createApiClient } from "../api-client.ts";
 import { createApp, type AppDeps } from "./app.ts";
-import { createMemoryEventLogStore } from "./event-log-store.ts";
-import { createMemorySessionListStore } from "./session-list-store.ts";
+import { createMemoryEventLogStore } from "../domain/event-log-store.ts";
+import { createMemorySessionListStore } from "../domain/session-list-store.ts";
 
 export const TEST_NOW = "2026-10-07T12:00:00Z";
 export const TEST_ID = "session-1";

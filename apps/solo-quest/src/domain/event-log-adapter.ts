@@ -1,7 +1,7 @@
 import type { Adapter } from "ventyd";
 import * as v from "valibot";
 
-import type { EventLogStore } from "../server/event-log-store.ts";
+import type { EventLogStore } from "./event-log-store.ts";
 import { SessionEventSchema, type sessionSchema } from "./session.ts";
 
 /**
