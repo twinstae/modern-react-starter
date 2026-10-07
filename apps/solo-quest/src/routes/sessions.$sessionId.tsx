@@ -3,6 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSyncExternalStore } from "react";
 import { styled } from "styled-system/jsx";
 
+import { CharacterPanel } from "../components/character-panel.tsx";
 import { MessageInput } from "../components/message-input.tsx";
 import { SessionLog } from "../components/session-log.tsx";
 import type { Side } from "../domain/session.ts";
@@ -46,6 +47,11 @@ const Main = styled("main", {
 
 const Title = styled("h1", { base: { textStyle: "xl", fontWeight: "semibold" } });
 
+// 캐릭터 패널은 제목 옆에 접혀 있어 자리를 거의 차지하지 않는다
+const Header = styled("div", {
+  base: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "3" },
+});
+
 // 말풍선 옆에 띄운 시각이 좁은 화면에서 가로 스크롤을 만들지 않게 가로로는 자른다
 const LogScroll = styled("div", {
   base: { flex: "1", minHeight: "0", overflowY: "auto", overflowX: "hidden" },
@@ -66,7 +72,14 @@ function SessionPage() {
 
   return (
     <Main>
-      <Title>{session.title}</Title>
+      <Header>
+        <Title>{session.title}</Title>
+        <CharacterPanel
+          characters={view.characters}
+          onAdd={controller.addCharacter}
+          onArchive={controller.archiveCharacter}
+        />
+      </Header>
       <LogScroll>
         <SessionLog entries={view.entries} />
       </LogScroll>
