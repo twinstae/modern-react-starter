@@ -112,16 +112,20 @@ export function createSessionController({
       text: string;
     }): Promise<string | undefined> {
       if (!session) return "아직 시작되지 않은 세션입니다";
+      const current = session;
       const input = parseInput(text);
       if (input.type === "error") return input.message;
-      const notation = input.type === "roll" ? parseNotation(input.notation) : undefined;
-      if (notation && !notation.ok) return notation.message;
+      let record: () => void;
+      if (input.type === "message") {
+        record = () => current.postMessage(side, as, input.content);
+      } else {
+        const notation = parseNotation(input.notation);
+        if (!notation.ok) return notation.message;
+        const result = roll(notation.terms, random);
+        record = () => current.rollDice(side, as, input.notation, result, input.label);
+      }
       try {
-        if (input.type === "roll" && notation?.ok) {
-          session.rollDice(side, as, input.notation, roll(notation.terms, random), input.label);
-        } else if (input.type === "message") {
-          session.postMessage(side, as, input.content);
-        }
+        record();
         await repository.commit(session);
         events = [...events, ...committed];
         publish();
