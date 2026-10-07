@@ -142,6 +142,10 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
 
   /** 캐릭터를 보관한다. 지워지지 않고 더 이상 화자가 될 수 없다. */
   archiveCharacter = mutation(this, (dispatch, characterId: string) => {
+    const character = this.state.characters.find(({ id }) => id === characterId);
+    if (!character) throw new RuleViolation("없는 캐릭터입니다");
+    if (character.isDefault) throw new RuleViolation("기본 캐릭터는 보관할 수 없습니다");
+    if (character.archived) throw new RuleViolation("이미 보관된 캐릭터입니다");
     dispatch("session:character_archived", { characterId });
   });
 

@@ -183,4 +183,25 @@ describe("세션", () => {
     ]);
     expect(reloaded?.state).toStrictEqual(session.state);
   });
+
+  it.each([
+    ["기본 캐릭터 GM", "gm"],
+    ["기본 캐릭터 Player", "player"],
+    ["없는 캐릭터", "아무도-아님"],
+  ])("%s의 보관은 이벤트를 만들지 않고 오류를 낸다", (_name, characterId) => {
+    const session = startSession();
+
+    expect(() => session.archiveCharacter(characterId)).toThrow(RuleViolation);
+    expect(session.version).toBe(1);
+  });
+
+  it("이미 보관된 캐릭터의 보관은 이벤트를 만들지 않고 오류를 낸다", () => {
+    const session = startSession();
+    session.addCharacter("경비병");
+    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    session.archiveCharacter(guard.id);
+
+    expect(() => session.archiveCharacter(guard.id)).toThrow(RuleViolation);
+    expect(session.version).toBe(3);
+  });
 });
