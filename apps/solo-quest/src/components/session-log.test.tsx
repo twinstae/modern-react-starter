@@ -86,4 +86,11 @@ describe("SessionLog", () => {
     });
     expect(shown).toStrictEqual(["경비병", "", "경비병", ""]);
   });
+
+  it("보관된 캐릭터의 지난 기록에도 편과 이름이 보인다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.ArchivedSpeaker.args} />),
+      assertions.count(query.listitem(/^마스터 경비병$/), 4),
+    );
+  });
 });
