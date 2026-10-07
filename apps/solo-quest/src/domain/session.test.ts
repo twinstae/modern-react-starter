@@ -217,4 +217,26 @@ describe("세션", () => {
     expect(guards.map(({ archived }) => archived)).toStrictEqual([true, false]);
     expect(guards[1].id).not.toBe(first.id);
   });
+
+  it("보관된 캐릭터를 화자로 하는 대화와 판정은 이벤트를 만들지 않고 오류를 낸다", () => {
+    const session = startSession();
+    session.addCharacter("경비병");
+    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    session.archiveCharacter(guard.id);
+
+    expect(() => session.postMessage("master", guard.id, "멈춰라")).toThrow(RuleViolation);
+    expect(() => session.rollDice("master", guard.id, "2d6+1", rolled)).toThrow(RuleViolation);
+    expect(session.version).toBe(3);
+  });
+
+  it("편과 상관없이 활성 캐릭터가 말할 수 있다: 마스터 입력창에서 NPC로, 플레이어 입력창에서 GM으로", () => {
+    const session = startSession();
+    session.addCharacter("경비병");
+    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+
+    session.postMessage("master", guard.id, "멈춰라");
+    session.postMessage("player", "gm", "누구냐");
+
+    expect(session.version).toBe(4);
+  });
 });
