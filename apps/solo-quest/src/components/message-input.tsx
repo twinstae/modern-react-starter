@@ -62,7 +62,7 @@ function SpeakerFallback({ activeIds, fallback }: { activeIds: string[]; fallbac
   const stale = !activeIds.includes(String(speakerId));
   useEffect(() => {
     if (stale) setSpeakerId(fallback);
-  });
+  }, [stale, fallback, setSpeakerId]);
   return null;
 }
 

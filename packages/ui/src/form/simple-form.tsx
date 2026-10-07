@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { useForm, useFormContext, useWatch, FormProvider, type FieldValues } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -80,5 +80,7 @@ export function SimpleWatch({
 export function useSimpleField(name: string): [unknown, (value: unknown) => void] {
   const { setValue } = useFormContext();
   const value = useWatch({ name });
-  return [value, (next) => setValue(name, next)];
+  // setValue는 렌더링마다 같으므로 setter도 name이 같으면 같다. effect의 의존성으로 쓸 수 있다.
+  const set = useCallback((next: unknown) => setValue(name, next), [setValue, name]);
+  return [value, set];
 }
