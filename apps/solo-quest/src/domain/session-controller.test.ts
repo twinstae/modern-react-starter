@@ -60,6 +60,37 @@ describe("세션 컨트롤러", () => {
     expect((await controller.load()).events).toStrictEqual(await memory.read("s-1"));
   });
 
+  it("구독자는 불러오기와 제출이 끝날 때마다 알림을 받고, 스냅샷에서 로그 항목과 캐릭터를 읽는다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+    });
+    const notified: number[] = [];
+    const unsubscribe = controller.subscribe(() => {
+      notified.push(controller.getSnapshot().entries.length);
+    });
+    expect(controller.getSnapshot().entries).toStrictEqual([]);
+
+    await controller.load();
+    await controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
+    // 규칙을 어긴 제출은 아무것도 바꾸지 않으므로 알리지 않는다
+    await controller.submit({ side: "master", as: "gm", text: " " });
+    unsubscribe();
+    await controller.submit({ side: "player", as: "player", text: "안으로 들어간다" });
+
+    expect(notified).toStrictEqual([0, 1]);
+    const snapshot = controller.getSnapshot();
+    expect(snapshot.characters).toStrictEqual(DEFAULT_CHARACTERS);
+    expect(
+      snapshot.entries.map((entry) => [entry.side, entry.speakerName, entry.content]),
+    ).toStrictEqual([
+      ["master", "GM", "문이 열린다"],
+      ["player", "Player", "안으로 들어간다"],
+    ]);
+    // 바뀌지 않았다면 같은 스냅샷을 돌려준다(useSyncExternalStore가 요구한다)
+    expect(controller.getSnapshot()).toBe(snapshot);
+  });
+
   it("규칙을 어긴 제출은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
     const controller = createSessionController({
       sessionId: "s-1",

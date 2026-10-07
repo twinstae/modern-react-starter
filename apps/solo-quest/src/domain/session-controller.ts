@@ -1,4 +1,5 @@
 import { createEventLogAdapter } from "./event-log-adapter.ts";
+import { toLogEntries, type LogEntry } from "./log-entries.ts";
 import {
   createSessionRepository,
   DEFAULT_CHARACTERS,
@@ -10,11 +11,15 @@ import {
 } from "./session.ts";
 import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
 
-/** 화면이 그리는 세션의 모습. 로그는 이벤트 목록 그대로, 화자 목록은 세션 상태에서 온다. */
+/** 화면이 그리는 세션의 모습. 로그 항목은 이벤트 목록에서, 화자 목록은 세션 상태에서 온다. */
 export interface SessionView {
   events: SessionEvent[];
+  entries: LogEntry[];
   characters: Character[];
 }
+
+/** 불러오기 전의 모습 */
+const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [] };
 
 /**
  * 세션 하나에 대한 컨트롤러. UI를 모른다. 이벤트 로그 저장소(메모리 또는 HTTP)만 받는다.
@@ -38,7 +43,17 @@ export function createSessionController({
   let events: SessionEvent[] = [];
   let loading: Promise<void> | undefined;
 
-  const view = (): SessionView => ({ events, characters: session?.state.characters ?? [] });
+  // 바뀔 때만 새로 만든다. useSyncExternalStore는 같은 상태에 같은 스냅샷을 요구한다.
+  let snapshot = EMPTY_VIEW;
+  const listeners = new Set<() => void>();
+  const publish = () => {
+    snapshot = {
+      events,
+      entries: toLogEntries(events),
+      characters: session?.state.characters ?? [],
+    };
+    for (const listener of listeners) listener();
+  };
 
   /** 이미 읽어 둔 이벤트로 엔티티를 되살린다. 로그를 다시 읽지 않는다. */
   const restore = (known: SessionEvent[]) =>
@@ -55,9 +70,19 @@ export function createSessionController({
       await repository.commit(session);
       events = committed;
     }
+    publish();
   }
 
   return {
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+
+    getSnapshot: (): SessionView => snapshot,
+
     /** 처음 한 번만 로그를 읽는다. 이미 불러왔으면 메모리의 모습을 돌려준다. */
     load(): Promise<SessionView> {
       loading ??= readLog().catch((error) => {
@@ -65,7 +90,7 @@ export function createSessionController({
         loading = undefined;
         throw error;
       });
-      return loading.then(view);
+      return loading.then(() => snapshot);
     },
 
     /** 대화를 남긴다. 규칙 위반이나 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 성공하면 undefined다. */
@@ -83,6 +108,7 @@ export function createSessionController({
         session.postMessage(side, as, text);
         await repository.commit(session);
         events = [...events, ...committed];
+        publish();
       } catch (error) {
         if (error instanceof RuleViolation) return error.message;
         if (error instanceof VersionConflictError) {
