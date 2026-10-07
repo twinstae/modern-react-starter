@@ -6,6 +6,8 @@ import { nitro } from "nitro/vite";
 import { pandacss } from "@pandacss/vite";
 import { playwright } from "@vitest/browser-playwright";
 
+import { fakeAliases } from "./fake-aliases.ts";
+
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
@@ -35,6 +37,7 @@ export default defineConfig({
       },
       {
         extends: true,
+        resolve: { alias: fakeAliases },
         test: {
           // 스토리 args로 렌더링한다. API와 서버 상태를 모른다.
           name: "component",

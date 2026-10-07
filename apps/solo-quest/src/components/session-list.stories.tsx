@@ -1,11 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { MemoryRouter } from "./memory-router.tsx";
 import { SessionList } from "./session-list.tsx";
 
 const meta = {
   component: SessionList,
-  decorators: [(Story) => <MemoryRouter>{Story()}</MemoryRouter>],
 } satisfies Meta<typeof SessionList>;
 
 export default meta;
