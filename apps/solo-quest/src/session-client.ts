@@ -1,3 +1,5 @@
+import { v7 as uuidv7 } from "uuid";
+
 import { browserRandom } from "./browser-random.ts";
 import { api } from "./api-client.ts";
 import { createSessionController } from "./domain/session-controller.ts";
@@ -9,4 +11,5 @@ export const sessionController = (sessionId: string) =>
     sessionId,
     eventLog: createHttpEventLog(api),
     random: browserRandom,
+    generateId: uuidv7,
   });

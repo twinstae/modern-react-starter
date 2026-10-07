@@ -8,10 +8,21 @@ import { DEFAULT_CHARACTERS } from "./session.ts";
 /** 항상 0.5를 내는 난수. d6은 4가 나온다. */
 const fixedRandom = () => 0.5;
 
+/** character-1, character-2, ... 차례로 내는 id 생성기 */
+const sequentialIds = () => {
+  let count = 0;
+  return () => `character-${++count}`;
+};
+
 describe("세션 컨트롤러", () => {
   it("로그가 빈 세션을 불러오면 시작 이벤트를 커밋하고, 다시 불러와도 다시 시작하지 않는다", async () => {
     const eventLog = createMemoryEventLogStore();
-    const controller = createSessionController({ sessionId: "s-1", eventLog, random: fixedRandom });
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
 
     const first = await controller.load();
     const second = await controller.load();
@@ -26,6 +37,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
 
@@ -56,6 +68,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: counting,
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
 
     await controller.load();
@@ -73,6 +86,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     const notified: number[] = [];
     const unsubscribe = controller.subscribe(() => {
@@ -109,6 +123,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
 
@@ -140,6 +155,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: racing,
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
     otherTabIsWriting = true;
@@ -158,6 +174,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
 
@@ -195,6 +212,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
 
@@ -204,11 +222,16 @@ describe("세션 컨트롤러", () => {
 
   it("추가한 캐릭터는 화자 목록에 나타나고, 그 이름으로 말한 기록이 남으며, 다시 불러와도 있다", async () => {
     const eventLog = createMemoryEventLogStore();
-    const controller = createSessionController({ sessionId: "s-1", eventLog, random: fixedRandom });
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
     await controller.load();
 
     expect(await controller.addCharacter({ name: " 경비병 " })).toBeUndefined();
-    const guard = controller.getSnapshot().characters.find(({ name }) => name === "경비병")!;
+    const guard = { id: "character-1" };
     expect(
       await controller.submit({ side: "master", as: guard.id, text: "멈춰라" }),
     ).toBeUndefined();
@@ -217,7 +240,14 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog,
       random: fixedRandom,
+      generateId: sequentialIds(),
     }).load();
+    expect(reloaded.characters.at(-1)).toStrictEqual({
+      id: "character-1",
+      name: "경비병",
+      archived: false,
+      isDefault: false,
+    });
     expect(reloaded.characters).toStrictEqual(controller.getSnapshot().characters);
     expect(reloaded.entries.map((entry) => entry.speakerName)).toStrictEqual(["경비병"]);
   });
@@ -227,10 +257,11 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
     await controller.addCharacter({ name: "경비병" });
-    const guard = controller.getSnapshot().characters.find(({ name }) => name === "경비병")!;
+    const guard = { id: "character-1" };
     await controller.submit({ side: "master", as: guard.id, text: "멈춰라" });
 
     expect(await controller.archiveCharacter(guard.id)).toBeUndefined();
@@ -248,6 +279,7 @@ describe("세션 컨트롤러", () => {
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
       random: fixedRandom,
+      generateId: sequentialIds(),
     });
     await controller.load();
     await controller.addCharacter({ name: "경비병" });

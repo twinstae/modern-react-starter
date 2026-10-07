@@ -1,5 +1,3 @@
-import { v7 as uuidv7 } from "uuid";
-
 import { parseNotation, roll, type Random } from "./dice.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import { parseInput } from "./parse-input.ts";
@@ -34,11 +32,14 @@ export function createSessionController({
   sessionId,
   eventLog,
   random,
+  generateId,
 }: {
   sessionId: string;
   eventLog: EventLogStore;
   /** 주사위를 굴릴 난수. 도메인은 난수를 만들지 않고 앱이 넘겨 준다. */
   random: Random;
+  /** 새 캐릭터의 id를 만든다. 도메인은 id를 만들지 않고 앱이 넘겨 준다. */
+  generateId: () => string;
 }) {
   let committed: SessionEvent[] = [];
   const adapter = createEventLogAdapter(eventLog, (events) => {
@@ -153,7 +154,7 @@ export function createSessionController({
 
     /** 캐릭터를 추가한다. 이름 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
     addCharacter: ({ name }: { name: string }): Promise<string | undefined> =>
-      commit((current) => current.addCharacter(uuidv7(), name)),
+      commit((current) => current.addCharacter(generateId(), name)),
 
     /** 캐릭터를 보관한다. 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
     archiveCharacter: (characterId: string): Promise<string | undefined> =>
