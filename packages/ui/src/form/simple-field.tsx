@@ -1,5 +1,6 @@
 import { useId, type ComponentProps } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { css } from "styled-system/css";
 
 import { Input } from "../ui/input.tsx";
 import { Textarea } from "../ui/textarea.tsx";
@@ -71,6 +72,9 @@ function fieldAria({
   };
 }
 
+/** 레이블을 화면에서 숨기되 접근성 이름으로는 남긴다. 주변 맥락으로 무엇을 넣는지 분명할 때 쓴다. */
+const labelClass = (hideLabel: boolean) => (hideLabel ? css({ srOnly: true }) : undefined);
+
 /** react-hook-form 필드 상태에서 사용자에게 보여 줄 오류 메시지를 꺼낸다. */
 const errorMessageOf = (error: { message?: string; root?: { message?: string } } | undefined) =>
   error?.root?.message ?? error?.message;
@@ -119,11 +123,13 @@ export function SimpleTextarea({
   label,
   hint,
   submitOnEnter = false,
+  hideLabel = false,
   ...props
 }: ComponentProps<typeof Textarea> & {
   name: string;
   label: string;
   hint?: string;
+  hideLabel?: boolean;
   /** Enter로 폼을 제출한다. 줄바꿈은 Shift+Enter로 한다. */
   submitOnEnter?: boolean;
 }) {
@@ -140,7 +146,7 @@ export function SimpleTextarea({
         const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
-            <Field.Label>
+            <Field.Label className={labelClass(hideLabel)}>
               {label} {props.required && <Field.RequiredIndicator />}
             </Field.Label>
             <Textarea
@@ -185,11 +191,13 @@ export function SimpleSelect({
   hint,
   items,
   placeholder,
+  hideLabel = false,
   ...props
 }: Omit<Select.RootProps<SelectItem>, "collection" | "name"> & {
   name: string;
   label: string;
   hint?: string;
+  hideLabel?: boolean;
   items: SelectItem[];
   placeholder?: string;
 }) {
@@ -215,7 +223,7 @@ export function SimpleSelect({
               invalid={isError}
               {...props}
             >
-              <Select.Label>
+              <Select.Label className={labelClass(hideLabel)}>
                 {label} {props.required && <Field.RequiredIndicator />}
               </Select.Label>
               <Select.Control>
