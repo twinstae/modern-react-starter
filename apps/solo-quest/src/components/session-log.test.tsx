@@ -65,4 +65,15 @@ describe("SessionLog", () => {
     expect(alignOf("마스터 경비병")).toBe("flex-start");
     expect(alignOf("플레이어 Player")).toBe("flex-end");
   });
+
+  it("같은 편의 같은 화자가 이어 말하면 이름을 다시 보이지 않는다", async () => {
+    await runSiheom(given.render(<SessionLog {...Stories.Consecutive.args} />));
+
+    // 내용 앞에 보이는 글자가 화자 이름이다. 이름을 숨겨도 항목의 접근성 이름에는 편과 화자가 남는다.
+    const shown = Stories.Consecutive.args.entries.map((entry, index) => {
+      const item = screen.getAllByRole("listitem")[index];
+      return entry.kind === "message" ? item?.textContent?.split(entry.content)[0] : undefined;
+    });
+    expect(shown).toStrictEqual(["GM", "", "Player", "GM", "GM"]);
+  });
 });

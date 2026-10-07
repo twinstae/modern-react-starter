@@ -71,3 +71,16 @@ export const Mixed: Story = {
     ],
   },
 };
+
+/** 같은 편의 같은 화자가 이어 말한 기록. 편이 바뀌면 같은 화자라도 다시 이름이 보인다. */
+export const Consecutive: Story = {
+  args: {
+    entries: [
+      { ...entry(1), content: "문이 열린다" },
+      { ...entry(3), content: "안은 어둡다" },
+      { ...entry(2), content: "들어간다" },
+      { ...entry(5), content: "바닥이 삐걱인다" },
+      { ...entry(6), side: "player", speakerName: "GM", content: "혼잣말" },
+    ],
+  },
+};

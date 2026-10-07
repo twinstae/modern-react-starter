@@ -75,6 +75,13 @@ function RollBody({ entry }: { entry: RollEntry }) {
   );
 }
 
+/** 바로 앞 기록과 편과 화자가 같으면 이름을 다시 보이지 않는다. */
+const continuesPrevious = (entries: LogEntry[], index: number) => {
+  const previous = entries[index - 1];
+  const entry = entries[index];
+  return previous?.side === entry?.side && previous?.speakerName === entry?.speakerName;
+};
+
 export function SessionLog({ entries }: { entries: LogEntry[] }) {
   return (
     <section aria-label="세션 로그">
@@ -82,14 +89,14 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
         <p>아직 기록이 없습니다</p>
       ) : (
         <List>
-          {entries.map((entry) => (
+          {entries.map((entry, index) => (
             <Item
               key={entry.id}
               side={entry.side}
               aria-label={`${SIDE_LABEL[entry.side]} ${entry.speakerName}`}
             >
               <Content>
-                <Speaker>{entry.speakerName}</Speaker>
+                {!continuesPrevious(entries, index) && <Speaker>{entry.speakerName}</Speaker>}
                 {entry.kind === "message" ? entry.content : <RollBody entry={entry} />}
                 <Time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</Time>
               </Content>
