@@ -1,7 +1,7 @@
 # TICKET-00004: 주사위 판정
 
 - 스펙: [SPEC-0001](SPEC-0001.md) — User Stories 18–28
-- Blocked by: TICKET-00003
+- Blocked by: TICKET-00008, TICKET-00003
 - Status: ready-for-agent
 
 ## 만들 것

@@ -1,7 +1,7 @@
 # TICKET-00006: 낙관적 업데이트와 실패 처리
 
 - 스펙: [SPEC-0001](SPEC-0001.md) — User Stories 44–48, 52
-- Blocked by: TICKET-00003
+- Blocked by: TICKET-00008, TICKET-00003
 - Status: ready-for-agent
 
 ## 만들 것

@@ -1,7 +1,7 @@
 # TICKET-00007: 가상 스크롤 로그
 
 - 스펙: [SPEC-0001](SPEC-0001.md) — User Stories 40–43
-- Blocked by: TICKET-00004 (높이가 다른 판정 항목까지 함께 확인하기 위해)
+- Blocked by: TICKET-00008, TICKET-00004 (높이가 다른 판정 항목까지 함께 확인하기 위해)
 - Status: ready-for-agent
 
 ## 만들 것

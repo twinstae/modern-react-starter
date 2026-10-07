@@ -1,7 +1,7 @@
 # TICKET-00005: 캐릭터 추가, 보관, 화자 선택
 
 - 스펙: [SPEC-0001](SPEC-0001.md) — User Stories 29–38
-- Blocked by: TICKET-00003 (TICKET-00004와 동시에 진행 가능)
+- Blocked by: TICKET-00008, TICKET-00003 (TICKET-00004와 동시에 진행 가능)
 - Status: ready-for-agent
 
 ## 만들 것
