@@ -89,6 +89,7 @@ function SessionPage() {
             key={side}
             side={side}
             characters={view.characters}
+            restored={view.restored[side]}
             onSubmit={controller.submit}
           />
         ))}
