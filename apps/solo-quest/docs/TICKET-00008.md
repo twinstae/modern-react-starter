@@ -2,7 +2,7 @@
 
 - 스펙: [SPEC-0001](SPEC-0001.md)
 - Blocked by: TICKET-00003
-- Status: ready-for-agent
+- Status: done
 
 ## 만들 것
 
@@ -65,12 +65,36 @@ TICKET-00003 리뷰에서 나온 구조 문제를 고친다. 사용자가 보는
 
 ## 인수 조건
 
-- [ ] 세션 화면에서 대화를 제출해도 이벤트 로그를 다시 읽지 않는다(컨트롤러 테스트). 로그는 세션을 처음 열 때 한 번만 읽는다.
-- [ ] 충돌이 나면 컨트롤러가 다시 읽어 다른 탭의 이벤트까지 포함한 목록을 갖고, 안내 메시지를 돌려준다(컨트롤러 테스트).
-- [ ] 제출 뒤 로그를 `invalidateQueries`로 다시 불러오지 않고, 라우트 컨테이너에 분기 로직이 없다.
-- [ ] `src/domain/`이 `src/server/`, `src/persistence/`를 import하지 않는다.
-- [ ] 이벤트를 하나 추가할 때 고칠 곳이 한 곳이다. 서버 검증과 ventyd 스키마가 같은 정의에서 나온다.
-- [ ] `@repo/ui`에 `SimpleTextarea`, `SimpleSelect`(Ark UI `Select` 기반)가 있고, 각각 스토리와 테스트(`onSubmit` 값, 검증 오류)가 있다.
-- [ ] 입력창이 `SimpleForm`과 `simple-field`로 만들어져 있고, 기존 입력창 동작 테스트(제출 값, 입력 비움, 오류 유지, 빈 입력과 141자 차단, 화자 선택)가 모두 통과한다.
-- [ ] `vite.config.ts`에 단일 파일 include가 없고, 모든 테스트가 단계 디렉터리에 있다.
-- [ ] 루트 `bun run ci`가 통과한다.
+- [x] 세션 화면에서 대화를 제출해도 이벤트 로그를 다시 읽지 않는다(컨트롤러 테스트). 로그는 세션을 처음 열 때 한 번만 읽는다.
+- [x] 충돌이 나면 컨트롤러가 다시 읽어 다른 탭의 이벤트까지 포함한 목록을 갖고, 안내 메시지를 돌려준다(컨트롤러 테스트).
+- [x] 제출 뒤 로그를 `invalidateQueries`로 다시 불러오지 않고, 라우트 컨테이너에 분기 로직이 없다.
+- [x] `src/domain/`이 `src/server/`, `src/persistence/`를 import하지 않는다.
+- [x] 이벤트를 하나 추가할 때 고칠 곳이 한 곳이다. 서버 검증과 ventyd 스키마가 같은 정의에서 나온다.
+- [x] `@repo/ui`에 `SimpleTextarea`, `SimpleSelect`(Ark UI `Select` 기반)가 있고, 각각 스토리와 테스트(`onSubmit` 값, 검증 오류)가 있다.
+- [x] 입력창이 `SimpleForm`과 `simple-field`로 만들어져 있고, 기존 입력창 동작 테스트(제출 값, 입력 비움, 오류 유지, 빈 입력과 141자 차단, 화자 선택)가 모두 통과한다.
+- [x] `vite.config.ts`에 단일 파일 include가 없고, 모든 테스트가 단계 디렉터리에 있다.
+- [x] 루트 `bun run ci`가 통과한다.
+
+## 작업하며 배운 것
+
+- **ventyd schema 객체는 `parseEvent`를 공개한다.** `defineSchema`가 돌려주는 값에 `parseEvent`, `parseEventByName`이 있고 타입도 `session:started` 같은 런타임 키의 유니언으로 나온다(TICKET-00003 때 본 접두사 없는 키는 `schema.event`만의 일이다). 다만 문서(`dist/docs`)에는 나오지 않고 내부 타입(`@internal`)에만 보여서, 공개 API라고 보장되지는 않는다. 서버 검증은 이것을 쓰고, ventyd가 보지 않는 두 가지만 더한다. 이 엔티티의 이벤트인지(`entityName`)와 버전이 있는지다. 이벤트를 추가하면 `defineSchema`의 `event`와 reducer만 고친다.
+  - `parseEvent`가 던지는 일반 `Error`를 valibot `rawTransform`으로 감싸 Standard Schema 오류로 바꾼다. elysia는 이것을 422로 돌려준다. 그 대가로 eden 클라이언트의 `events` 입력 타입이 `unknown[]`이 된다(호출하는 쪽은 `SessionEvent[]`를 그대로 넘길 수 있다).
+- **컨트롤러 형태는 권장안을 따랐다.** `load()`는 처음 한 번만 읽고, `submit()`은 엔티티에 mutation을 적용해 커밋한 이벤트를 메모리 목록에 더한다. 몇 가지는 직접 정했다.
+  - 커밋한 이벤트는 엔티티 큐에서 꺼낼 수 없으므로(공개되지 않는다), `createEventLogAdapter`가 저장에 성공한 이벤트를 `onCommitted`로 알려 준다.
+  - 읽기 한 번으로 엔티티를 만들려고 이미 읽은 이벤트를 돌려주는 어댑터로 `findOne`을 한다(`restore`). `findOne`이 로그를 또 읽지 않는다.
+  - 충돌이 아닌 다른 오류로 커밋이 실패하면, 저장하지 못한 이벤트가 엔티티 큐에 남아 다음 제출에 딸려 가므로 메모리의 목록으로 엔티티를 되살리고 오류를 다시 던진다.
+  - 규칙 위반은 엔티티를 바꾸지 않으므로 구독자에게 알리지 않는다.
+- **컨트롤러는 query option 키를 세션 목록과 따로 둔다**(`["session-controllers", id]`). `["sessions"]` 아래에 두면 세션을 만들어 목록을 무효화할 때 컨트롤러까지 낡은 것으로 표시된다. 컨트롤러는 직렬화할 수 없는 객체지만 `spa: { enabled: true }`라 서버에서 dehydrate하지 않는다.
+- **`HttpEventLog`는 `src/server/`로 옮겼다.** 테스트가 `createTestClient`(api 단계)를 쓰기 때문이다. 브라우저 쪽 구현이 `server/`에 있는 어색함은 남는다. 구현이 늘면 별도 디렉터리와 테스트 단계를 정한다.
+- **`SimpleForm`을 넓혔다.**
+  - `onSubmit`이 문자열을 돌려주면 폼 수준 오류(`errors.root`)로 `role="alert"`와 함께 폼 끝에 보여 준다. react-hook-form은 `root` 오류를 다음 제출에서 지운다.
+  - `resetOnSuccess`로 고른 필드만 성공 뒤에 기본값으로 되돌린다. 입력창이 대화만 비우고 화자를 유지하는 데 쓴다.
+  - `SimpleWatch`(필드 값을 읽어 그리는 render prop)를 더했다. 남은 글자 수 표시 때문이다. 앱이 react-hook-form에 직접 의존하지 않게 하려는 선택이다.
+- **입력창 테스트에서 바뀐 것 둘.**
+  - 오류는 이제 필드에 연결된 `aria-errormessage`가 아니라 폼 수준 오류(`query.alert`)로 확인한다. 폼 수준 오류를 특정 필드에 묶는 것은 `SimpleForm`이 알 수 없다. 오류가 보이고 입력이 남는 확인은 그대로다.
+  - 빈 입력과 141자는 버튼을 막는 대신(`disabled`) 제출 때 검증 오류로 막는다. `SimpleForm`의 관례다. 제출되지 않는 것과 오류 메시지를 확인한다.
+- **Ark UI `Select`의 트리거 역할은 `combobox`**다. 첫 시도에 siheom 쿼리가 그대로 맞았다. 다만 옵션을 고른 뒤 메뉴가 닫히기 전에 다음 입력(`fill`)을 하면 값이 사라진다(바깥 클릭으로 처리된다). 테스트는 `assertions.not.expanded`로 닫힌 것을 기다린 뒤 이어 간다. `assertions.expanded(target, false)`는 거꾸로 `true`를 기대하므로 `not.`을 쓴다.
+- **`withProvider(Select.Root)`는 Ark `Select.Root`의 제네릭을 지운다.** `collection: ListCollection<unknown>`이 되어 항목 타입이 맞지 않으므로, `RootProps<T>`를 직접 만들어 캐스트한다.
+- **필드 넷(`SimpleInput`, `SimpleTextarea`, `SimpleSelect`, `SimpleCheckbox`)이 되풀이하던 힌트/오류 표시와 aria 연결을 `FieldMessage`, `fieldAria`로 모았다.** `Controller` + `Field.Root` 틀 자체는 필드마다 레이블 위치가 달라 그대로 두었다.
+- **글자 수 기준은 `countGraphemes` 하나다.** `ShortText`가 `v.maxGraphemes` 대신 이것을 쓰고, 남은 글자 수는 `remainingGraphemes`가 계산한다.
+- **(작업 방식) vitest browser는 새 의존성이 생기면 첫 실행이 실패한다.** `@repo/ui`에 `Select`를 추가한 직후 `solo-quest`의 component 프로젝트가 한 번 실패했고, 재실행하니 통과했다.
