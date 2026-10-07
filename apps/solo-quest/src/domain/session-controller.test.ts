@@ -38,6 +38,28 @@ describe("세션 컨트롤러", () => {
     ]);
   });
 
+  it("이벤트 로그는 세션을 처음 열 때 한 번만 읽고, 제출해도 다시 읽지 않는다", async () => {
+    const memory = createMemoryEventLogStore();
+    let reads = 0;
+    const counting: EventLogStore = {
+      async read(sessionId) {
+        reads += 1;
+        return memory.read(sessionId);
+      },
+      append: memory.append,
+    };
+    const controller = createSessionController({ sessionId: "s-1", eventLog: counting });
+
+    await controller.load();
+    await controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
+    await controller.submit({ side: "player", as: "player", text: "안으로 들어간다" });
+    await controller.load();
+
+    expect(reads).toBe(1);
+    // 메모리에 든 목록이 저장된 로그와 같다
+    expect((await controller.load()).events).toStrictEqual(await memory.read("s-1"));
+  });
+
   it("규칙을 어긴 제출은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
     const controller = createSessionController({
       sessionId: "s-1",
