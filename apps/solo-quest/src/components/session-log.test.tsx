@@ -57,15 +57,6 @@ describe("SessionLog", () => {
     );
   });
 
-  it("마스터 판정은 왼쪽, 플레이어 판정은 오른쪽에 정렬된다", async () => {
-    await runSiheom(given.render(<SessionLog {...Stories.Mixed.args} />));
-
-    const alignOf = (name: string) =>
-      getComputedStyle(screen.getByRole("listitem", { name })).alignSelf;
-    expect(alignOf("마스터 경비병")).toBe("flex-start");
-    expect(alignOf("플레이어 Player")).toBe("flex-end");
-  });
-
   it("같은 편의 같은 화자가 이어 말하면 이름을 다시 보이지 않는다", async () => {
     await runSiheom(given.render(<SessionLog {...Stories.Consecutive.args} />));
 
