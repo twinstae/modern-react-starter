@@ -3,7 +3,7 @@ import * as v from "valibot";
 
 import { SessionEventSchema } from "../domain/session.ts";
 import { ShortText } from "../domain/short-text.ts";
-import type { EventLogStore } from "./event-log-store.ts";
+import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
 import type { SessionListStore } from "./session-list-store.ts";
 
 export interface AppDeps {
@@ -42,7 +42,12 @@ export function createApp({ sessionListStore, eventLogStore, now, generateId }: 
       "/sessions/:id/events",
       async ({ params, body }) => {
         if (!(await sessionListStore.get(params.id))) return status(404, "세션이 없습니다");
-        await eventLogStore.append(params.id, body.expectedVersion, body.events);
+        try {
+          await eventLogStore.append(params.id, body.expectedVersion, body.events);
+        } catch (error) {
+          if (error instanceof VersionConflictError) return status(409, error.message);
+          throw error;
+        }
         return new Response(null, { status: 204 });
       },
       {
