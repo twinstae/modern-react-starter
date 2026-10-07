@@ -11,7 +11,8 @@ import {
   type Side,
   type SessionEvent,
 } from "./session.ts";
-import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
+import type { EventLogStore } from "./event-log-store.ts";
+import { createSaveQueue, type SaveOutcome } from "./save-queue.ts";
 
 /** 화면이 그리는 세션의 모습. 로그 항목은 이벤트 목록에서, 화자 목록은 세션 상태에서 온다. */
 export interface SessionView {
@@ -39,14 +40,6 @@ interface SubmittedInput {
   side: Side;
   as: string;
   text: string;
-}
-
-/** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들과 그 상태 */
-interface Unsaved {
-  events: SessionEvent[];
-  status: Exclude<EntryStatus, "committed">;
-  /** 이 묶음을 만든 제출. 캐릭터 변경에는 없다. */
-  input?: SubmittedInput;
 }
 
 const CONFLICT_NOTICE = "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
@@ -77,42 +70,14 @@ export function createSessionController({
     committed = events;
   });
 
-  /** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들. 저장이 끝나기를 기다린다. */
-  let unsaved: Unsaved[] = [];
-  /** 저장을 한 번에 하나씩 순서대로 하도록 줄 세우는 꼬리 */
-  let tail: Promise<void> = Promise.resolve();
-  /** 저장이 한 번 실패하면, 다시 불러오기 전까지 뒤의 묶음은 저장하지 않는다 */
-  let halted = false;
-  /**
-   * 저장소를 감싸 저장을 줄 세운다. ventyd는 commit 안에서 이 `append`를 바로 부르므로,
-   * 저장 전 묶음은 mutation 직후 여기서 등록된다.
-   */
-  const queuedStore: EventLogStore = {
-    read: eventLog.read,
-    append(id, expectedVersion, batch) {
-      const entry: Unsaved = { events: batch, status: "pending" };
-      unsaved.push(entry);
-      const saving = tail.then(async () => {
-        try {
-          // 앞의 저장이 실패했으면 이 묶음은 버전이 이어지지 않으므로 저장하지 않는다
-          if (halted) throw new Error("앞의 저장이 실패해 저장하지 않았습니다");
-          await eventLog.append(id, expectedVersion, batch);
-        } catch (error) {
-          // 충돌은 실패가 아니라 다시 불러오는 일이라 failed로 보이지 않는다
-          if (!(error instanceof VersionConflictError)) entry.status = "failed";
-          halted = true;
-          publish();
-          throw error;
-        }
-        events = [...events, ...batch];
-        unsaved = unsaved.filter((other) => other !== entry);
-        publish();
-      });
-      tail = saving.catch(() => {});
-      return saving;
+  const queue = createSaveQueue<SubmittedInput | undefined>({
+    store: eventLog,
+    onChange: () => publish(),
+    onSaved: (saved) => {
+      events = [...events, ...saved];
     },
-  };
-  const repository = createSessionRepository(createEventLogAdapter(queuedStore));
+  });
+  const repository = createSessionRepository(createEventLogAdapter(queue.store));
   const startRepository = createSessionRepository(adapter);
 
   let session: Session | undefined;
@@ -129,9 +94,9 @@ export function createSessionController({
   let snapshot = EMPTY_VIEW;
   const listeners = new Set<() => void>();
   const publish = () => {
-    const all = [...events, ...unsaved.flatMap((entry) => entry.events)];
+    const all = [...events, ...queue.unsaved.flatMap((batch) => batch.events)];
     const statuses = new Map<string, EntryStatus>(
-      unsaved.flatMap((entry) =>
+      queue.unsaved.flatMap((entry) =>
         entry.events.map((event) => [event.eventId, entry.status] as const),
       ),
     );
@@ -154,7 +119,7 @@ export function createSessionController({
   /** 로그를 읽어 엔티티와 목록을 새로 만든다. 로그가 비어 있으면 기본 캐릭터로 시작한다. */
   async function readLog() {
     const stored = await eventLog.read(sessionId);
-    unsaved = [];
+    queue.clear();
     events = stored;
     session = (await restore(events)) ?? undefined;
     if (!session) {
@@ -163,7 +128,7 @@ export function createSessionController({
       events = committed;
     }
     // 읽는 동안에는 낡은 묶음이 저장하지 못하게 멈춰 둔다. 읽은 뒤에야 새 제출을 받는다.
-    halted = false;
+    queue.resume();
     publish();
   }
 
@@ -180,11 +145,11 @@ export function createSessionController({
   }
 
   /** 저장이 끝난 뒤의 일. 충돌이면 서버의 로그를 다시 불러온다. 실패는 이미 failed로 화면에 있다. */
-  async function afterSave(error: unknown) {
-    if (error instanceof VersionConflictError) {
+  async function afterSave(outcome: SaveOutcome) {
+    if (outcome === "conflict") {
       restored = {};
       notice = CONFLICT_NOTICE;
-      for (const { input } of unsaved) {
+      for (const { meta: input } of queue.unsaved) {
         if (!input) continue;
         const text = [restored[input.side]?.text, input.text]
           .filter((t) => t !== undefined)
@@ -204,9 +169,9 @@ export function createSessionController({
     input?: SubmittedInput,
   ): Promise<string | undefined> {
     // 저장이 실패한 뒤의 첫 제출은 서버의 로그를 다시 불러온 위에서 받는다. 실패한 기록은 여기서 사라진다.
-    if (halted) {
+    if (queue.halted) {
       await settling;
-      if (halted) await reload();
+      if (queue.halted) await reload();
     }
     if (!session) return "아직 시작되지 않은 세션입니다";
     try {
@@ -216,11 +181,9 @@ export function createSessionController({
       throw error;
     }
     notice = undefined;
-    const saving = repository.commit(session);
-    const entry = unsaved.at(-1);
-    if (entry) entry.input = input;
-    publish();
-    settling = Promise.all([settling, saving.catch(afterSave)]);
+    const current = session;
+    const saving = queue.run(input, () => repository.commit(current));
+    settling = Promise.all([settling, saving.then(afterSave)]);
     return undefined;
   }
 
