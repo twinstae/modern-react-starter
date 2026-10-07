@@ -34,44 +34,45 @@ export const DEFAULT_CHARACTERS: Character[] = [
 /** 편마다 기본 화자 */
 export const DEFAULT_SPEAKER: Record<Side, string> = { master: "gm", player: "player" };
 
-const eventBodies = {
-  started: v.object({ characters: v.array(Character) }),
-  message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
-};
-
 /**
  * 세션 하나가 엔티티 하나다. 브라우저와 서버가 이 스키마를 공유한다.
+ * 이벤트 정의는 여기 `event` 한 곳이다. 이벤트를 추가하려면 여기에 본문을 적고 reducer를 고치면 된다.
  * 상태는 캐릭터 목록뿐이고, 대화는 상태를 바꾸지 않는다.
  */
 export const sessionSchema = defineSchema("session", {
   schema: valibot({
-    event: eventBodies,
+    event: {
+      started: v.object({ characters: v.array(Character) }),
+      message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
+    },
     state: v.object({ characters: v.array(Character) }),
   }),
   initialEventName: "session:started",
 });
 
-const eventOf = <Name extends keyof typeof eventBodies>(name: Name) =>
-  v.object({
-    eventId: v.string(),
-    eventName: v.literal(`session:${name}`),
-    eventCreatedAt: v.string(),
-    entityName: v.literal("session"),
-    entityId: v.string(),
-    version: v.number(),
-    body: eventBodies[name],
-  });
+/** 저장된 이벤트에는 버전이 반드시 있다(ventyd 타입에서는 optional이다). */
+export type SessionEvent = ReturnType<typeof sessionSchema.parseEvent> & { version: number };
 
 /**
- * 서버가 받은 이벤트를 검증하는 스키마. 이벤트 본문은 도메인 스키마와 같은 정의를 쓰고,
- * 저장된 이벤트에는 버전이 반드시 있다.
+ * 서버가 받은 이벤트를 검증하는 스키마. 별도 정의 없이 ventyd 스키마의 `parseEvent`를 그대로 쓴다.
+ * ventyd가 검사하지 않는 것(이 엔티티의 이벤트인지, 버전이 있는지)만 더한다.
  */
-export const SessionEventSchema = v.variant("eventName", [
-  eventOf("started"),
-  eventOf("message_posted"),
-]);
-
-export type SessionEvent = v.InferOutput<typeof SessionEventSchema>;
+export const SessionEventSchema = v.pipe(
+  v.unknown(),
+  v.rawTransform(({ dataset, addIssue, NEVER }): SessionEvent => {
+    try {
+      const event = sessionSchema.parseEvent(dataset.value);
+      if (event.entityName !== "session" || event.version === undefined) {
+        addIssue({ message: "세션의 이벤트가 아니거나 버전이 없습니다" });
+        return NEVER;
+      }
+      return { ...event, version: event.version };
+    } catch (error) {
+      addIssue({ message: error instanceof Error ? error.message : "이벤트가 올바르지 않습니다" });
+      return NEVER;
+    }
+  }),
+);
 
 const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
   switch (event.eventName) {
