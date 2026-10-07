@@ -31,8 +31,8 @@ SOLO QUEST(`apps/solo-quest`, 예정)는 이 과제를 실제로 부딪혀 보�
 
 - [x] 모노레포: bun workspaces + Turborepo, Panda v2 `designSystem`
 - [x] oxlint, oxfmt, TypeScript 7, vitest browser mode, Storybook
-- [ ] jscpd (중복 코드)
-- [ ] nose (https://github.com/corca-ai/nose)
+- [ ] jscpd (중복 코드) — SOLO QUEST TICKET-00007 이후 도입
+- [ ] nose (https://github.com/corca-ai/nose) — SOLO QUEST TICKET-00007 이후 도입
 - [ ] CI 워크플로 (turbo `--affected`, 캐시)
 - [ ] 새 앱/패키지를 추가하는 절차 (예: `apps/solo-quest`)
 
