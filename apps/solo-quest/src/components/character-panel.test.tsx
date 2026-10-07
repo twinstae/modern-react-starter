@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/dom";
+import { screen, waitFor } from "@testing-library/dom";
 import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
@@ -86,5 +86,20 @@ describe("CharacterPanel", () => {
       assertions.value(query.textbox("캐릭터 이름"), "GM"),
       assertions.visible(query.alert("같은 이름의 캐릭터가 이미 있습니다")),
     );
+  });
+
+  it("onArchive가 오류를 돌려주면 오류가 보이고, 다음에 성공하면 사라진다", async () => {
+    let result: string | undefined = "다른 곳에서 먼저 기록했습니다";
+
+    await runSiheom(
+      given.render(<CharacterPanel {...Stories.One.args} onArchive={async () => result} />),
+      actions.click(query.button(/^캐릭터/)),
+      actions.click(query.button("경비병 보관")),
+      assertions.visible(query.alert("다른 곳에서 먼저 기록했습니다")),
+    );
+    result = undefined;
+    await runSiheom(actions.click(query.button("경비병 보관")));
+    // siheom 0.3.0은 요소가 없음을 확인하지 못해서 직접 기다린다
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
 });

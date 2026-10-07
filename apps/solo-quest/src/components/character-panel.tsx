@@ -1,5 +1,6 @@
 import { Button, Collapsible, SimpleForm, SimpleInput, SubmitButton } from "@repo/ui";
 import { Archive, ChevronDown, Plus } from "lucide-react";
+import { useState } from "react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
@@ -61,6 +62,8 @@ const Archived = styled("ul", {
   },
 });
 
+const ArchiveError = styled("p", { base: { mt: "2", fontSize: "sm", color: "error" } });
+
 const AddWrap = styled("div", { base: { mt: "3" } });
 
 const AddRow = styled("div", { base: { display: "flex", gap: "2", alignItems: "flex-start" } });
@@ -68,6 +71,7 @@ const AddRow = styled("div", { base: { display: "flex", gap: "2", alignItems: "f
 export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelProps) {
   const active = characters.filter((character) => !character.archived);
   const archived = characters.filter((character) => character.archived);
+  const [archiveError, setArchiveError] = useState<string>();
 
   return (
     <Collapsible.Root>
@@ -87,7 +91,7 @@ export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelP
                       size="xs"
                       aria-label={`${character.name} 보관`}
                       title={`${character.name} 보관`}
-                      onClick={() => onArchive(character.id)}
+                      onClick={async () => setArchiveError(await onArchive(character.id))}
                     >
                       <Archive />
                     </Button>
@@ -95,6 +99,11 @@ export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelP
                 </Row>
               ))}
             </List>
+            {archiveError && (
+              <ArchiveError role="alert" aria-label={archiveError}>
+                {archiveError}
+              </ArchiveError>
+            )}
             {archived.length > 0 && (
               <Archived aria-label="보관된 캐릭터">
                 {archived.map((character) => (
