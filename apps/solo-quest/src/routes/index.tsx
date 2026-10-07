@@ -10,7 +10,9 @@ import { sessionQueries } from "../queries.ts";
 import { unwrap } from "../unwrap.ts";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(sessionQueries.list()),
+  // 이미 불러온 데이터가 있으면 loader가 막지 않는다. 신선도는 useSuspenseQuery의 기본 동작이 맡는다.
+  loader: ({ context }) =>
+    context.queryClient.query({ ...sessionQueries.list(), staleTime: "static" }),
   component: Home,
 });
 
