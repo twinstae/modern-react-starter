@@ -2,7 +2,11 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import type { SessionEvent } from "../domain/session.ts";
-import type { EventLogStore } from "../server/event-log-store.ts";
+import {
+  lastVersionOf,
+  VersionConflictError,
+  type EventLogStore,
+} from "../server/event-log-store.ts";
 
 /** 세션마다 `<dir>/<sessionId>.jsonl` 파일에 한 줄에 이벤트 하나를 추가한다. */
 export function createFileEventLogStore(dir: string): EventLogStore {
@@ -24,7 +28,11 @@ export function createFileEventLogStore(dir: string): EventLogStore {
 
   return {
     read,
-    async append(sessionId, _expectedVersion, events) {
+    async append(sessionId, expectedVersion, events) {
+      const actualVersion = lastVersionOf(await read(sessionId));
+      if (actualVersion !== expectedVersion) {
+        throw new VersionConflictError(expectedVersion, actualVersion);
+      }
       await mkdir(dir, { recursive: true });
       await appendFile(pathOf(sessionId), events.map((e) => `${JSON.stringify(e)}\n`).join(""));
     },

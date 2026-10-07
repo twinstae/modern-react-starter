@@ -4,7 +4,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_CHARACTERS, type SessionEvent } from "../domain/session.ts";
-import { createMemoryEventLogStore, type EventLogStore } from "../server/event-log-store.ts";
+import {
+  createMemoryEventLogStore,
+  VersionConflictError,
+  type EventLogStore,
+} from "../server/event-log-store.ts";
 import { createFileEventLogStore } from "./file-event-log-store.ts";
 
 const started = (sessionId: string): SessionEvent => ({
@@ -43,6 +47,19 @@ function describeEventLogStore(name: string, makeStore: () => Promise<EventLogSt
       await store.append("s-1", 1, [events[1]]);
 
       expect(await store.read("s-1")).toStrictEqual(events);
+    });
+
+    it("저장된 마지막 버전과 expectedVersion이 다르면 충돌 오류이고 아무것도 쓰지 않는다", async () => {
+      const store = await makeStore();
+      await store.append("s-1", 0, [started("s-1")]);
+
+      await expect(store.append("s-1", 0, [posted("s-1", 1, "중복")])).rejects.toThrow(
+        VersionConflictError,
+      );
+      await expect(store.append("s-1", 5, [posted("s-1", 6, "건너뜀")])).rejects.toThrow(
+        VersionConflictError,
+      );
+      expect(await store.read("s-1")).toStrictEqual([started("s-1")]);
     });
   });
 }

@@ -8,6 +8,20 @@ export interface EventLogStore {
   append(sessionId: string, expectedVersion: number, events: SessionEvent[]): Promise<void>;
 }
 
+/** 저장된 마지막 버전이 호출한 쪽이 알던 버전과 다르다 */
+export class VersionConflictError extends Error {
+  constructor(
+    readonly expectedVersion: number,
+    readonly actualVersion: number,
+  ) {
+    super(`버전 충돌: 기대 ${expectedVersion}, 실제 ${actualVersion}`);
+    this.name = "VersionConflictError";
+  }
+}
+
+/** 로그의 마지막 버전. 비어 있으면 0이다. */
+export const lastVersionOf = (events: SessionEvent[]) => events.at(-1)?.version ?? 0;
+
 export function createMemoryEventLogStore(): EventLogStore {
   const logs = new Map<string, SessionEvent[]>();
 
@@ -15,8 +29,13 @@ export function createMemoryEventLogStore(): EventLogStore {
     async read(sessionId) {
       return logs.get(sessionId) ?? [];
     },
-    async append(sessionId, _expectedVersion, events) {
-      logs.set(sessionId, [...(logs.get(sessionId) ?? []), ...events]);
+    async append(sessionId, expectedVersion, events) {
+      const log = logs.get(sessionId) ?? [];
+      const actualVersion = lastVersionOf(log);
+      if (actualVersion !== expectedVersion) {
+        throw new VersionConflictError(expectedVersion, actualVersion);
+      }
+      logs.set(sessionId, [...log, ...events]);
     },
   };
 }
