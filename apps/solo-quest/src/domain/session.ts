@@ -1,4 +1,4 @@
-import { defineReducer, defineSchema, Entity, type InferEventFromSchema } from "ventyd";
+import { defineReducer, defineSchema, Entity, mutation, type InferEventFromSchema } from "ventyd";
 import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
@@ -61,6 +61,17 @@ export class RuleViolation extends Error {
   }
 }
 
-export class Session extends Entity(sessionSchema, sessionReducer, {
-  generateId: () => uuidv7(),
-}) {}
+export class Session extends Entity(sessionSchema, sessionReducer, { generateId: () => uuidv7() }) {
+  /** 화자는 활성 캐릭터여야 한다. */
+  #assertActiveSpeaker(characterId: string) {
+    const speaker = this.state.characters.find((character) => character.id === characterId);
+    if (!speaker || speaker.archived) throw new RuleViolation("말할 수 없는 캐릭터입니다");
+  }
+
+  postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {
+    const content = v.safeParse(ShortText, text);
+    if (!content.success) throw new RuleViolation(content.issues[0].message);
+    this.#assertActiveSpeaker(as);
+    dispatch("session:message_posted", { side, as, content: content.output });
+  });
+}
