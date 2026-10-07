@@ -33,6 +33,7 @@ SOLO QUEST(`apps/solo-quest`, 예정)는 이 과제를 실제로 부딪혀 보�
 - [x] oxlint, oxfmt, TypeScript 7, vitest browser mode, Storybook
 - [ ] jscpd (중복 코드) — SOLO QUEST TICKET-00007 이후 도입
 - [ ] nose (https://github.com/corca-ai/nose) — SOLO QUEST TICKET-00007 이후 도입
+- [ ] deprecated API 사용 검출: oxlint `typescript/no-deprecated`는 타입 정보가 필요하다 (type-aware linting 설정). SOLO QUEST에서 deprecated된 `ensureQueryData`를 lint가 잡지 못했다
 - [ ] CI 워크플로 (turbo `--affected`, 캐시)
 - [ ] 새 앱/패키지를 추가하는 절차 (예: `apps/solo-quest`)
 
