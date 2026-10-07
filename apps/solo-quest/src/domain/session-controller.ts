@@ -20,6 +20,8 @@ export interface SessionView {
   characters: Character[];
   /** 충돌로 버려진 제출의 글. 그 편의 입력창이 다시 채운다. */
   restored: Partial<Record<Side, RestoredInput>>;
+  /** 충돌로 다시 불러왔다는 알림. 캐릭터 변경처럼 되돌려 줄 글이 없는 제출도 이것으로 알린다. 다음 제출을 받으면 사라진다. */
+  notice?: string;
 }
 
 /** 충돌로 버려진 제출을 입력창에 되돌려 주는 값 */
@@ -46,6 +48,8 @@ interface Unsaved {
   /** 이 묶음을 만든 제출. 캐릭터 변경에는 없다. */
   input?: SubmittedInput;
 }
+
+const CONFLICT_NOTICE = "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
 
 /** 불러오기 전의 모습 */
 const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [], restored: {} };
@@ -116,6 +120,7 @@ export function createSessionController({
   let events: SessionEvent[] = [];
   let restored: SessionView["restored"] = {};
   let restoredCount = 0;
+  let notice: string | undefined;
   let loading: Promise<void> | undefined;
   /** 시작한 저장과 그 뒤처리가 모두 끝나면 이루어지는 약속 */
   let settling: Promise<unknown> = Promise.resolve();
@@ -135,6 +140,7 @@ export function createSessionController({
       entries: toLogEntries(all, statuses),
       characters: session?.state.characters ?? [],
       restored,
+      notice,
     };
     for (const listener of listeners) listener();
   };
@@ -177,6 +183,7 @@ export function createSessionController({
   async function afterSave(error: unknown) {
     if (error instanceof VersionConflictError) {
       restored = {};
+      notice = CONFLICT_NOTICE;
       for (const { input } of unsaved) {
         if (!input) continue;
         const text = [restored[input.side]?.text, input.text]
@@ -208,6 +215,7 @@ export function createSessionController({
       if (error instanceof RuleViolation) return error.message;
       throw error;
     }
+    notice = undefined;
     const saving = repository.commit(session);
     const entry = unsaved.at(-1);
     if (entry) entry.input = input;

@@ -374,6 +374,26 @@ describe("세션 컨트롤러", () => {
       entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
     ).toStrictEqual([["committed", "다른 탭"]]);
     expect(restored).toStrictEqual({ player: { key: 1, as: "player", text: " 내 기록 " } });
+    expect(controller.getSnapshot().notice).toBe(
+      "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다",
+    );
+  });
+
+  it("충돌로 버려진 캐릭터 추가도 알림만 남기고 되돌려 줄 글은 없으며, 다음 제출을 받으면 알림이 사라진다", async () => {
+    const log = createFakeEventLog();
+    const controller = newController(log.store);
+    await controller.load();
+    await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
+
+    await controller.addCharacter({ name: "경비병" });
+    await controller.idle();
+
+    expect(controller.getSnapshot().notice).toBeDefined();
+    expect(controller.getSnapshot().restored).toStrictEqual({});
+    expect(controller.getSnapshot().characters).toStrictEqual(DEFAULT_CHARACTERS);
+
+    await controller.submit({ side: "master", as: "gm", text: "다시" });
+    expect(controller.getSnapshot().notice).toBeUndefined();
   });
 
   it("충돌이 나면 뒤에서 기다리던 제출도 저장하지 않고 버리며, 버려진 글은 줄바꿈으로 이어 돌려준다", async () => {
