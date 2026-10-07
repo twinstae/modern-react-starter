@@ -175,7 +175,7 @@ export function createSessionController({
    * 엔티티에 일을 시키고 곧바로 화면에 반영한 뒤 저장을 시작한다. 저장을 기다리지 않는다.
    * 규칙 위반이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 아니면 undefined다.
    */
-  async function commit(
+  async function apply(
     record: (current: Session) => void,
     input?: SubmittedInput,
   ): Promise<string | undefined> {
@@ -259,15 +259,15 @@ export function createSessionController({
         const result = roll(notation.terms, random);
         record = (current) => current.rollDice(side, as, input.notation, result, input.label);
       }
-      return commit(record, { side, as, text });
+      return apply(record, { side, as, text });
     },
 
     /** 캐릭터를 추가한다. 이름 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */
     addCharacter: async ({ name }: { name: string }): Promise<string | undefined> =>
-      commit((current) => current.addCharacter(generateId(), name)),
+      apply((current) => current.addCharacter(generateId(), name)),
 
     /** 캐릭터를 보관한다. 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */
     archiveCharacter: async (characterId: string): Promise<string | undefined> =>
-      commit((current) => current.archiveCharacter(characterId)),
+      apply((current) => current.archiveCharacter(characterId)),
   };
 }
