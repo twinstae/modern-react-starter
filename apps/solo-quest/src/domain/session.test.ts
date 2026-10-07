@@ -16,6 +16,10 @@ const rolled = {
 const startSession = () =>
   Session.create({ entityId: "session-1", body: { characters: DEFAULT_CHARACTERS } });
 
+/** 이름으로 찾은 캐릭터. 추가한 캐릭터의 id는 mutation 안에서 만들어지므로 이름으로 찾는다. */
+const characterNamed = (session: Session, name: string) =>
+  session.state.characters.find((character) => character.name === name)!;
+
 describe("세션", () => {
   it("새 세션을 시작하면 활성 기본 캐릭터 GM과 Player가 있다", () => {
     const session = startSession();
@@ -168,7 +172,7 @@ describe("세션", () => {
     const session = startSession();
     session.addCharacter("경비병");
     session.addCharacter("상인");
-    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    const guard = characterNamed(session, "경비병");
 
     session.archiveCharacter(guard.id);
     await repository.commit(session);
@@ -198,7 +202,7 @@ describe("세션", () => {
   it("이미 보관된 캐릭터의 보관은 이벤트를 만들지 않고 오류를 낸다", () => {
     const session = startSession();
     session.addCharacter("경비병");
-    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    const guard = characterNamed(session, "경비병");
     session.archiveCharacter(guard.id);
 
     expect(() => session.archiveCharacter(guard.id)).toThrow(RuleViolation);
@@ -208,7 +212,7 @@ describe("세션", () => {
   it("보관된 캐릭터와 같은 이름의 캐릭터는 추가할 수 있고, 둘은 다른 캐릭터다", () => {
     const session = startSession();
     session.addCharacter("경비병");
-    const first = session.state.characters.find(({ name }) => name === "경비병")!;
+    const first = characterNamed(session, "경비병");
     session.archiveCharacter(first.id);
 
     session.addCharacter("경비병");
@@ -221,7 +225,7 @@ describe("세션", () => {
   it("보관된 캐릭터를 화자로 하는 대화와 판정은 이벤트를 만들지 않고 오류를 낸다", () => {
     const session = startSession();
     session.addCharacter("경비병");
-    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    const guard = characterNamed(session, "경비병");
     session.archiveCharacter(guard.id);
 
     expect(() => session.postMessage("master", guard.id, "멈춰라")).toThrow(RuleViolation);
@@ -232,7 +236,7 @@ describe("세션", () => {
   it("편과 상관없이 활성 캐릭터가 말할 수 있다: 마스터 입력창에서 NPC로, 플레이어 입력창에서 GM으로", () => {
     const session = startSession();
     session.addCharacter("경비병");
-    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+    const guard = characterNamed(session, "경비병");
 
     session.postMessage("master", guard.id, "멈춰라");
     session.postMessage("player", "gm", "누구냐");
