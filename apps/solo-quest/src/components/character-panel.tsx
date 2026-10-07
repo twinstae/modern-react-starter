@@ -4,7 +4,7 @@ import { useState } from "react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
-import type { Character } from "../domain/session.ts";
+import { activeCharacters, type Character } from "../domain/session.ts";
 import { ShortText } from "../domain/short-text.ts";
 
 const AddSchema = v.object({ name: ShortText });
@@ -69,7 +69,7 @@ const AddWrap = styled("div", { base: { mt: "3" } });
 const AddRow = styled("div", { base: { display: "flex", gap: "2", alignItems: "flex-start" } });
 
 export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelProps) {
-  const active = characters.filter((character) => !character.archived);
+  const active = activeCharacters(characters);
   const archived = characters.filter((character) => character.archived);
   const [archiveError, setArchiveError] = useState<string>();
 

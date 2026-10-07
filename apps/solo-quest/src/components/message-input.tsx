@@ -11,7 +11,7 @@ import { SendHorizontal } from "lucide-react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
-import { DEFAULT_SPEAKER, type Character, type Side } from "../domain/session.ts";
+import { activeCharacters, DEFAULT_SPEAKER, type Character, type Side } from "../domain/session.ts";
 import { remainingGraphemes, ShortText } from "../domain/short-text.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
@@ -73,7 +73,7 @@ export function MessageInput({
   onSubmit,
 }: MessageInputProps) {
   const label = SIDE_LABEL[side];
-  const active = characters.filter((character) => !character.archived);
+  const active = activeCharacters(characters);
 
   return (
     <SimpleForm

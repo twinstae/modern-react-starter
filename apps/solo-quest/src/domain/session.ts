@@ -32,6 +32,10 @@ export const DEFAULT_CHARACTERS: Character[] = [
   { id: "player", name: "Player", archived: false, isDefault: true },
 ];
 
+/** 화자가 될 수 있는 캐릭터. 보관된 캐릭터는 빠진다. */
+export const activeCharacters = (characters: Character[]) =>
+  characters.filter((character) => !character.archived);
+
 /** 편마다 기본 화자 */
 export const DEFAULT_SPEAKER: Record<Side, string> = { master: "gm", player: "player" };
 
