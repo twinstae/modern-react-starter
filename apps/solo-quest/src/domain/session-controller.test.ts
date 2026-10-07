@@ -523,4 +523,37 @@ describe("세션 컨트롤러", () => {
     ]);
     expect((await log.otherTab.read("s-1")).map((event) => event.version)).toStrictEqual([1, 2, 3]);
   });
+
+  it("이어 제출한 세 기록은 저장이 하나씩 끝날 때마다 앞에서부터 committed가 된다", async () => {
+    const log = createFakeEventLog();
+    const controller = newController(log.store);
+    await controller.load();
+    log.hold();
+    const statusesOf = (view: SessionView) => view.entries.map((entry) => entry.status);
+
+    for (const text of ["첫째", "둘째", "셋째"]) {
+      await controller.submit({ side: "master", as: "gm", text });
+    }
+    expect(statusesOf(controller.getSnapshot())).toStrictEqual(["pending", "pending", "pending"]);
+
+    log.releaseNext();
+    await untilView(controller, (view) => view.entries[0]?.status === "committed");
+    expect(statusesOf(controller.getSnapshot())).toStrictEqual(["committed", "pending", "pending"]);
+
+    log.releaseNext();
+    await untilView(controller, (view) => view.entries[1]?.status === "committed");
+    expect(statusesOf(controller.getSnapshot())).toStrictEqual([
+      "committed",
+      "committed",
+      "pending",
+    ]);
+
+    log.releaseNext();
+    await controller.idle();
+    expect(statusesOf(controller.getSnapshot())).toStrictEqual([
+      "committed",
+      "committed",
+      "committed",
+    ]);
+  });
 });
