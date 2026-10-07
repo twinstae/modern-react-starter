@@ -3,33 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_CHARACTERS, type SessionEvent } from "../domain/session.ts";
+import { postedEvent, startedEvent } from "../domain/session.fixture.ts";
 import {
   createMemoryEventLogStore,
   VersionConflictError,
   type EventLogStore,
 } from "../server/event-log-store.ts";
 import { createFileEventLogStore } from "./file-event-log-store.ts";
-
-const started = (sessionId: string): SessionEvent => ({
-  eventId: `${sessionId}-event-1`,
-  eventName: "session:started",
-  eventCreatedAt: "2026-10-07T12:00:00Z",
-  entityName: "session",
-  entityId: sessionId,
-  version: 1,
-  body: { characters: DEFAULT_CHARACTERS },
-});
-
-const posted = (sessionId: string, version: number, content: string): SessionEvent => ({
-  eventId: `${sessionId}-event-${version}`,
-  eventName: "session:message_posted",
-  eventCreatedAt: "2026-10-07T12:00:00Z",
-  entityName: "session",
-  entityId: sessionId,
-  version,
-  body: { side: "master", as: "gm", content },
-});
 
 function describeEventLogStore(name: string, makeStore: () => Promise<EventLogStore>) {
   describe(`이벤트 로그 저장소 (${name})`, () => {
@@ -41,7 +21,7 @@ function describeEventLogStore(name: string, makeStore: () => Promise<EventLogSt
 
     it("추가한 이벤트를 버전순으로 다시 읽는다", async () => {
       const store = await makeStore();
-      const events = [started("s-1"), posted("s-1", 2, "문이 열린다\n안은 어둡다")];
+      const events = [startedEvent("s-1"), postedEvent("s-1", 2, "문이 열린다\n안은 어둡다")];
 
       await store.append("s-1", 0, [events[0]]);
       await store.append("s-1", 1, [events[1]]);
@@ -51,39 +31,39 @@ function describeEventLogStore(name: string, makeStore: () => Promise<EventLogSt
 
     it("저장된 마지막 버전과 expectedVersion이 다르면 충돌 오류이고 아무것도 쓰지 않는다", async () => {
       const store = await makeStore();
-      await store.append("s-1", 0, [started("s-1")]);
+      await store.append("s-1", 0, [startedEvent("s-1")]);
 
-      await expect(store.append("s-1", 0, [posted("s-1", 1, "중복")])).rejects.toThrow(
+      await expect(store.append("s-1", 0, [postedEvent("s-1", 1, "중복")])).rejects.toThrow(
         VersionConflictError,
       );
-      await expect(store.append("s-1", 5, [posted("s-1", 6, "건너뜀")])).rejects.toThrow(
+      await expect(store.append("s-1", 5, [postedEvent("s-1", 6, "건너뜀")])).rejects.toThrow(
         VersionConflictError,
       );
-      expect(await store.read("s-1")).toStrictEqual([started("s-1")]);
+      expect(await store.read("s-1")).toStrictEqual([startedEvent("s-1")]);
     });
 
     it("다른 세션의 이벤트와 섞이지 않는다", async () => {
       const store = await makeStore();
 
-      await store.append("s-1", 0, [started("s-1")]);
-      await store.append("s-2", 0, [started("s-2")]);
-      await store.append("s-2", 1, [posted("s-2", 2, "둘째 세션")]);
+      await store.append("s-1", 0, [startedEvent("s-1")]);
+      await store.append("s-2", 0, [startedEvent("s-2")]);
+      await store.append("s-2", 1, [postedEvent("s-2", 2, "둘째 세션")]);
 
-      expect(await store.read("s-1")).toStrictEqual([started("s-1")]);
+      expect(await store.read("s-1")).toStrictEqual([startedEvent("s-1")]);
       expect(await store.read("s-2")).toStrictEqual([
-        started("s-2"),
-        posted("s-2", 2, "둘째 세션"),
+        startedEvent("s-2"),
+        postedEvent("s-2", 2, "둘째 세션"),
       ]);
     });
 
     it("같은 세션에 동시에 추가하면 하나만 성공하고 이벤트가 섞이지 않는다", async () => {
       const store = await makeStore();
-      await store.append("s-1", 0, [started("s-1")]);
+      await store.append("s-1", 0, [startedEvent("s-1")]);
       const contents = Array.from({ length: 20 }, (_, i) => `동시 ${i}`);
 
       const results = await Promise.allSettled(
         contents.map((content) =>
-          store.append("s-1", 1, [posted("s-1", 2, content), posted("s-1", 3, content)]),
+          store.append("s-1", 1, [postedEvent("s-1", 2, content), postedEvent("s-1", 3, content)]),
         ),
       );
 

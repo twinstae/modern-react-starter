@@ -3,28 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_CHARACTERS, type SessionEvent } from "../domain/session.ts";
+import { postedEvent, startedEvent } from "../domain/session.fixture.ts";
 import { createFileEventLogStore } from "./file-event-log-store.ts";
 
-const started: SessionEvent = {
-  eventId: "event-1",
-  eventName: "session:started",
-  eventCreatedAt: "2026-10-07T12:00:00Z",
-  entityName: "session",
-  entityId: "s-1",
-  version: 1,
-  body: { characters: DEFAULT_CHARACTERS },
-};
-
-const posted: SessionEvent = {
-  eventId: "event-2",
-  eventName: "session:message_posted",
-  eventCreatedAt: "2026-10-07T12:00:01Z",
-  entityName: "session",
-  entityId: "s-1",
-  version: 2,
-  body: { side: "player", as: "player", content: "안으로 들어간다" },
-};
+const started = startedEvent("s-1");
+const posted = postedEvent("s-1", 2, "안으로 들어간다", "player");
 
 const makeDir = () => mkdtemp(join(tmpdir(), "solo-quest-file-log-"));
 
