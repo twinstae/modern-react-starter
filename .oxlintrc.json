@@ -30,5 +30,23 @@
   },
   "env": {
     "builtin": true
-  }
+  },
+  "overrides": [
+    {
+      "files": ["packages/ui/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@ark-ui/react/*"],
+                "message": "Ark UI는 루트 \"@ark-ui/react\"에서 가져오세요. 하위 경로는 새 컴포넌트마다 Vite가 의존성을 다시 최적화하게 해서, vitest browser의 첫 실행이 테스트를 다시 불러오며 실패합니다."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
