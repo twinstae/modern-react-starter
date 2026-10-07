@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "styled-system", ".output", ".nitro", ".tanstack"],
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "styled-system/*": ["./styled-system/*"]
+    }
+  }
+}

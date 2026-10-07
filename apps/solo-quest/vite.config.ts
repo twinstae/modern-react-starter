@@ -1,0 +1,51 @@
+/// <reference types="vitest/config" />
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
+import { pandacss } from "@pandacss/vite";
+import { playwright } from "@vitest/browser-playwright";
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+  },
+  plugins: [nitro(), pandacss(), tanstackStart({ spa: { enabled: true } }), viteReact()],
+  test: {
+    projects: [
+      {
+        extends: true,
+        test: {
+          // 도메인과 순수 로직, 저장소 계약 테스트
+          name: "domain",
+          environment: "node",
+          include: ["src/domain/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // elysia 앱을 메모리 저장소로 HTTP 요청 테스트한다. 영속성을 모른다.
+          name: "api",
+          environment: "node",
+          include: ["src/server/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // 스토리 args로 렌더링한다. API와 서버 상태를 모른다.
+          name: "component",
+          setupFiles: ["src/setupTest.ts"],
+          include: ["src/components/**/*.test.tsx"],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright({}),
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ],
+  },
+});
