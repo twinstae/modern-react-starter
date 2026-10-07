@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 
 import { DEFAULT_CHARACTERS, type Character, type Side } from "../domain/session.ts";
-import { MessageInput } from "./message-input.tsx";
+import { MessageInput, type MessageInputProps } from "./message-input.tsx";
 
 const meta = {
   component: MessageInput,
   // 스토리가 아니라 스토리와 테스트가 함께 쓰는 컴포넌트
-  excludeStories: ["GuardGetsArchived"],
+  excludeStories: ["GuardGetsArchived", "RestoredLater"],
 } satisfies Meta<typeof MessageInput>;
 
 export default meta;
@@ -64,4 +64,43 @@ export function GuardGetsArchived({ side }: { side: Side }) {
 export const SpeakerArchivedWhileSelected: Story = {
   args: WithArchived.args,
   render: (args) => <GuardGetsArchived side={args.side} />,
+};
+
+/** 충돌로 버려진 제출의 글과 화자가 처음부터 돌아와 있다 */
+export const Restored: Story = {
+  args: {
+    ...WithArchived.args,
+    restored: { key: 1, as: "guard", text: "되돌아온 글" },
+  },
+};
+
+/**
+ * 입력하는 중에 충돌이 나서 글이 돌아오는 상황. 충돌은 화면 밖(세션)의 일이라 버튼으로 흉내 낸다.
+ * 입력창이 비어 있을 때만 돌아온 글이 채워지고, 새로 쓰던 글은 덮이지 않는다.
+ */
+export function RestoredLater({ side }: { side: Side }) {
+  const [restored, setRestored] = useState<MessageInputProps["restored"]>();
+  return (
+    <>
+      <MessageInput
+        side={side}
+        characters={WithArchived.args.characters}
+        restored={restored}
+        onSubmit={callbacks.onSubmit}
+      />
+      <button
+        type="button"
+        onClick={() =>
+          setRestored({ key: (restored?.key ?? 0) + 1, as: "guard", text: "되돌아온 글" })
+        }
+      >
+        글 되돌리기
+      </button>
+    </>
+  );
+}
+
+export const RestoredWhileTyping: Story = {
+  args: WithArchived.args,
+  render: (args) => <RestoredLater side={args.side} />,
 };

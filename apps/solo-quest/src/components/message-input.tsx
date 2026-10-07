@@ -6,7 +6,7 @@ import {
   SubmitButton,
   useSimpleField,
 } from "@repo/ui";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { SendHorizontal } from "lucide-react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
@@ -27,7 +27,7 @@ const MessageSchema = v.object({
   text: ShortText,
 });
 
-interface MessageInputProps {
+export interface MessageInputProps {
   side: Side;
   /** 모든 캐릭터. 화자 목록에는 이 중 활성 캐릭터만 나온다. */
   characters: Character[];
@@ -35,6 +35,8 @@ interface MessageInputProps {
   defaultSpeakerId?: string;
   /** 오류 메시지를 돌려주면 입력을 유지하고 보여 준다. 성공하면 undefined를 돌려준다. */
   onSubmit: (values: MessageValues) => Promise<string | undefined>;
+  /** 저장에 충돌해 버려진 제출의 글. `key`가 바뀔 때마다 입력창에 채워진다. */
+  restored?: { key: number; as: string; text: string };
 }
 
 const Layout = styled("div", { base: { display: "flex", flexDirection: "column", gap: "1.5" } });
@@ -66,11 +68,27 @@ function SpeakerFallback({ activeIds, fallback }: { activeIds: string[]; fallbac
   return null;
 }
 
+/** 돌려받은 글과 화자를 폼에 채운다. 입력창에 새로 쓰던 글이 있으면 덮어쓰지 않는다. */
+function RestoreInput({ restored }: { restored: NonNullable<MessageInputProps["restored"]> }) {
+  const [text, setText] = useSimpleField("text");
+  const [, setSpeakerId] = useSimpleField("as");
+  // 글이 바뀔 때마다 다시 채우지 않도록 최신 값만 ref로 읽는다
+  const typed = useRef(text);
+  typed.current = text;
+  useEffect(() => {
+    if (typed.current) return;
+    setText(restored.text);
+    setSpeakerId(restored.as);
+  }, [restored.key, restored.text, restored.as, setText, setSpeakerId]);
+  return null;
+}
+
 export function MessageInput({
   side,
   characters,
   defaultSpeakerId = DEFAULT_SPEAKER[side],
   onSubmit,
+  restored,
 }: MessageInputProps) {
   const label = SIDE_LABEL[side];
   const active = activeCharacters(characters);
@@ -85,6 +103,7 @@ export function MessageInput({
       onSubmit={(values) => onSubmit({ side, ...values })}
     >
       <Layout>
+        {restored && <RestoreInput restored={restored} />}
         <Speaker>
           <SimpleSelect
             name="as"

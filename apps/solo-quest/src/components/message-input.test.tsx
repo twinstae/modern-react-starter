@@ -205,4 +205,29 @@ describe("MessageInput", () => {
       );
     },
   );
+
+  it("충돌로 버려진 글이 돌아오면 그 글과 화자가 채워진다", async () => {
+    await runSiheom(
+      given.render(<MessageInput {...Stories.Restored.args} onSubmit={async () => undefined} />),
+      assertions.value(query.textbox("마스터 대화"), "되돌아온 글"),
+      assertions.textContent(query.combobox("마스터 화자"), "경비병"),
+    );
+  });
+
+  it("글이 돌아올 때 입력창에 새로 쓰던 글이 있으면 덮어쓰지 않는다", async () => {
+    await runSiheom(
+      given.render(<Stories.RestoredLater side="master" />),
+      actions.fill(query.textbox("마스터 대화"), "새로 쓰던 글"),
+      actions.click(query.button("글 되돌리기")),
+      assertions.value(query.textbox("마스터 대화"), "새로 쓰던 글"),
+    );
+  });
+
+  it("입력창이 비어 있을 때 글이 돌아오면 채워진다", async () => {
+    await runSiheom(
+      given.render(<Stories.RestoredLater side="master" />),
+      actions.click(query.button("글 되돌리기")),
+      assertions.value(query.textbox("마스터 대화"), "되돌아온 글"),
+    );
+  });
 });
