@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_DICE, MAX_SIDES, parseNotation, type DiceTerm } from "./dice.ts";
+import { MAX_DICE, MAX_SIDES, parseNotation, roll, type DiceTerm, type Random } from "./dice.ts";
 
 const dice = (count: number, sides: number, sign: 1 | -1 = 1): DiceTerm => ({
   type: "dice",
@@ -57,6 +57,32 @@ describe("표기 파서", () => {
     expect(parseNotation(`1d${MAX_SIDES + 1}`)).toStrictEqual({
       ok: false,
       message: `주사위 면은 ${MAX_SIDES}개까지 쓸 수 있습니다`,
+    });
+  });
+});
+
+/** 넘긴 값을 차례로 내는 난수 */
+const sequence = (...values: number[]): Random => {
+  let next = 0;
+  return () => values[next++] ?? 0;
+};
+
+describe("굴림", () => {
+  it("주사위마다 난수로 값을 정하고, 상수와 빼기 항을 반영해 합계를 낸다", () => {
+    // d6: floor(0.5 * 6) + 1 = 4, floor(0.99 * 6) + 1 = 6, d4: floor(0.3 * 4) + 1 = 2
+    const result = roll(
+      [dice(2, 6), constant(1, -1), dice(1, 4, -1), constant(10)],
+      sequence(0.5, 0.99, 0.3),
+    );
+
+    expect(result).toStrictEqual({
+      terms: [
+        { type: "dice", sign: 1, sides: 6, values: [4, 6] },
+        { type: "constant", sign: -1, value: 1 },
+        { type: "dice", sign: -1, sides: 4, values: [2] },
+        { type: "constant", sign: 1, value: 10 },
+      ],
+      total: 4 + 6 - 1 - 2 + 10,
     });
   });
 });

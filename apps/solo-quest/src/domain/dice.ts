@@ -53,3 +53,32 @@ export function parseNotation(text: string): NotationResult {
   }
   return { ok: true, terms };
 }
+
+/** 굴린 뒤의 항. 주사위 값을 그대로 들고 있어, 기록을 다시 굴리지 않고 보여 줄 수 있다. */
+export type RolledTerm =
+  | { type: "dice"; sign: 1 | -1; sides: number; values: number[] }
+  | { type: "constant"; sign: 1 | -1; value: number };
+
+export interface RollResult {
+  terms: RolledTerm[];
+  total: number;
+}
+
+/** 0 이상 1 미만의 값을 내는 함수 */
+export type Random = () => number;
+
+/** 항을 굴린다. 난수는 주입받는다. 실제 앱은 `crypto.getRandomValues` 기반 난수를 넘긴다. */
+export function roll(terms: DiceTerm[], random: Random): RollResult {
+  const rolled = terms.map((term): RolledTerm => {
+    if (term.type === "constant") return term;
+    const values = Array.from({ length: term.count }, () => Math.floor(random() * term.sides) + 1);
+    return { type: "dice", sign: term.sign, sides: term.sides, values };
+  });
+  const total = rolled.reduce(
+    (sum, term) =>
+      sum +
+      term.sign * (term.type === "constant" ? term.value : term.values.reduce((a, b) => a + b, 0)),
+    0,
+  );
+  return { terms: rolled, total };
+}
