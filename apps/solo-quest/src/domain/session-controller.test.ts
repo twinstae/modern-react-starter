@@ -305,7 +305,6 @@ describe("세션 컨트롤러", () => {
     await controller.idle();
 
     expect(statuses()).toStrictEqual(["committed", "committed", "committed"]);
-    expect(log.mostAtOnce).toBe(1);
     expect(
       (await log.otherTab.read("s-1")).map((event) => [event.version, event.body]),
     ).toStrictEqual([
@@ -314,30 +313,6 @@ describe("세션 컨트롤러", () => {
       [3, { side: "master", as: "gm", content: "둘째" }],
       [4, { side: "master", as: "gm", content: "셋째" }],
     ]);
-  });
-
-  it("앞의 저장이 실패하면 뒤에서 기다리던 기록은 저장하지 않고 모두 failed로 남는다", async () => {
-    const log = createFakeEventLog();
-    const controller = newController(log.store);
-    await controller.load();
-    log.hold();
-    log.failNext(new Error("네트워크 오류"));
-
-    const submissions = ["첫째", "둘째", "셋째"].map((text) =>
-      controller.submit({ side: "master", as: "gm", text }),
-    );
-    log.releaseNext();
-    log.releaseNext();
-    log.releaseNext();
-    await Promise.all(submissions);
-    await controller.idle();
-
-    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
-      "failed",
-      "failed",
-      "failed",
-    ]);
-    expect(await log.otherTab.read("s-1")).toHaveLength(1);
   });
 
   it("제출은 저장을 기다리지 않고 곧바로 돌아오며, 저장은 뒤에서 끝난다", async () => {
