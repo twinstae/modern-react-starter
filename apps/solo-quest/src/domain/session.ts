@@ -134,14 +134,14 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     if (!speaker || speaker.archived) throw new RuleViolation("말할 수 없는 캐릭터입니다");
   }
 
-  /** 이름만 가진 활성 캐릭터를 더한다. 이름은 짧은 글 규칙을 따른다. */
-  addCharacter = mutation(this, (dispatch, name: string) => {
+  /** 이름만 가진 활성 캐릭터를 더한다. id는 호출하는 쪽이 정한다. 이름은 짧은 글 규칙을 따른다. */
+  addCharacter = mutation(this, (dispatch, characterId: string, name: string) => {
     const parsed = parseShortText(name);
     const taken = this.state.characters.some(
       (character) => !character.archived && character.name === parsed,
     );
     if (taken) throw new RuleViolation("같은 이름의 캐릭터가 이미 있습니다");
-    dispatch("session:character_added", { characterId: uuidv7(), name: parsed });
+    dispatch("session:character_added", { characterId, name: parsed });
   });
 
   /** 캐릭터를 보관한다. 지워지지 않고 더 이상 화자가 될 수 없다. */

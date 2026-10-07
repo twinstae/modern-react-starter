@@ -16,10 +16,6 @@ const rolled = {
 const startSession = () =>
   Session.create({ entityId: "session-1", body: { characters: DEFAULT_CHARACTERS } });
 
-/** 이름으로 찾은 캐릭터. 추가한 캐릭터의 id는 mutation 안에서 만들어지므로 이름으로 찾는다. */
-const characterNamed = (session: Session, name: string) =>
-  session.state.characters.find((character) => character.name === name)!;
-
 describe("세션", () => {
   it("새 세션을 시작하면 활성 기본 캐릭터 GM과 Player가 있다", () => {
     const session = startSession();
@@ -132,14 +128,14 @@ describe("세션", () => {
     const repository = createSessionRepository(createEventLogAdapter(createMemoryEventLogStore()));
     const session = startSession();
 
-    session.addCharacter(" 경비병 ");
+    session.addCharacter("guard", " 경비병 ");
     await repository.commit(session);
     const reloaded = await repository.findOne({ entityId: "session-1" });
 
     expect(session.version).toBe(2);
     expect(session.state.characters.slice(0, 2)).toStrictEqual(DEFAULT_CHARACTERS);
     expect(session.state.characters.slice(2)).toStrictEqual([
-      { id: expect.any(String), name: "경비병", archived: false, isDefault: false },
+      { id: "guard", name: "경비병", archived: false, isDefault: false },
     ]);
     expect(reloaded?.state).toStrictEqual(session.state);
   });
@@ -151,7 +147,7 @@ describe("세션", () => {
   ])("%s의 캐릭터는 이벤트를 만들지 않고 오류를 낸다", (_name, name) => {
     const session = startSession();
 
-    expect(() => session.addCharacter(name)).toThrow(RuleViolation);
+    expect(() => session.addCharacter("new", name)).toThrow(RuleViolation);
     expect(session.version).toBe(1);
     expect(session.state.characters).toStrictEqual(DEFAULT_CHARACTERS);
   });
@@ -161,20 +157,19 @@ describe("세션", () => {
     ["추가한 활성 캐릭터와 같은 이름(앞뒤 공백은 무시)", " 경비병 "],
   ])("%s은 거부된다", (_name, name) => {
     const session = startSession();
-    session.addCharacter("경비병");
+    session.addCharacter("guard", "경비병");
 
-    expect(() => session.addCharacter(name)).toThrow(RuleViolation);
+    expect(() => session.addCharacter("new", name)).toThrow(RuleViolation);
     expect(session.version).toBe(2);
   });
 
   it("캐릭터를 보관하면 그 캐릭터만 archived가 되고 목록에서 지워지지 않으며, 커밋하고 다시 불러와도 같다", async () => {
     const repository = createSessionRepository(createEventLogAdapter(createMemoryEventLogStore()));
     const session = startSession();
-    session.addCharacter("경비병");
-    session.addCharacter("상인");
-    const guard = characterNamed(session, "경비병");
+    session.addCharacter("guard", "경비병");
+    session.addCharacter("merchant", "상인");
 
-    session.archiveCharacter(guard.id);
+    session.archiveCharacter("guard");
     await repository.commit(session);
     const reloaded = await repository.findOne({ entityId: "session-1" });
 
@@ -201,44 +196,40 @@ describe("세션", () => {
 
   it("이미 보관된 캐릭터의 보관은 이벤트를 만들지 않고 오류를 낸다", () => {
     const session = startSession();
-    session.addCharacter("경비병");
-    const guard = characterNamed(session, "경비병");
-    session.archiveCharacter(guard.id);
+    session.addCharacter("guard", "경비병");
+    session.archiveCharacter("guard");
 
-    expect(() => session.archiveCharacter(guard.id)).toThrow(RuleViolation);
+    expect(() => session.archiveCharacter("guard")).toThrow(RuleViolation);
     expect(session.version).toBe(3);
   });
 
   it("보관된 캐릭터와 같은 이름의 캐릭터는 추가할 수 있고, 둘은 다른 캐릭터다", () => {
     const session = startSession();
-    session.addCharacter("경비병");
-    const first = characterNamed(session, "경비병");
-    session.archiveCharacter(first.id);
+    session.addCharacter("guard", "경비병");
+    session.archiveCharacter("guard");
 
-    session.addCharacter("경비병");
+    session.addCharacter("guard-2", "경비병");
 
     const guards = session.state.characters.filter(({ name }) => name === "경비병");
     expect(guards.map(({ archived }) => archived)).toStrictEqual([true, false]);
-    expect(guards[1].id).not.toBe(first.id);
+    expect(guards.map(({ id }) => id)).toStrictEqual(["guard", "guard-2"]);
   });
 
   it("보관된 캐릭터를 화자로 하는 대화와 판정은 이벤트를 만들지 않고 오류를 낸다", () => {
     const session = startSession();
-    session.addCharacter("경비병");
-    const guard = characterNamed(session, "경비병");
-    session.archiveCharacter(guard.id);
+    session.addCharacter("guard", "경비병");
+    session.archiveCharacter("guard");
 
-    expect(() => session.postMessage("master", guard.id, "멈춰라")).toThrow(RuleViolation);
-    expect(() => session.rollDice("master", guard.id, "2d6+1", rolled)).toThrow(RuleViolation);
+    expect(() => session.postMessage("master", "guard", "멈춰라")).toThrow(RuleViolation);
+    expect(() => session.rollDice("master", "guard", "2d6+1", rolled)).toThrow(RuleViolation);
     expect(session.version).toBe(3);
   });
 
   it("편과 상관없이 활성 캐릭터가 말할 수 있다: 마스터 입력창에서 NPC로, 플레이어 입력창에서 GM으로", () => {
     const session = startSession();
-    session.addCharacter("경비병");
-    const guard = characterNamed(session, "경비병");
+    session.addCharacter("guard", "경비병");
 
-    session.postMessage("master", guard.id, "멈춰라");
+    session.postMessage("master", "guard", "멈춰라");
     session.postMessage("player", "gm", "누구냐");
 
     expect(session.version).toBe(4);
