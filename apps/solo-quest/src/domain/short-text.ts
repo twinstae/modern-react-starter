@@ -9,6 +9,6 @@ export const SHORT_TEXT_MAX = 140;
 export const ShortText = v.pipe(
   v.string(),
   v.trim(),
-  v.minLength(1),
-  v.maxGraphemes(SHORT_TEXT_MAX),
+  v.minLength(1, "내용을 입력해주세요"),
+  v.maxGraphemes(SHORT_TEXT_MAX, `${SHORT_TEXT_MAX}자 이하로 입력해주세요`),
 );
