@@ -183,4 +183,22 @@ describe("세션 컨트롤러", () => {
     });
     expect(entries.map((entry) => entry.kind)).toStrictEqual(["roll"]);
   });
+
+  it.each([
+    ["잘못된 표기", "/r 2x6 자물쇠", "주사위 표기가 올바르지 않습니다: 2x6"],
+    ["상한을 넘는 표기", "/r 101d6", "주사위는 모두 100개까지 굴릴 수 있습니다"],
+    ["표기가 없는 /r", "/r", "굴릴 주사위 표기를 적어주세요. 예: /r 2d6+1"],
+    ["알 수 없는 명령", "/desc 안개", "알 수 없는 명령입니다: /desc"],
+    ["141자 라벨", `/r d20 ${"가".repeat(141)}`, "140자 이하로 입력해주세요"],
+  ])("%s는 오류 메시지를 돌려주고 이벤트를 만들지 않는다", async (_name, text, message) => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
+    });
+    await controller.load();
+
+    expect(await controller.submit({ side: "master", as: "gm", text })).toBe(message);
+    expect(controller.getSnapshot().events).toHaveLength(1);
+  });
 });
