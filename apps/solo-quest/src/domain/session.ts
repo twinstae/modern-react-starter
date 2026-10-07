@@ -137,9 +137,7 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
   /** 이름만 가진 활성 캐릭터를 더한다. id는 호출하는 쪽이 정한다. 이름은 짧은 글 규칙을 따른다. */
   addCharacter = mutation(this, (dispatch, characterId: string, name: string) => {
     const parsed = parseShortText(name);
-    const taken = this.state.characters.some(
-      (character) => !character.archived && character.name === parsed,
-    );
+    const taken = activeCharacters(this.state.characters).some(({ name }) => name === parsed);
     if (taken) throw new RuleViolation("같은 이름의 캐릭터가 이미 있습니다");
     dispatch("session:character_added", { characterId, name: parsed });
   });
