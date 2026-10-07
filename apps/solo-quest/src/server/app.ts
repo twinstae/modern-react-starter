@@ -1,7 +1,7 @@
 import { Elysia, status } from "elysia";
 import * as v from "valibot";
 
-import { SessionEventSchema } from "../domain/session.ts";
+import { SessionEventSchema, type SessionEvent } from "../domain/session.ts";
 import { ShortText } from "../domain/short-text.ts";
 import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
 import type { SessionListStore } from "./session-list-store.ts";
@@ -12,6 +12,15 @@ export interface AppDeps {
   /** 현재 시각 Instant (ISO 문자열) */
   now: () => string;
   generateId: () => string;
+}
+
+/** 도메인은 실행하지 않고, 이 세션의 이벤트이고 버전이 expectedVersion + 1부터 1씩 이어지는지만 본다. */
+function findEventProblem(sessionId: string, expectedVersion: number, events: SessionEvent[]) {
+  const belongsElsewhere = events.some((event) => event.entityId !== sessionId);
+  if (belongsElsewhere) return "다른 세션의 이벤트가 섞여 있습니다";
+  const isContiguous = events.every((event, i) => event.version === expectedVersion + 1 + i);
+  if (!isContiguous) return "이벤트 버전이 expectedVersion 다음부터 1씩 이어지지 않습니다";
+  return null;
 }
 
 /**
@@ -42,6 +51,8 @@ export function createApp({ sessionListStore, eventLogStore, now, generateId }: 
       "/sessions/:id/events",
       async ({ params, body }) => {
         if (!(await sessionListStore.get(params.id))) return status(404, "세션이 없습니다");
+        const problem = findEventProblem(params.id, body.expectedVersion, body.events);
+        if (problem) return status(422, problem);
         try {
           await eventLogStore.append(params.id, body.expectedVersion, body.events);
         } catch (error) {

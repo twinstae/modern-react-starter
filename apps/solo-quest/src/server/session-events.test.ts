@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { postedEvent, startedEvent } from "../domain/session.fixture.ts";
+import type { SessionEvent } from "../domain/session.ts";
 import { unwrap } from "../unwrap.ts";
 import { createTestClient, TEST_ID } from "./test-client.ts";
 
@@ -41,5 +42,22 @@ describe("세션 이벤트 API", () => {
     await expect(
       unwrap(session.events.post({ expectedVersion: 0, events: [startedEvent("없는-세션")] })),
     ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it.each([
+    ["141자 내용의 이벤트", 0, [postedEvent(TEST_ID, 1, "가".repeat(141))]],
+    ["스키마에 없는 이벤트", 0, [{ ...startedEvent(TEST_ID), eventName: "session:unknown" }]],
+    ["버전을 건너뛴 이벤트", 0, [startedEvent(TEST_ID), postedEvent(TEST_ID, 3, "건너뜀")]],
+    ["버전이 겹친 이벤트", 0, [startedEvent(TEST_ID), postedEvent(TEST_ID, 1, "겹침")]],
+    ["expectedVersion 다음 버전이 아닌 이벤트", 0, [postedEvent(TEST_ID, 2, "늦음")]],
+    ["다른 세션의 이벤트", 0, [startedEvent("다른-세션")]],
+  ])("%s는 422이고 로그에 들어가지 않는다", async (_name, expectedVersion, events) => {
+    const { session } = await setup();
+
+    await expect(
+      // 잘못된 이벤트를 일부러 보내므로 타입을 우회한다
+      unwrap(session.events.post({ expectedVersion, events: events as SessionEvent[] })),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(await unwrap(session.events.get())).toStrictEqual([]);
   });
 });
