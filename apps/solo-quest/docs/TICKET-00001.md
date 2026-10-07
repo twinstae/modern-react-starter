@@ -2,7 +2,7 @@
 
 - 스펙: [SPEC-0001](SPEC-0001.md)
 - Blocked by: 없음 (바로 시작 가능)
-- Status: ready-for-agent
+- Status: done
 
 ## 만들 것
 
@@ -41,11 +41,19 @@
 
 ## 인수 조건
 
-- [ ] 루트에서 `bun run dev`를 실행하면 solo-quest가 demo와 겹치지 않는 포트로 뜨고, 첫 화면에 상태 확인 API의 응답이 보인다.
-- [ ] 루트의 `bun run typecheck`, `bun run test`, `bun run lint`가 solo-quest를 포함해 통과한다.
-- [ ] `domain` 프로젝트에 예시 단위 테스트가 하나 있고 통과한다.
-- [ ] `api` 프로젝트에 상태 확인 API를 `app.handle(new Request(...))`로 부르는 테스트가 하나 있고 통과한다.
-- [ ] `component` 프로젝트에 스토리 args로 렌더링하는 컴포넌트 테스트가 하나 있고 통과한다. 그 스토리는 Storybook에서도 보인다.
-- [ ] elysia 앱은 의존성을 인자로 받는 팩토리이고, 서버 라우트는 그 팩토리에 실제 의존성을 넘겨 만든다.
-- [ ] `apps/solo-quest/CONTEXT.md`와 ADR 세 개가 있다.
-- [ ] 루트 README의 구조 단락에 solo-quest가 추가되어 있다.
+- [x] 루트에서 `bun run dev`를 실행하면 solo-quest가 demo와 겹치지 않는 포트로 뜨고, 첫 화면에 상태 확인 API의 응답이 보인다.
+- [x] 루트의 `bun run typecheck`, `bun run test`, `bun run lint`가 solo-quest를 포함해 통과한다.
+- [x] `domain` 프로젝트에 예시 단위 테스트가 하나 있고 통과한다.
+- [x] `api` 프로젝트에 상태 확인 API를 `app.handle(new Request(...))`로 부르는 테스트가 하나 있고 통과한다.
+- [x] `component` 프로젝트에 스토리 args로 렌더링하는 컴포넌트 테스트가 하나 있고 통과한다. 그 스토리는 Storybook에서도 보인다.
+- [x] elysia 앱은 의존성을 인자로 받는 팩토리이고, 서버 라우트는 그 팩토리에 실제 의존성을 넘겨 만든다.
+- [x] `apps/solo-quest/CONTEXT.md`와 ADR 세 개가 있다.
+- [x] 루트 README의 구조 단락에 solo-quest가 추가되어 있다.
+
+## 작업하며 배운 것
+
+- `designSystem`을 쓰는 앱은 `@pandacss/preset-base`, `@pandacss/preset-panda`를 직접 의존성으로 가져야 한다. Panda가 디자인 시스템의 preset을 앱 기준으로 찾고, bun은 패키지별로 격리해 설치하기 때문이다.
+- TanStack Start 앱에서는 `tsr generate`를 쓰지 않는다. 이 CLI는 Start 타입 등록(`declare module "@tanstack/react-start"`)을 빠뜨려 서버 라우트의 `server` 옵션 타입이 깨진다. 라우트 트리는 Start vite 플러그인이 만든다.
+- 앱 `vite.config.ts`를 그대로 쓰는 Storybook은 Start, nitro 플러그인 때문에 빌드가 깨진다. `viteFinal`에서 두 플러그인을 걸러 낸다.
+- turbo에 `-- run`을 넘기면 함께 실행하는 모든 작업(예: `tsc`)에 인자가 전달된다. 커밋 전 검사는 루트의 `bun run ci`로 한다.
+- vitest 설정의 node 프로젝트에서 `ReferenceError: module is not defined` 경고가 demo와 똑같이 나온다. 앱 vite 플러그인에서 나오는 것으로 보이며, 원인은 ROADMAP 정리 항목으로 남겨 둔다.
