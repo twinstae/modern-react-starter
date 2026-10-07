@@ -71,4 +71,20 @@ describe("CharacterPanel", () => {
 
     expect(added).toStrictEqual({ name: "경비병" });
   });
+
+  it("onAdd가 오류를 돌려주면 입력이 남고 오류가 보인다", async () => {
+    await runSiheom(
+      given.render(
+        <CharacterPanel
+          {...Stories.DefaultOnly.args}
+          onAdd={async () => "같은 이름의 캐릭터가 이미 있습니다"}
+        />,
+      ),
+      actions.click(query.button(/^캐릭터/)),
+      actions.fill(query.textbox("캐릭터 이름"), "GM"),
+      actions.click(query.button("캐릭터 추가")),
+      assertions.value(query.textbox("캐릭터 이름"), "GM"),
+      assertions.visible(query.alert("같은 이름의 캐릭터가 이미 있습니다")),
+    );
+  });
 });
