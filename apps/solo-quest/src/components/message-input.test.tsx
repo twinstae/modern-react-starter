@@ -158,10 +158,10 @@ describe("MessageInput", () => {
         />,
       ),
       assertions.textContent(query.combobox("마스터 화자"), "GM"),
+      actions.fill(query.textbox("마스터 대화"), "안으로 들어간다"),
       actions.click(query.combobox("마스터 화자")),
       actions.click(query.option("Player")),
       assertions.not.expanded(query.combobox("마스터 화자")),
-      actions.fill(query.textbox("마스터 대화"), "안으로 들어간다"),
       assertions.value(query.textbox("마스터 대화"), "안으로 들어간다"),
       actions.click(query.button("마스터로 남기기")),
       assertions.value(query.textbox("마스터 대화"), ""),
@@ -186,6 +186,7 @@ describe("MessageInput", () => {
           }}
         />,
       ),
+      actions.fill(query.textbox("마스터 대화"), "멈춰라"),
       actions.click(query.combobox("마스터 화자")),
       assertions.visible(query.option("경비병")),
     );
@@ -196,7 +197,6 @@ describe("MessageInput", () => {
     await runSiheom(
       actions.click(query.option("경비병")),
       assertions.not.expanded(query.combobox("마스터 화자")),
-      actions.fill(query.textbox("마스터 대화"), "멈춰라"),
       actions.click(query.button("마스터로 남기기")),
       assertions.value(query.textbox("마스터 대화"), ""),
     );
