@@ -46,3 +46,32 @@ export const rolledEvent = (sessionId: string, version: number, label?: string):
     ...(label !== undefined && { label }),
   },
 });
+
+export const characterAddedEvent = (
+  sessionId: string,
+  version: number,
+  characterId: string,
+  name: string,
+): SessionEvent => ({
+  eventId: `${sessionId}-event-${version}`,
+  eventName: "session:character_added",
+  eventCreatedAt: "2026-10-07T12:00:00Z",
+  entityName: "session",
+  entityId: sessionId,
+  version,
+  body: { characterId, name },
+});
+
+export const characterArchivedEvent = (
+  sessionId: string,
+  version: number,
+  characterId: string,
+): SessionEvent => ({
+  eventId: `${sessionId}-event-${version}`,
+  eventName: "session:character_archived",
+  eventCreatedAt: "2026-10-07T12:00:00Z",
+  entityName: "session",
+  entityId: sessionId,
+  version,
+  body: { characterId },
+});
