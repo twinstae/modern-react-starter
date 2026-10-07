@@ -48,7 +48,7 @@ export function MessageInput({
         label={`${label} 화자`}
         items={characters.map((character) => ({ label: character.name, value: character.id }))}
       />
-      <SimpleTextarea name="text" label={`${label} 대화`} />
+      <SimpleTextarea name="text" label={`${label} 대화`} submitOnEnter />
       <SimpleWatch name="text">
         {(text) => (
           <p role="status" aria-label={`${label} 남은 글자 수`}>

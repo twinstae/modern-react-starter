@@ -26,6 +26,26 @@ describe("MessageInput", () => {
     expect(result).toStrictEqual({ side: "master", as: "gm", text: "문이 열린다\n안은 어둡다" });
   });
 
+  it("대화를 치고 Enter를 누르면 바로 남겨진다", async () => {
+    let result: MessageValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.Master.args}
+          onSubmit={async (values) => {
+            result = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.type(query.textbox("마스터 대화"), "문이 열린다{Enter}"),
+      assertions.value(query.textbox("마스터 대화"), ""),
+    );
+
+    expect(result).toStrictEqual({ side: "master", as: "gm", text: "문이 열린다" });
+  });
+
   it("onSubmit이 오류를 돌려주면 입력이 남고 아래에 오류가 보인다", async () => {
     await runSiheom(
       given.render(
