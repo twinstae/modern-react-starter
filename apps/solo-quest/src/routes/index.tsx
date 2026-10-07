@@ -6,6 +6,7 @@ import { styled } from "styled-system/jsx";
 import { api } from "../api-client.ts";
 import { NewSessionForm, type NewSessionValues } from "../components/new-session-form.tsx";
 import { SessionList } from "../components/session-list.tsx";
+import { unwrap } from "../unwrap.ts";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -27,16 +28,11 @@ function Home() {
   const [formKey, setFormKey] = useState(0);
   const sessions = useQuery({
     queryKey: ["sessions"],
-    queryFn: async () => {
-      const { data, error } = await api.sessions.get();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => unwrap(api.sessions.get()),
   });
 
   const createSession = async (values: NewSessionValues) => {
-    const { error } = await api.sessions.post(values);
-    if (error) throw error;
+    await unwrap(api.sessions.post(values));
     await queryClient.invalidateQueries({ queryKey: ["sessions"] });
     setFormKey((key) => key + 1);
   };
