@@ -44,6 +44,8 @@ interface SubmittedInput {
 
 const CONFLICT_NOTICE = "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
 
+const RELOAD_FAILED_NOTICE = "최신 기록을 불러오지 못했습니다. 다시 시도하려면 새로 기록하세요";
+
 /** 불러오기 전의 모습 */
 const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [], restored: {} };
 
@@ -139,7 +141,7 @@ export function createSessionController({
       reloading = readLog().finally(() => {
         reloading = undefined;
       });
-      settling = Promise.all([settling, reloading]);
+      settling = Promise.all([settling, reloading.catch(() => {})]);
     }
     return reloading;
   }
@@ -156,7 +158,14 @@ export function createSessionController({
           .join("\n");
         restored[input.side] = { key: ++restoredCount, as: input.as, text };
       }
-      await reload();
+      try {
+        await reload();
+      } catch {
+        // 다시 불러오지 못했다. 줄은 멈춘 채로 두어 다음 제출이 다시 시도한다.
+        queue.abandon();
+        notice = RELOAD_FAILED_NOTICE;
+        publish();
+      }
     }
   }
 
@@ -171,7 +180,13 @@ export function createSessionController({
     // 저장이 실패한 뒤의 첫 제출은 서버의 로그를 다시 불러온 위에서 받는다. 실패한 기록은 여기서 사라진다.
     if (queue.halted) {
       await settling;
-      if (queue.halted) await reload();
+      if (queue.halted) {
+        try {
+          await reload();
+        } catch {
+          return RELOAD_FAILED_NOTICE;
+        }
+      }
     }
     if (!session) return "아직 시작되지 않은 세션입니다";
     try {

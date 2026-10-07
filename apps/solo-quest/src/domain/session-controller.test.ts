@@ -431,4 +431,49 @@ describe("세션 컨트롤러", () => {
       ["committed", "둘째"],
     ]);
   });
+
+  it("충돌 뒤 다시 불러오기가 실패해도 오류가 새지 않고 실패로 알리며, 다음 제출이 다시 불러온다", async () => {
+    const log = createFakeEventLog();
+    const controller = newController(log.store);
+    await controller.load();
+    await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
+    log.failNextRead(new Error("네트워크 오류"));
+
+    await controller.submit({ side: "player", as: "player", text: "내 기록" });
+    await controller.idle();
+
+    const afterFailure = controller.getSnapshot();
+    expect(afterFailure.notice).toBe(
+      "최신 기록을 불러오지 못했습니다. 다시 시도하려면 새로 기록하세요",
+    );
+    expect(afterFailure.entries.map((entry) => entry.status)).toStrictEqual(["failed"]);
+
+    await controller.submit({ side: "player", as: "player", text: "다시" });
+    await controller.idle();
+
+    expect(
+      controller
+        .getSnapshot()
+        .entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
+    ).toStrictEqual([
+      ["committed", "다른 탭"],
+      ["committed", "다시"],
+    ]);
+    expect(controller.getSnapshot().notice).toBeUndefined();
+  });
+
+  it("다시 불러오기가 계속 실패하면 제출은 받아들이지 않고 오류 메시지를 돌려주며, 입력이 남는다", async () => {
+    const log = createFakeEventLog();
+    const controller = newController(log.store);
+    await controller.load();
+    log.failNext(new Error("네트워크 오류"));
+    await controller.submit({ side: "master", as: "gm", text: "저장 못 함" });
+    await controller.idle();
+    log.failNextRead(new Error("네트워크 오류"));
+
+    const result = await controller.submit({ side: "master", as: "gm", text: "다시" });
+
+    expect(result).toBe("최신 기록을 불러오지 못했습니다. 다시 시도하려면 새로 기록하세요");
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual(["failed"]);
+  });
 });

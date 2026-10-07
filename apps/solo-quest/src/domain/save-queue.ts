@@ -110,6 +110,11 @@ export function createSaveQueue<Meta>({
     clear() {
       unsaved = [];
     },
+    /** 저장 전 묶음을 모두 failed로 둔다. 다시 불러오지 못해 저장 여부를 알 수 없을 때 쓴다. */
+    abandon() {
+      for (const batch of unsaved) batch.status = "failed";
+      onChange();
+    },
     /** 멈춘 줄을 다시 연다. 다시 불러온 뒤에 쓴다. */
     resume() {
       halted = false;
