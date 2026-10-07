@@ -201,4 +201,24 @@ describe("세션 컨트롤러", () => {
     expect(await controller.submit({ side: "master", as: "gm", text })).toBe(message);
     expect(controller.getSnapshot().events).toHaveLength(1);
   });
+
+  it("추가한 캐릭터는 화자 목록에 나타나고, 그 이름으로 말한 기록이 남으며, 다시 불러와도 있다", async () => {
+    const eventLog = createMemoryEventLogStore();
+    const controller = createSessionController({ sessionId: "s-1", eventLog, random: fixedRandom });
+    await controller.load();
+
+    expect(await controller.addCharacter({ name: " 경비병 " })).toBeUndefined();
+    const guard = controller.getSnapshot().characters.find(({ name }) => name === "경비병")!;
+    expect(
+      await controller.submit({ side: "master", as: guard.id, text: "멈춰라" }),
+    ).toBeUndefined();
+
+    const reloaded = await createSessionController({
+      sessionId: "s-1",
+      eventLog,
+      random: fixedRandom,
+    }).load();
+    expect(reloaded.characters).toStrictEqual(controller.getSnapshot().characters);
+    expect(reloaded.entries.map((entry) => entry.speakerName)).toStrictEqual(["경비병"]);
+  });
 });
