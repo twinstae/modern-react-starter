@@ -139,4 +139,16 @@ describe("세션", () => {
     ]);
     expect(reloaded?.state).toStrictEqual(session.state);
   });
+
+  it.each([
+    ["빈 이름", ""],
+    ["공백뿐인 이름", "  \n "],
+    ["141자 이름", "가".repeat(141)],
+  ])("%s의 캐릭터는 이벤트를 만들지 않고 오류를 낸다", (_name, name) => {
+    const session = startSession();
+
+    expect(() => session.addCharacter(name)).toThrow(RuleViolation);
+    expect(session.version).toBe(1);
+    expect(session.state.characters).toStrictEqual(DEFAULT_CHARACTERS);
+  });
 });
