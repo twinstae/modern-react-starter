@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Button } from "@repo/ui";
 import { styled } from "styled-system/jsx";
 
 export const Route = createFileRoute("/")({ component: App });
@@ -16,5 +17,9 @@ const CenterMain = styled("main", {
 });
 
 function App() {
-  return <CenterMain></CenterMain>;
+  return (
+    <CenterMain>
+      <Button>Modern React Starter</Button>
+    </CenterMain>
+  );
 }

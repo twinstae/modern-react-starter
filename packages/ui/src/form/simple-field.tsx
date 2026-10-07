@@ -1,9 +1,9 @@
 import { useId, type ComponentProps } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { Input } from "@/components/ui/input.tsx";
-import * as Field from "@/components/ui/field.tsx";
-import * as Checkbox from "@/components/ui/checkbox.tsx";
+import { Input } from "../ui/input.tsx";
+import * as Field from "../ui/field.tsx";
+import * as Checkbox from "../ui/checkbox.tsx";
 // export function SimpleDatePicker({ name, label }: { name: string; label: string }) {
 //   const { control } = useFormContext();
 

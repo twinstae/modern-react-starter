@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "lib": {
+      "dependsOn": ["^lib"],
+      "outputs": ["styled-system/**", "dist/panda/**"]
+    },
+    "codegen": {
+      "dependsOn": ["^lib"],
+      "outputs": ["styled-system/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["codegen", "lib", "^lib"]
+    },
+    "test": {
+      "dependsOn": ["codegen", "lib"],
+      "outputs": []
+    },
+    "build": {
+      "dependsOn": ["codegen", "lib"],
+      "outputs": [".output/**"]
+    },
+    "dev": {
+      "dependsOn": ["codegen", "lib"],
+      "cache": false,
+      "persistent": true
+    },
+    "storybook": {
+      "dependsOn": ["codegen", "lib"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

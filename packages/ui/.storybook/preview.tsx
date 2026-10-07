@@ -1,5 +1,5 @@
-import "@/styles.css";
-import type { Preview } from "@storybook/tanstack-react";
+import "../src/styles.css";
+import type { Preview } from "@storybook/react-vite";
 
 const preview: Preview = {
   parameters: {

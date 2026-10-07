@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*.ts", "**/*.tsx", ".storybook/**/*.ts", ".storybook/**/*.tsx"],
+  "exclude": ["node_modules", "styled-system", "dist", "storybook-static"],
+  "compilerOptions": {
+    "paths": {
+      "styled-system/*": ["./styled-system/*"]
+    }
+  }
+}

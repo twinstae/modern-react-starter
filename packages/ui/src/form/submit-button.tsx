@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 import { useFormContext } from "react-hook-form";
 
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "../ui/button.tsx";
 
 type SubmitButtonProps = Omit<ComponentProps<typeof Button>, "type" | "loading">;
 

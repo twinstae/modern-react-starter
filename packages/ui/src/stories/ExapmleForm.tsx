@@ -1,7 +1,7 @@
-import { SimpleCheckbox, SimpleInput } from "@/components/form/simple-field.tsx";
-import { SimpleForm } from "@/components/form/simple-form.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import * as Card from "@/components/ui/card.tsx";
+import { SimpleCheckbox, SimpleInput } from "../form/simple-field.tsx";
+import { SimpleForm } from "../form/simple-form.tsx";
+import { Button } from "../ui/button.tsx";
+import * as Card from "../ui/card.tsx";
 import { validDataSchema, type ValidData, type ValidDataInput } from "./schema.ts";
 import { css } from "styled-system/css";
 
