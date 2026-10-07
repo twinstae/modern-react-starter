@@ -4,6 +4,7 @@ import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store
  * 메모리 저장소를 감싼 테스트용 가짜. 저장 시점과 실패, 다른 탭의 기록을 테스트가 정한다.
  * - `hold()` 뒤의 저장은 `releaseNext()`로 하나씩 풀어 주기 전까지 끝나지 않는다.
  * - `failNext(error)`는 다음 저장 하나를 그 오류로 실패시킨다.
+ * - `mostAtOnce`는 저장이 동시에 진행된 가장 많은 수다. 순서대로 하나씩 저장하는지 확인하는 데 쓴다.
  * - `otherTab`은 같은 저장소에 직접 쓴다. 이 컨트롤러가 모르는 사이에 다른 탭이 기록한 것과 같다.
  */
 export function createFakeEventLog() {
@@ -12,22 +13,38 @@ export function createFakeEventLog() {
   let permits = 0;
   const waiting: Array<() => void> = [];
   const failures: Error[] = [];
+  let running = 0;
+  let mostAtOnce = 0;
+
+  /** 풀어 주기를 기다렸다가 실패하거나 저장한다 */
+  const save: EventLogStore["append"] = async (sessionId, expectedVersion, events) => {
+    if (holding) {
+      if (permits > 0) permits -= 1;
+      else await new Promise<void>((resolve) => waiting.push(resolve));
+    }
+    const failure = failures.shift();
+    if (failure) throw failure;
+    await memory.append(sessionId, expectedVersion, events);
+  };
 
   const store: EventLogStore = {
     read: memory.read,
     async append(sessionId, expectedVersion, events) {
-      if (holding) {
-        if (permits > 0) permits -= 1;
-        else await new Promise<void>((resolve) => waiting.push(resolve));
+      running += 1;
+      mostAtOnce = Math.max(mostAtOnce, running);
+      try {
+        await save(sessionId, expectedVersion, events);
+      } finally {
+        running -= 1;
       }
-      const failure = failures.shift();
-      if (failure) throw failure;
-      await memory.append(sessionId, expectedVersion, events);
     },
   };
 
   return {
     store,
+    get mostAtOnce() {
+      return mostAtOnce;
+    },
     otherTab: memory,
     /** 이후 저장은 `releaseNext()`가 풀어 줄 때까지 기다린다 */
     hold() {

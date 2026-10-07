@@ -342,4 +342,40 @@ describe("세션 컨트롤러", () => {
       ["failed", "저장 못 하는 기록"],
     ]);
   });
+
+  it("저장을 기다리는 중에 이어 제출한 세 기록은 순서대로 하나씩 저장된다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    log.hold();
+    const statuses = () => controller.getSnapshot().entries.map((entry) => entry.status);
+
+    const submissions = ["첫째", "둘째", "셋째"].map((text) =>
+      controller.submit({ side: "master", as: "gm", text }),
+    );
+    expect(statuses()).toStrictEqual(["pending", "pending", "pending"]);
+
+    log.releaseNext();
+    await submissions[0];
+    expect(statuses()).toStrictEqual(["committed", "pending", "pending"]);
+    log.releaseNext();
+    log.releaseNext();
+    await Promise.all(submissions);
+
+    expect(statuses()).toStrictEqual(["committed", "committed", "committed"]);
+    expect(log.mostAtOnce).toBe(1);
+    expect(
+      (await log.otherTab.read("s-1")).map((event) => [event.version, event.body]),
+    ).toStrictEqual([
+      [1, { characters: DEFAULT_CHARACTERS }],
+      [2, { side: "master", as: "gm", content: "첫째" }],
+      [3, { side: "master", as: "gm", content: "둘째" }],
+      [4, { side: "master", as: "gm", content: "셋째" }],
+    ]);
+  });
 });
