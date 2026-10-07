@@ -45,6 +45,7 @@ export const sessionSchema = defineSchema("session", {
     event: {
       started: v.object({ characters: v.array(Character) }),
       character_added: v.object({ characterId: v.string(), name: ShortText }),
+      character_archived: v.object({ characterId: v.string() }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
       /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
       dice_rolled: v.object({
@@ -96,6 +97,12 @@ const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
           { id: event.body.characterId, name: event.body.name, archived: false, isDefault: false },
         ],
       };
+    case "session:character_archived":
+      return {
+        characters: prevState.characters.map((character) =>
+          character.id === event.body.characterId ? { ...character, archived: true } : character,
+        ),
+      };
     default:
       return prevState;
   }
@@ -131,6 +138,11 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     );
     if (taken) throw new RuleViolation("같은 이름의 캐릭터가 이미 있습니다");
     dispatch("session:character_added", { characterId: uuidv7(), name: parsed });
+  });
+
+  /** 캐릭터를 보관한다. 지워지지 않고 더 이상 화자가 될 수 없다. */
+  archiveCharacter = mutation(this, (dispatch, characterId: string) => {
+    dispatch("session:character_archived", { characterId });
   });
 
   postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {

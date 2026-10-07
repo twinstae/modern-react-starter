@@ -162,4 +162,25 @@ describe("세션", () => {
     expect(() => session.addCharacter(name)).toThrow(RuleViolation);
     expect(session.version).toBe(2);
   });
+
+  it("캐릭터를 보관하면 그 캐릭터만 archived가 되고 목록에서 지워지지 않으며, 커밋하고 다시 불러와도 같다", async () => {
+    const repository = createSessionRepository(createEventLogAdapter(createMemoryEventLogStore()));
+    const session = startSession();
+    session.addCharacter("경비병");
+    session.addCharacter("상인");
+    const guard = session.state.characters.find(({ name }) => name === "경비병")!;
+
+    session.archiveCharacter(guard.id);
+    await repository.commit(session);
+    const reloaded = await repository.findOne({ entityId: "session-1" });
+
+    expect(session.version).toBe(4);
+    expect(session.state.characters.map(({ name, archived }) => [name, archived])).toStrictEqual([
+      ["GM", false],
+      ["Player", false],
+      ["경비병", true],
+      ["상인", false],
+    ]);
+    expect(reloaded?.state).toStrictEqual(session.state);
+  });
 });
