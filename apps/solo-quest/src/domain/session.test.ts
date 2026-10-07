@@ -204,4 +204,17 @@ describe("세션", () => {
     expect(() => session.archiveCharacter(guard.id)).toThrow(RuleViolation);
     expect(session.version).toBe(3);
   });
+
+  it("보관된 캐릭터와 같은 이름의 캐릭터는 추가할 수 있고, 둘은 다른 캐릭터다", () => {
+    const session = startSession();
+    session.addCharacter("경비병");
+    const first = session.state.characters.find(({ name }) => name === "경비병")!;
+    session.archiveCharacter(first.id);
+
+    session.addCharacter("경비병");
+
+    const guards = session.state.characters.filter(({ name }) => name === "경비병");
+    expect(guards.map(({ archived }) => archived)).toStrictEqual([true, false]);
+    expect(guards[1].id).not.toBe(first.id);
+  });
 });
