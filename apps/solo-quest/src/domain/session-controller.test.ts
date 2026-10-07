@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createMemoryEventLogStore } from "../server/event-log-store.ts";
+import { createMemoryEventLogStore, type EventLogStore } from "../server/event-log-store.ts";
+import { postedEvent } from "./session.fixture.ts";
 import { createSessionController } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
 
@@ -15,5 +16,69 @@ describe("세션 컨트롤러", () => {
     expect(first.characters).toStrictEqual(DEFAULT_CHARACTERS);
     expect(first.events.map((event) => event.eventName)).toStrictEqual(["session:started"]);
     expect(second).toStrictEqual(first);
+  });
+
+  it("제출한 대화는 오류 없이 로그에 편과 화자, 앞뒤 공백을 뺀 내용으로 순서대로 쌓인다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+    });
+    await controller.load();
+
+    const results = [
+      await controller.submit({ side: "master", as: "gm", text: " 문이 열린다\n안은 어둡다 " }),
+      await controller.submit({ side: "player", as: "player", text: "안으로 들어간다" }),
+    ];
+
+    expect(results).toStrictEqual([undefined, undefined]);
+    const { events } = await controller.load();
+    expect(events.slice(1).map((event) => event.body)).toStrictEqual([
+      { side: "master", as: "gm", content: "문이 열린다\n안은 어둡다" },
+      { side: "player", as: "player", content: "안으로 들어간다" },
+    ]);
+  });
+
+  it("규칙을 어긴 제출은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+    });
+    await controller.load();
+
+    expect(await controller.submit({ side: "master", as: "gm", text: "  " })).toBe(
+      "내용을 입력해주세요",
+    );
+    expect(await controller.submit({ side: "master", as: "유령", text: "안녕" })).toBe(
+      "말할 수 없는 캐릭터입니다",
+    );
+    expect((await controller.load()).events).toHaveLength(1);
+  });
+
+  it("커밋하는 사이 다른 곳에서 먼저 기록했다면 충돌 안내를 돌려주고 기록은 하나만 남는다", async () => {
+    const memory = createMemoryEventLogStore();
+    let otherTabIsWriting = false;
+    const racing: EventLogStore = {
+      read: memory.read,
+      // 이 컨트롤러가 커밋하기 직전에 다른 탭이 먼저 기록한 상황
+      async append(sessionId, expectedVersion, events) {
+        if (otherTabIsWriting) {
+          await memory.append(sessionId, expectedVersion, [
+            postedEvent(sessionId, expectedVersion + 1, "다른 탭"),
+          ]);
+        }
+        await memory.append(sessionId, expectedVersion, events);
+      },
+    };
+    const controller = createSessionController({ sessionId: "s-1", eventLog: racing });
+    await controller.load();
+    otherTabIsWriting = true;
+
+    const result = await controller.submit({ side: "master", as: "gm", text: "내 기록" });
+
+    expect(result).toBe("다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다");
+    expect((await controller.load()).events.map((event) => event.body)).toStrictEqual([
+      { characters: DEFAULT_CHARACTERS },
+      { side: "master", as: "gm", content: "다른 탭" },
+    ]);
   });
 });
