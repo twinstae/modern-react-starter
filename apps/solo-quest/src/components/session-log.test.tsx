@@ -1,4 +1,5 @@
-import { describe, it } from "vitest";
+import { screen } from "@testing-library/dom";
+import { describe, expect, it } from "vitest";
 import { assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SessionLog } from "./session-log.tsx";
@@ -54,5 +55,14 @@ describe("SessionLog", () => {
       // 라벨이 있는 판정 하나뿐이다
       assertions.count(query.note("판정 라벨"), 1),
     );
+  });
+
+  it("마스터 판정은 왼쪽, 플레이어 판정은 오른쪽에 정렬된다", async () => {
+    await runSiheom(given.render(<SessionLog {...Stories.Mixed.args} />));
+
+    const alignOf = (name: string) =>
+      getComputedStyle(screen.getByRole("listitem", { name })).alignSelf;
+    expect(alignOf("마스터 경비병")).toBe("flex-start");
+    expect(alignOf("플레이어 Player")).toBe("flex-end");
   });
 });
