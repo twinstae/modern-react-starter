@@ -118,8 +118,15 @@ export function SimpleTextarea({
   name,
   label,
   hint,
+  submitOnEnter = false,
   ...props
-}: ComponentProps<typeof Textarea> & { name: string; label: string; hint?: string }) {
+}: ComponentProps<typeof Textarea> & {
+  name: string;
+  label: string;
+  hint?: string;
+  /** Enter로 폼을 제출한다. 줄바꿈은 Shift+Enter로 한다. */
+  submitOnEnter?: boolean;
+}) {
   const { control } = useFormContext();
 
   const descriptionId = useId();
@@ -142,6 +149,14 @@ export function SimpleTextarea({
               onChange={field.onChange}
               {...aria}
               {...props}
+              onKeyDown={(event) => {
+                props.onKeyDown?.(event);
+                // 한글 조합 중의 Enter는 글자를 확정하는 키이므로 제출하지 않는다
+                if (!submitOnEnter || event.key !== "Enter" || event.shiftKey) return;
+                if (event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }}
             />
             <FieldMessage
               hint={hint}

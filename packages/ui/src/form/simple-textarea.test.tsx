@@ -26,6 +26,24 @@ describe("SimpleTextarea", () => {
     expect(result).toStrictEqual({ memo: "문이 열린다\n안은 어둡다" });
   });
 
+  it("submitOnEnter면 Enter로 제출되고, Shift+Enter는 줄을 바꾼다", async () => {
+    let result: MemoValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MemoForm
+          {...Stories.SubmitOnEnter.args}
+          onSubmit={async (values) => {
+            result = values;
+          }}
+        />,
+      ),
+      actions.type(query.textbox("메모"), "문이 열린다{Shift>}{Enter}{/Shift}안은 어둡다{Enter}"),
+    );
+
+    expect(result).toStrictEqual({ memo: "문이 열린다\n안은 어둡다" });
+  });
+
   it("검증에 실패하면 제출되지 않고 오류가 필드에 연결되어 보인다", async () => {
     let result: MemoValues | undefined;
 

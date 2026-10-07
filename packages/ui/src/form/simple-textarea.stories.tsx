@@ -16,14 +16,16 @@ function MemoForm({
   onSubmit,
   hint,
   defaultMemo = "",
+  submitOnEnter,
 }: {
   onSubmit: (values: MemoValues) => Promise<void>;
   hint?: string;
   defaultMemo?: string;
+  submitOnEnter?: boolean;
 }) {
   return (
     <SimpleForm schema={MemoSchema} defaultValues={{ memo: defaultMemo }} onSubmit={onSubmit}>
-      <SimpleTextarea name="memo" label="메모" hint={hint} />
+      <SimpleTextarea name="memo" label="메모" hint={hint} submitOnEnter={submitOnEnter} />
       <SubmitButton>저장</SubmitButton>
     </SimpleForm>
   );
@@ -50,3 +52,5 @@ export const WithHint: Story = {
 export const WithValue: Story = {
   args: { onSubmit, defaultMemo: "문이 열린다\n안은 어둡다" },
 };
+
+export const SubmitOnEnter: Story = { args: { onSubmit, submitOnEnter: true } };
