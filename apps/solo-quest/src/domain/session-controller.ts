@@ -18,16 +18,37 @@ export interface SessionView {
   events: SessionEvent[];
   entries: LogEntry[];
   characters: Character[];
+  /** 충돌로 버려진 제출의 글. 그 편의 입력창이 다시 채운다. */
+  restored: Partial<Record<Side, RestoredInput>>;
+}
+
+/** 충돌로 버려진 제출을 입력창에 되돌려 주는 값 */
+export interface RestoredInput {
+  /** 되돌려 줄 때마다 늘어난다. 입력창이 같은 값을 두 번 채우지 않게 한다. */
+  key: number;
+  /** 화자 캐릭터 id */
+  as: string;
+  /** 사용자가 친 그대로의 글 */
+  text: string;
+}
+
+/** 제출한 글. 충돌로 버려지면 입력창에 돌려준다. */
+interface SubmittedInput {
+  side: Side;
+  as: string;
+  text: string;
 }
 
 /** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들과 그 상태 */
 interface Unsaved {
   events: SessionEvent[];
   status: Exclude<EntryStatus, "committed">;
+  /** 이 묶음을 만든 제출. 캐릭터 변경에는 없다. */
+  input?: SubmittedInput;
 }
 
 /** 불러오기 전의 모습 */
-const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [] };
+const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [], restored: {} };
 
 /**
  * 세션 하나에 대한 컨트롤러. UI를 모른다. 이벤트 로그 저장소(메모리 또는 HTTP)만 받는다.
@@ -73,7 +94,8 @@ export function createSessionController({
           if (halted) throw new Error("앞의 저장이 실패해 저장하지 않았습니다");
           await eventLog.append(id, expectedVersion, batch);
         } catch (error) {
-          entry.status = "failed";
+          // 충돌은 실패가 아니라 다시 불러오는 일이라 failed로 보이지 않는다
+          if (!(error instanceof VersionConflictError)) entry.status = "failed";
           halted = true;
           publish();
           throw error;
@@ -92,6 +114,8 @@ export function createSessionController({
   let session: Session | undefined;
   /** 저장된 이벤트 */
   let events: SessionEvent[] = [];
+  let restored: SessionView["restored"] = {};
+  let restoredCount = 0;
   let loading: Promise<void> | undefined;
   /** 시작한 저장과 그 뒤처리가 모두 끝나면 이루어지는 약속 */
   let settling: Promise<unknown> = Promise.resolve();
@@ -110,6 +134,7 @@ export function createSessionController({
       events: all,
       entries: toLogEntries(all, statuses),
       characters: session?.state.characters ?? [],
+      restored,
     };
     for (const listener of listeners) listener();
   };
@@ -136,14 +161,20 @@ export function createSessionController({
 
   /** 저장이 끝난 뒤의 일. 충돌이면 서버의 로그를 다시 불러온다. 실패는 이미 failed로 화면에 있다. */
   async function afterSave(error: unknown) {
-    if (error instanceof VersionConflictError) await readLog();
+    if (error instanceof VersionConflictError) {
+      restored = {};
+      for (const { input } of unsaved) {
+        if (input) restored[input.side] = { key: ++restoredCount, as: input.as, text: input.text };
+      }
+      await readLog();
+    }
   }
 
   /**
    * 엔티티에 일을 시키고 곧바로 화면에 반영한 뒤 저장을 시작한다. 저장을 기다리지 않는다.
    * 규칙 위반이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 아니면 undefined다.
    */
-  function commit(record: (current: Session) => void): string | undefined {
+  function commit(record: (current: Session) => void, input?: SubmittedInput): string | undefined {
     if (!session) return "아직 시작되지 않은 세션입니다";
     try {
       record(session);
@@ -152,6 +183,8 @@ export function createSessionController({
       throw error;
     }
     const saving = repository.commit(session);
+    const entry = unsaved.at(-1);
+    if (entry) entry.input = input;
     publish();
     settling = Promise.all([settling, saving.catch(afterSave)]);
     return undefined;
@@ -207,7 +240,7 @@ export function createSessionController({
         const result = roll(notation.terms, random);
         record = (current) => current.rollDice(side, as, input.notation, result, input.label);
       }
-      return commit(record);
+      return commit(record, { side, as, text });
     },
 
     /** 캐릭터를 추가한다. 이름 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */

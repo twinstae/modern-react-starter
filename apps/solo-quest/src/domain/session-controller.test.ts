@@ -435,4 +435,25 @@ describe("세션 컨트롤러", () => {
       "committed",
     ]);
   }, 1000);
+
+  it("다른 탭이 먼저 기록했다면 최신 로그를 다시 불러오고, 버려진 제출의 글을 그 편에 되돌려 준다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
+
+    await controller.submit({ side: "player", as: "player", text: " 내 기록 " });
+    await controller.idle();
+
+    const { entries, restored } = controller.getSnapshot();
+    expect(
+      entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
+    ).toStrictEqual([["committed", "다른 탭"]]);
+    expect(restored).toStrictEqual({ player: { key: 1, as: "player", text: " 내 기록 " } });
+  });
 });
