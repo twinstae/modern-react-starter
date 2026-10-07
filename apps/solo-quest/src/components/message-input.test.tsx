@@ -214,10 +214,10 @@ describe("MessageInput", () => {
 
       await runSiheom(
         given.render(<GuardGetsArchived side={side} />),
+        actions.fill(query.textbox(`${label} 대화`), "쓰던 글"),
         actions.click(query.combobox(`${label} 화자`)),
         actions.click(query.option("경비병")),
         assertions.not.expanded(query.combobox(`${label} 화자`)),
-        actions.fill(query.textbox(`${label} 대화`), "쓰던 글"),
         assertions.textContent(query.combobox(`${label} 화자`), "경비병"),
         actions.click(query.button("경비병 보관")),
         assertions.textContent(query.combobox(`${label} 화자`), defaultName),
