@@ -20,7 +20,7 @@ export function toLogEntries(events: SessionEvent[]): LogEntry[] {
   for (const event of events) {
     if (event.eventName === "session:started") {
       for (const character of event.body.characters) names.set(character.id, character.name);
-    } else {
+    } else if (event.eventName === "session:message_posted") {
       entries.push({
         id: event.eventId,
         side: event.body.side,

@@ -9,6 +9,7 @@ import {
 import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
+import { RolledTerm, type RollResult } from "./dice.ts";
 import { ShortText } from "./short-text.ts";
 
 const Character = v.object({
@@ -44,6 +45,15 @@ export const sessionSchema = defineSchema("session", {
     event: {
       started: v.object({ characters: v.array(Character) }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
+      /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
+      dice_rolled: v.object({
+        side: Side,
+        as: v.string(),
+        notation: v.string(),
+        terms: v.array(RolledTerm),
+        total: v.pipe(v.number(), v.integer()),
+        label: v.optional(ShortText),
+      }),
     },
     state: v.object({ characters: v.array(Character) }),
   }),
@@ -104,6 +114,25 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     this.#assertActiveSpeaker(as);
     dispatch("session:message_posted", { side, as, content: content.output });
   });
+
+  /** 이미 굴린 결과를 판정으로 남긴다. 라벨이 없으면 생략한다. */
+  rollDice = mutation(
+    this,
+    (dispatch, side: Side, as: string, notation: string, result: RollResult, label?: string) => {
+      const parsedLabel = label === undefined ? undefined : v.safeParse(ShortText, label);
+      if (parsedLabel && !parsedLabel.success)
+        throw new RuleViolation(parsedLabel.issues[0].message);
+      this.#assertActiveSpeaker(as);
+      dispatch("session:dice_rolled", {
+        side,
+        as,
+        notation,
+        terms: result.terms,
+        total: result.total,
+        ...(parsedLabel && { label: parsedLabel.output }),
+      });
+    },
+  );
 }
 
 export const createSessionRepository = (adapter: Adapter<typeof sessionSchema>) =>

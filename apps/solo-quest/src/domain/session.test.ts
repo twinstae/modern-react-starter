@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { createMemoryEventLogStore } from "./event-log-store.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
+import type { RollResult } from "./dice.ts";
 import { createSessionRepository, DEFAULT_CHARACTERS, RuleViolation, Session } from "./session.ts";
+
+const rolled = {
+  terms: [
+    { type: "dice", sign: 1, sides: 6, values: [4, 6] },
+    { type: "constant", sign: 1, value: 1 },
+  ],
+  total: 11,
+} satisfies RollResult;
 
 const startSession = () =>
   Session.create({ entityId: "session-1", body: { characters: DEFAULT_CHARACTERS } });
@@ -70,6 +79,48 @@ describe("세션", () => {
         eventName: "session:message_posted",
         body: { side: "player", as: "player", content: "안으로 들어간다" },
       },
+    ]);
+  });
+
+  it("판정을 남기면 이벤트가 하나 늘고 캐릭터 목록은 그대로다", () => {
+    const session = startSession();
+    const before = session.state;
+
+    session.rollDice("player", "player", "2d6+1", rolled, "자물쇠 따기");
+    session.rollDice("master", "gm", "2d6+1", rolled);
+
+    expect(session.version).toBe(3);
+    expect(session.state).toStrictEqual(before);
+  });
+
+  it.each([
+    ["141자 라벨의 판정", "gm", "가".repeat(141)],
+    ["공백뿐인 라벨의 판정", "gm", "   "],
+    ["없는 화자의 판정", "아무도-아님", "자물쇠 따기"],
+  ])("%s은 이벤트를 만들지 않고 오류를 낸다", (_name, speakerId, label) => {
+    const session = startSession();
+
+    expect(() => session.rollDice("master", speakerId, "2d6+1", rolled, label)).toThrow(
+      RuleViolation,
+    );
+    expect(session.version).toBe(1);
+  });
+
+  it("판정을 커밋하고 다시 불러오면 굴린 결과가 그대로다(다시 굴리지 않는다)", async () => {
+    const store = createMemoryEventLogStore();
+    const repository = createSessionRepository(createEventLogAdapter(store));
+    const session = startSession();
+    session.rollDice("player", "player", "2d6+1", rolled, " 자물쇠 따기 ");
+    session.rollDice("master", "gm", "2d6+1", rolled);
+
+    await repository.commit(session);
+    const reloaded = await repository.findOne({ entityId: "session-1" });
+
+    expect(reloaded?.version).toBe(3);
+    expect(reloaded?.state).toStrictEqual(session.state);
+    expect((await store.read("session-1")).slice(1).map(({ body }) => body)).toStrictEqual([
+      { side: "player", as: "player", notation: "2d6+1", ...rolled, label: "자물쇠 따기" },
+      { side: "master", as: "gm", notation: "2d6+1", ...rolled },
     ]);
   });
 });

@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 /** 한 판정에서 굴릴 수 있는 주사위 수의 상한 */
 export const MAX_DICE = 100;
 /** 주사위 하나의 면 수 상한 */
@@ -54,10 +56,25 @@ export function parseNotation(text: string): NotationResult {
   return { ok: true, terms };
 }
 
+const Sign = v.picklist([1, -1]);
+const Positive = v.pipe(v.number(), v.integer(), v.minValue(1));
+
 /** 굴린 뒤의 항. 주사위 값을 그대로 들고 있어, 기록을 다시 굴리지 않고 보여 줄 수 있다. */
-export type RolledTerm =
-  | { type: "dice"; sign: 1 | -1; sides: number; values: number[] }
-  | { type: "constant"; sign: 1 | -1; value: number };
+export const RolledTerm = v.variant("type", [
+  v.object({
+    type: v.literal("dice"),
+    sign: Sign,
+    sides: Positive,
+    values: v.array(Positive),
+  }),
+  v.object({
+    type: v.literal("constant"),
+    sign: Sign,
+    value: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  }),
+]);
+
+export type RolledTerm = v.InferOutput<typeof RolledTerm>;
 
 export interface RollResult {
   terms: RolledTerm[];
