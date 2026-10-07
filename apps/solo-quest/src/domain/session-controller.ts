@@ -147,8 +147,9 @@ export function createSessionController({
 
   /** 로그를 읽어 엔티티와 목록을 새로 만든다. 로그가 비어 있으면 기본 캐릭터로 시작한다. */
   async function readLog() {
+    const stored = await eventLog.read(sessionId);
     unsaved = [];
-    events = await eventLog.read(sessionId);
+    events = stored;
     session = (await restore(events)) ?? undefined;
     if (!session) {
       session = Session.create({ entityId: sessionId, body: { characters: DEFAULT_CHARACTERS } });
@@ -158,6 +159,18 @@ export function createSessionController({
     // 읽는 동안에는 낡은 묶음이 저장하지 못하게 멈춰 둔다. 읽은 뒤에야 새 제출을 받는다.
     halted = false;
     publish();
+  }
+
+  /** 다시 불러오는 중이면 그 약속. 동시에 여럿이 부르면 한 번만 읽는다. */
+  let reloading: Promise<void> | undefined;
+  function reload() {
+    if (!reloading) {
+      reloading = readLog().finally(() => {
+        reloading = undefined;
+      });
+      settling = Promise.all([settling, reloading]);
+    }
+    return reloading;
   }
 
   /** 저장이 끝난 뒤의 일. 충돌이면 서버의 로그를 다시 불러온다. 실패는 이미 failed로 화면에 있다. */
@@ -171,7 +184,7 @@ export function createSessionController({
           .join("\n");
         restored[input.side] = { key: ++restoredCount, as: input.as, text };
       }
-      await readLog();
+      await reload();
     }
   }
 
@@ -186,7 +199,7 @@ export function createSessionController({
     // 저장이 실패한 뒤의 첫 제출은 서버의 로그를 다시 불러온 위에서 받는다. 실패한 기록은 여기서 사라진다.
     if (halted) {
       await settling;
-      if (halted) await readLog();
+      if (halted) await reload();
     }
     if (!session) return "아직 시작되지 않은 세션입니다";
     try {
@@ -215,7 +228,12 @@ export function createSessionController({
 
     /** 시작한 저장이 모두 끝날 때까지 기다린다. 테스트와 화면을 떠날 때 쓴다. */
     idle: async () => {
-      await settling;
+      // 기다리는 동안 새로 시작한 일(다시 불러온 뒤 받아들인 제출의 저장)까지 기다린다
+      let waited: Promise<unknown>;
+      do {
+        waited = settling;
+        await waited;
+      } while (waited !== settling);
     },
 
     /** 처음 한 번만 로그를 읽는다. 이미 불러왔으면 메모리의 모습을 돌려준다. */
