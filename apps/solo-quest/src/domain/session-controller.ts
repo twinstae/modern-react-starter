@@ -56,6 +56,8 @@ export function createSessionController({
   let unsaved: Unsaved[] = [];
   /** 저장을 한 번에 하나씩 순서대로 하도록 줄 세우는 꼬리 */
   let tail: Promise<void> = Promise.resolve();
+  /** 저장이 한 번 실패하면, 다시 불러오기 전까지 뒤의 묶음은 저장하지 않는다 */
+  let halted = false;
   /**
    * 저장소를 감싸 저장을 줄 세운다. ventyd는 commit 안에서 이 `append`를 바로 부르므로,
    * 저장 전 묶음은 mutation 직후 여기서 등록된다.
@@ -67,9 +69,12 @@ export function createSessionController({
       unsaved.push(entry);
       const saving = tail.then(async () => {
         try {
+          // 앞의 저장이 실패했으면 이 묶음은 버전이 이어지지 않으므로 저장하지 않는다
+          if (halted) throw new Error("앞의 저장이 실패해 저장하지 않았습니다");
           await eventLog.append(id, expectedVersion, batch);
         } catch (error) {
           entry.status = "failed";
+          halted = true;
           publish();
           throw error;
         }
@@ -116,6 +121,7 @@ export function createSessionController({
   /** 로그를 읽어 엔티티와 목록을 새로 만든다. 로그가 비어 있으면 기본 캐릭터로 시작한다. */
   async function readLog() {
     unsaved = [];
+    halted = false;
     events = await eventLog.read(sessionId);
     session = (await restore(events)) ?? undefined;
     if (!session) {

@@ -378,4 +378,32 @@ describe("세션 컨트롤러", () => {
       [4, { side: "master", as: "gm", content: "셋째" }],
     ]);
   });
+
+  it("앞의 저장이 실패하면 뒤에서 기다리던 기록은 저장하지 않고 모두 failed로 남는다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    log.hold();
+    log.failNext(new Error("네트워크 오류"));
+
+    const submissions = ["첫째", "둘째", "셋째"].map((text) =>
+      controller.submit({ side: "master", as: "gm", text }),
+    );
+    log.releaseNext();
+    log.releaseNext();
+    log.releaseNext();
+    await Promise.all(submissions);
+
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual([
+      "failed",
+      "failed",
+      "failed",
+    ]);
+    expect(await log.otherTab.read("s-1")).toHaveLength(1);
+  });
 });
