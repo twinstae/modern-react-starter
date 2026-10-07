@@ -23,6 +23,7 @@ styled-system
 styled-system-studio
 **/__screenshots__/
 .vitest-attachments
+.vitest
 .env.production
 docs/asset/
 
