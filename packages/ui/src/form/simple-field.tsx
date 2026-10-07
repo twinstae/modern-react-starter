@@ -30,6 +30,51 @@ import * as Select from "../ui/select.tsx";
 //   );
 // }
 
+/** 필드 아래에 힌트를 보이고, 오류가 나면 오류가 힌트를 대신한다. */
+function FieldMessage({
+  hint,
+  error,
+  descriptionId,
+  errorId,
+}: {
+  hint?: string;
+  error?: string;
+  descriptionId: string;
+  errorId: string;
+}) {
+  if (error) {
+    return (
+      <Field.ErrorText id={errorId} role="alert" aria-label={error}>
+        {error}
+      </Field.ErrorText>
+    );
+  }
+  return hint ? <Field.HelperText id={descriptionId}>{hint}</Field.HelperText> : null;
+}
+
+/** 오류와 힌트를 필드의 접근성 속성에 연결한다. */
+function fieldAria({
+  isError,
+  hint,
+  descriptionId,
+  errorId,
+}: {
+  isError: boolean;
+  hint?: string;
+  descriptionId: string;
+  errorId: string;
+}) {
+  return {
+    "aria-invalid": isError,
+    "aria-describedby": isError ? errorId : hint ? descriptionId : undefined,
+    "aria-errormessage": isError ? errorId : undefined,
+  };
+}
+
+/** react-hook-form 필드 상태에서 사용자에게 보여 줄 오류 메시지를 꺼낸다. */
+const errorMessageOf = (error: { message?: string; root?: { message?: string } } | undefined) =>
+  error?.root?.message ?? error?.message;
+
 export function SimpleInput({
   name,
   label,
@@ -44,29 +89,21 @@ export function SimpleInput({
   return (
     <Controller
       render={({ field, fieldState }) => {
+        const errorMessage = errorMessageOf(fieldState.error);
         const isError = !!fieldState.error;
-
-        const errorMessage = fieldState.error?.root?.message ?? fieldState.error?.message;
+        const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
             <Field.Label>
               {label} {props.required && <Field.RequiredIndicator />}
             </Field.Label>
-            <Input
-              name={name}
-              value={field.value}
-              onChange={field.onChange}
-              aria-invalid={isError}
-              aria-describedby={isError ? errorId : hint ? descriptionId : undefined}
-              aria-errormessage={isError ? errorId : undefined}
-              {...props}
+            <Input name={name} value={field.value} onChange={field.onChange} {...aria} {...props} />
+            <FieldMessage
+              hint={hint}
+              error={errorMessage}
+              descriptionId={descriptionId}
+              errorId={errorId}
             />
-            {hint && !isError && <Field.HelperText id={descriptionId}>{hint}</Field.HelperText>}
-            {isError && errorMessage && (
-              <Field.ErrorText id={errorId} role="alert" aria-label={errorMessage}>
-                {errorMessage}
-              </Field.ErrorText>
-            )}
           </Field.Root>
         );
       }}
@@ -91,9 +128,9 @@ export function SimpleTextarea({
   return (
     <Controller
       render={({ field, fieldState }) => {
+        const errorMessage = errorMessageOf(fieldState.error);
         const isError = !!fieldState.error;
-
-        const errorMessage = fieldState.error?.root?.message ?? fieldState.error?.message;
+        const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
             <Field.Label>
@@ -103,17 +140,15 @@ export function SimpleTextarea({
               name={name}
               value={field.value}
               onChange={field.onChange}
-              aria-invalid={isError}
-              aria-describedby={isError ? errorId : hint ? descriptionId : undefined}
-              aria-errormessage={isError ? errorId : undefined}
+              {...aria}
               {...props}
             />
-            {hint && !isError && <Field.HelperText id={descriptionId}>{hint}</Field.HelperText>}
-            {isError && errorMessage && (
-              <Field.ErrorText id={errorId} role="alert" aria-label={errorMessage}>
-                {errorMessage}
-              </Field.ErrorText>
-            )}
+            <FieldMessage
+              hint={hint}
+              error={errorMessage}
+              descriptionId={descriptionId}
+              errorId={errorId}
+            />
           </Field.Root>
         );
       }}
@@ -152,9 +187,9 @@ export function SimpleSelect({
   return (
     <Controller
       render={({ field, fieldState }) => {
+        const errorMessage = errorMessageOf(fieldState.error);
         const isError = !!fieldState.error;
-
-        const errorMessage = fieldState.error?.root?.message ?? fieldState.error?.message;
+        const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
             <Select.Root
@@ -169,10 +204,7 @@ export function SimpleSelect({
                 {label} {props.required && <Field.RequiredIndicator />}
               </Select.Label>
               <Select.Control>
-                <Select.Trigger
-                  aria-describedby={isError ? errorId : hint ? descriptionId : undefined}
-                  aria-errormessage={isError ? errorId : undefined}
-                >
+                <Select.Trigger {...aria}>
                   <Select.ValueText placeholder={placeholder} />
                   <Select.ChevronIndicator />
                 </Select.Trigger>
@@ -191,12 +223,12 @@ export function SimpleSelect({
               </Select.Portal>
               <Select.HiddenSelect />
             </Select.Root>
-            {hint && !isError && <Field.HelperText id={descriptionId}>{hint}</Field.HelperText>}
-            {isError && errorMessage && (
-              <Field.ErrorText id={errorId} role="alert" aria-label={errorMessage}>
-                {errorMessage}
-              </Field.ErrorText>
-            )}
+            <FieldMessage
+              hint={hint}
+              error={errorMessage}
+              descriptionId={descriptionId}
+              errorId={errorId}
+            />
           </Field.Root>
         );
       }}
@@ -220,17 +252,13 @@ export function SimpleCheckbox({
   return (
     <Controller
       render={({ field, fieldState }) => {
+        const errorMessage = errorMessageOf(fieldState.error);
         const isError = !!fieldState.error;
-
-        const errorMessage = fieldState.error?.root?.message ?? fieldState.error?.message;
+        const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
             <Checkbox.Root name={name} value={field.value} onChange={field.onChange}>
-              <Checkbox.HiddenInput
-                aria-invalid={isError}
-                aria-describedby={isError ? errorId : hint ? descriptionId : undefined}
-                aria-errormessage={isError ? errorId : undefined}
-              />
+              <Checkbox.HiddenInput {...aria} />
               <Checkbox.Control aria-invalid={isError}>
                 <Checkbox.Indicator />
               </Checkbox.Control>
@@ -238,12 +266,12 @@ export function SimpleCheckbox({
                 {label} {props.required && <Field.RequiredIndicator />}
               </Checkbox.Label>
             </Checkbox.Root>
-            {hint && !isError && <Field.HelperText id={descriptionId}>{hint}</Field.HelperText>}
-            {isError && errorMessage && (
-              <Field.ErrorText id={errorId} role="alert" aria-label={errorMessage}>
-                {errorMessage}
-              </Field.ErrorText>
-            )}
+            <FieldMessage
+              hint={hint}
+              error={errorMessage}
+              descriptionId={descriptionId}
+              errorId={errorId}
+            />
           </Field.Root>
         );
       }}
