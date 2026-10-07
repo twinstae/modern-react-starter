@@ -5,7 +5,6 @@
   "scripts": {
     "codegen": "panda codegen",
     "dev": "vite dev --port 3001",
-    "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6007",
@@ -36,7 +35,6 @@
     "@storybook/addon-a11y": "^10.6.1",
     "@storybook/addon-docs": "^10.6.1",
     "@storybook/react-vite": "^10.6.1",
-    "@tanstack/router-cli": "^1.167.40",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.4",
