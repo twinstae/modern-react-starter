@@ -83,8 +83,14 @@ export function SimpleInput({
   name,
   label,
   hint,
+  hideLabel = false,
   ...props
-}: ComponentProps<typeof Input> & { name: string; label: string; hint?: string }) {
+}: ComponentProps<typeof Input> & {
+  name: string;
+  label: string;
+  hint?: string;
+  hideLabel?: boolean;
+}) {
   const { control } = useFormContext();
 
   const descriptionId = useId();
@@ -98,7 +104,7 @@ export function SimpleInput({
         const aria = fieldAria({ isError, hint, descriptionId, errorId });
         return (
           <Field.Root>
-            <Field.Label>
+            <Field.Label className={labelClass(hideLabel)}>
               {label} {props.required && <Field.RequiredIndicator />}
             </Field.Label>
             <Input name={name} value={field.value} onChange={field.onChange} {...aria} {...props} />

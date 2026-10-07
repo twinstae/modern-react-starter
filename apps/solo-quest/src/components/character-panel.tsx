@@ -1,8 +1,12 @@
-import { Button, Collapsible } from "@repo/ui";
-import { Archive, ChevronDown } from "lucide-react";
+import { Button, Collapsible, SimpleForm, SimpleInput, SubmitButton } from "@repo/ui";
+import { Archive, ChevronDown, Plus } from "lucide-react";
 import { styled } from "styled-system/jsx";
+import * as v from "valibot";
 
 import type { Character } from "../domain/session.ts";
+import { ShortText } from "../domain/short-text.ts";
+
+const AddSchema = v.object({ name: ShortText });
 
 interface CharacterPanelProps {
   /** 모든 캐릭터. 활성과 보관은 `archived`로 나눈다. */
@@ -57,7 +61,11 @@ const Archived = styled("ul", {
   },
 });
 
-export function CharacterPanel({ characters, onArchive }: CharacterPanelProps) {
+const AddWrap = styled("div", { base: { mt: "3" } });
+
+const AddRow = styled("div", { base: { display: "flex", gap: "2", alignItems: "flex-start" } });
+
+export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelProps) {
   const active = characters.filter((character) => !character.archived);
   const archived = characters.filter((character) => character.archived);
 
@@ -94,6 +102,27 @@ export function CharacterPanel({ characters, onArchive }: CharacterPanelProps) {
                 ))}
               </Archived>
             )}
+            <AddWrap>
+              <SimpleForm
+                aria-label="캐릭터 추가"
+                schema={AddSchema}
+                defaultValues={{ name: "" }}
+                resetOnSuccess={["name"]}
+                onSubmit={onAdd}
+              >
+                <AddRow>
+                  <SimpleInput
+                    name="name"
+                    label="캐릭터 이름"
+                    hideLabel
+                    placeholder="새 캐릭터 이름"
+                  />
+                  <SubmitButton variant="subtle" aria-label="캐릭터 추가" title="캐릭터 추가">
+                    <Plus />
+                  </SubmitButton>
+                </AddRow>
+              </SimpleForm>
+            </AddWrap>
           </Floating>
         </Collapsible.Content>
       </Anchor>

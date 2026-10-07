@@ -49,4 +49,26 @@ describe("CharacterPanel", () => {
       assertions.count(query.listitem("상인"), 1),
     );
   });
+
+  it("이름을 넣고 추가하면 onAdd에 앞뒤 공백을 뺀 { name }이 넘어가고 입력이 비워진다", async () => {
+    let added: { name: string } | undefined;
+
+    await runSiheom(
+      given.render(
+        <CharacterPanel
+          {...Stories.DefaultOnly.args}
+          onAdd={async (values) => {
+            added = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.click(query.button(/^캐릭터/)),
+      actions.fill(query.textbox("캐릭터 이름"), "  경비병 "),
+      actions.click(query.button("캐릭터 추가")),
+      assertions.value(query.textbox("캐릭터 이름"), ""),
+    );
+
+    expect(added).toStrictEqual({ name: "경비병" });
+  });
 });
