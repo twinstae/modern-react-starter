@@ -1,4 +1,11 @@
-import { defineReducer, defineSchema, Entity, mutation } from "ventyd";
+import {
+  createRepository,
+  defineReducer,
+  defineSchema,
+  Entity,
+  mutation,
+  type Adapter,
+} from "ventyd";
 import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
@@ -97,3 +104,6 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     dispatch("session:message_posted", { side, as, content: content.output });
   });
 }
+
+export const createSessionRepository = (adapter: Adapter<typeof sessionSchema>) =>
+  createRepository(Session, { adapter });

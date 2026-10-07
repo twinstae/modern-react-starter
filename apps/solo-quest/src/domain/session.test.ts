@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_CHARACTERS, RuleViolation, Session } from "./session.ts";
+import { createMemoryEventLogStore } from "../server/event-log-store.ts";
+import { createEventLogAdapter } from "./event-log-adapter.ts";
+import { createSessionRepository, DEFAULT_CHARACTERS, RuleViolation, Session } from "./session.ts";
 
 const startSession = () =>
   Session.create({ entityId: "session-1", body: { characters: DEFAULT_CHARACTERS } });
@@ -36,5 +38,38 @@ describe("세션", () => {
 
     expect(() => session.postMessage("master", speakerId, text)).toThrow(RuleViolation);
     expect(session.version).toBe(1);
+  });
+
+  it("마스터와 플레이어 편 대화를 커밋하고 다시 불러오면 이벤트의 순서와 본문이 같다", async () => {
+    const store = createMemoryEventLogStore();
+    const repository = createSessionRepository(createEventLogAdapter(store));
+    const session = startSession();
+    session.postMessage("master", "gm", "문이 열린다\n안은 어둡다");
+    session.postMessage("player", "player", "안으로 들어간다");
+
+    await repository.commit(session);
+    const reloaded = await repository.findOne({ entityId: "session-1" });
+
+    expect(reloaded?.version).toBe(3);
+    expect(reloaded?.state).toStrictEqual(session.state);
+    expect(
+      (await store.read("session-1")).map(({ version, eventName, body }) => ({
+        version,
+        eventName,
+        body,
+      })),
+    ).toStrictEqual([
+      { version: 1, eventName: "session:started", body: { characters: DEFAULT_CHARACTERS } },
+      {
+        version: 2,
+        eventName: "session:message_posted",
+        body: { side: "master", as: "gm", content: "문이 열린다\n안은 어둡다" },
+      },
+      {
+        version: 3,
+        eventName: "session:message_posted",
+        body: { side: "player", as: "player", content: "안으로 들어간다" },
+      },
+    ]);
   });
 });
