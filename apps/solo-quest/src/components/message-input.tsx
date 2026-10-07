@@ -1,4 +1,6 @@
 import { SimpleForm, SimpleSelect, SimpleTextarea, SimpleWatch, SubmitButton } from "@repo/ui";
+import { SendHorizontal } from "lucide-react";
+import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
 import { DEFAULT_SPEAKER, type Character, type Side } from "../domain/session.ts";
@@ -26,6 +28,19 @@ interface MessageInputProps {
   onSubmit: (values: MessageValues) => Promise<string | undefined>;
 }
 
+const Layout = styled("div", { base: { display: "flex", flexDirection: "column", gap: "1.5" } });
+
+/** 화자 선택은 입력창 위에 작게 붙는다. */
+const Speaker = styled("div", { base: { width: "40" } });
+
+const Row = styled("div", { base: { display: "flex", gap: "2", alignItems: "flex-start" } });
+
+const Grow = styled("div", { base: { flex: "1", minWidth: "0" } });
+
+const Remaining = styled("p", {
+  base: { alignSelf: "flex-end", fontSize: "xs", color: "fg.subtle" },
+});
+
 export function MessageInput({
   side,
   characters,
@@ -43,20 +58,47 @@ export function MessageInput({
       resetOnSuccess={["text"]}
       onSubmit={(values) => onSubmit({ side, ...values })}
     >
-      <SimpleSelect
-        name="as"
-        label={`${label} 화자`}
-        items={characters.map((character) => ({ label: character.name, value: character.id }))}
-      />
-      <SimpleTextarea name="text" label={`${label} 대화`} submitOnEnter />
-      <SimpleWatch name="text">
-        {(text) => (
-          <p role="status" aria-label={`${label} 남은 글자 수`}>
-            {remainingGraphemes(String(text))}
-          </p>
-        )}
-      </SimpleWatch>
-      <SubmitButton>{label}로 남기기</SubmitButton>
+      <Layout>
+        <Speaker>
+          <SimpleSelect
+            name="as"
+            label={`${label} 화자`}
+            hideLabel
+            size="sm"
+            items={characters.map((character) => ({
+              label: character.name,
+              value: character.id,
+            }))}
+          />
+        </Speaker>
+        <Row>
+          <Grow>
+            <SimpleTextarea
+              name="text"
+              label={`${label} 대화`}
+              hideLabel
+              submitOnEnter
+              rows={2}
+              resize="none"
+            />
+          </Grow>
+          {/* Enter로 남기므로 버튼은 보조 수단이라 작고 흐리게 둔다 */}
+          <SubmitButton
+            variant="subtle"
+            aria-label={`${label}로 남기기`}
+            title={`${label}로 남기기 (Enter)`}
+          >
+            <SendHorizontal />
+          </SubmitButton>
+        </Row>
+        <SimpleWatch name="text">
+          {(text) => (
+            <Remaining role="status" aria-label={`${label} 남은 글자 수`}>
+              {remainingGraphemes(String(text))}
+            </Remaining>
+          )}
+        </SimpleWatch>
+      </Layout>
     </SimpleForm>
   );
 }
