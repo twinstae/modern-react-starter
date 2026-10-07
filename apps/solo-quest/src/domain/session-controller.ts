@@ -158,6 +158,8 @@ export function createSessionController({
           .join("\n");
         restored[input.side] = { key: ++restoredCount, as: input.as, text };
       }
+      // 다시 불러오는 동안에도 충돌을 바로 알린다
+      publish();
       try {
         await reload();
       } catch {

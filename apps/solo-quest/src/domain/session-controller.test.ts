@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
 import { createFakeEventLog } from "./event-log-store.fake.ts";
 import { postedEvent } from "./session.fixture.ts";
-import { createSessionController } from "./session-controller.ts";
+import { createSessionController, type SessionView } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
 
 /** 항상 0.5를 내는 난수. d6은 4가 나온다. */
@@ -22,6 +22,23 @@ const newController = (eventLog: EventLogStore) =>
     eventLog,
     random: fixedRandom,
     generateId: sequentialIds(),
+  });
+
+/** 스냅샷이 조건을 만족할 때까지 기다린다. 타이머 없이 구독 알림으로만 기다린다. */
+const untilView = (
+  controller: ReturnType<typeof newController>,
+  isReady: (view: SessionView) => boolean,
+) =>
+  new Promise<SessionView>((resolve) => {
+    const check = () => {
+      const view = controller.getSnapshot();
+      if (!isReady(view)) return false;
+      unsubscribe();
+      resolve(view);
+      return true;
+    };
+    const unsubscribe = controller.subscribe(check);
+    check();
   });
 
 describe("세션 컨트롤러", () => {
@@ -475,5 +492,35 @@ describe("세션 컨트롤러", () => {
 
     expect(result).toBe("최신 기록을 불러오지 못했습니다. 다시 시도하려면 새로 기록하세요");
     expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual(["failed"]);
+  });
+
+  it("충돌 뒤 다시 불러오는 동안 들어온 제출은 불러오기가 끝난 뒤 그 위에 받아들여진다", async () => {
+    const log = createFakeEventLog();
+    const controller = newController(log.store);
+    await controller.load();
+    await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
+    log.holdReads();
+
+    await controller.submit({ side: "player", as: "player", text: "충돌할 기록" });
+    // 충돌을 알아채 다시 불러오는 중이 될 때까지 기다린다
+    await untilView(controller, (view) => view.notice !== undefined);
+    const duringReload = controller.submit({
+      side: "player",
+      as: "player",
+      text: "불러오는 중의 기록",
+    });
+    log.releaseRead();
+    await duringReload;
+    await controller.idle();
+
+    expect(
+      controller
+        .getSnapshot()
+        .entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
+    ).toStrictEqual([
+      ["committed", "다른 탭"],
+      ["committed", "불러오는 중의 기록"],
+    ]);
+    expect((await log.otherTab.read("s-1")).map((event) => event.version)).toStrictEqual([1, 2, 3]);
   });
 });

@@ -5,6 +5,7 @@ import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store
  * - `hold()` 뒤의 저장은 `releaseNext()`로 하나씩 풀어 주기 전까지 끝나지 않는다.
  * - `failNext(error)`는 다음 저장 하나를 그 오류로 실패시킨다.
  * - `mostAtOnce`는 저장이 동시에 진행된 가장 많은 수다. 순서대로 하나씩 저장하는지 확인하는 데 쓴다.
+ * - `holdReads()` 뒤의 읽기는 `releaseRead()`로 풀어 주기 전까지 끝나지 않는다.
  * - `failNextRead(error)`는 다음 읽기 하나를 그 오류로 실패시킨다.
  * - `otherTab`은 같은 저장소에 직접 쓴다. 이 컨트롤러가 모르는 사이에 다른 탭이 기록한 것과 같다.
  */
@@ -15,6 +16,9 @@ export function createFakeEventLog() {
   const waiting: Array<() => void> = [];
   const failures: Error[] = [];
   const readFailures: Error[] = [];
+  let holdingReads = false;
+  let readPermits = 0;
+  const waitingReads: Array<() => void> = [];
   let running = 0;
   let mostAtOnce = 0;
 
@@ -31,6 +35,10 @@ export function createFakeEventLog() {
 
   const store: EventLogStore = {
     async read(sessionId) {
+      if (holdingReads) {
+        if (readPermits > 0) readPermits -= 1;
+        else await new Promise<void>((resolve) => waitingReads.push(resolve));
+      }
       const failure = readFailures.shift();
       if (failure) throw failure;
       return memory.read(sessionId);
@@ -64,6 +72,14 @@ export function createFakeEventLog() {
     },
     failNext(error: Error) {
       failures.push(error);
+    },
+    holdReads() {
+      holdingReads = true;
+    },
+    releaseRead() {
+      const next = waitingReads.shift();
+      if (next) next();
+      else readPermits += 1;
     },
     failNextRead(error: Error) {
       readFailures.push(error);
