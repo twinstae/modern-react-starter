@@ -32,7 +32,7 @@ export default defineConfig({
           // elysia 앱을 메모리 저장소로 HTTP 요청 테스트한다. 영속성을 모른다.
           name: "api",
           environment: "node",
-          include: ["src/server/**/*.test.ts", "src/http-event-log.test.ts"],
+          include: ["src/server/**/*.test.ts"],
         },
       },
       {

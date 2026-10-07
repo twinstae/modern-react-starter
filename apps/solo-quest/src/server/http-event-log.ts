@@ -1,6 +1,6 @@
-import type { createApiClient } from "./api-client.ts";
-import { VersionConflictError, type EventLogStore } from "./server/event-log-store.ts";
-import { ApiError, unwrap } from "./unwrap.ts";
+import type { createApiClient } from "../api-client.ts";
+import { VersionConflictError, type EventLogStore } from "./event-log-store.ts";
+import { ApiError, unwrap } from "../unwrap.ts";
 
 /**
  * eden 클라이언트로 서버의 이벤트 API를 부르는 이벤트 로그 저장소. 409 응답은 충돌 예외로 바꾼다.
