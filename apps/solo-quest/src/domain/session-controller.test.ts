@@ -480,4 +480,29 @@ describe("세션 컨트롤러", () => {
     expect(entries.map((entry) => entry.status)).toStrictEqual(["committed"]);
     expect(restored.player?.text).toBe("첫째\n둘째");
   });
+
+  it("저장에 실패한 뒤 다음 제출은 서버의 로그를 다시 불러온 위에서 저장되고, 실패한 기록은 사라진다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    log.failNext(new Error("네트워크 오류"));
+    await controller.submit({ side: "master", as: "gm", text: "저장 못 하는 기록" });
+    await controller.idle();
+    expect(controller.getSnapshot().entries.map((entry) => entry.status)).toStrictEqual(["failed"]);
+
+    await controller.submit({ side: "master", as: "gm", text: "다시 쓴 기록" });
+    await controller.idle();
+
+    expect(
+      controller
+        .getSnapshot()
+        .entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
+    ).toStrictEqual([["committed", "다시 쓴 기록"]]);
+    expect((await log.otherTab.read("s-1")).map((event) => event.version)).toStrictEqual([1, 2]);
+  });
 });

@@ -179,7 +179,15 @@ export function createSessionController({
    * 엔티티에 일을 시키고 곧바로 화면에 반영한 뒤 저장을 시작한다. 저장을 기다리지 않는다.
    * 규칙 위반이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 아니면 undefined다.
    */
-  function commit(record: (current: Session) => void, input?: SubmittedInput): string | undefined {
+  async function commit(
+    record: (current: Session) => void,
+    input?: SubmittedInput,
+  ): Promise<string | undefined> {
+    // 저장이 실패한 뒤의 첫 제출은 서버의 로그를 다시 불러온 위에서 받는다. 실패한 기록은 여기서 사라진다.
+    if (halted) {
+      await settling;
+      if (halted) await readLog();
+    }
     if (!session) return "아직 시작되지 않은 세션입니다";
     try {
       record(session);
