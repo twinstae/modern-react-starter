@@ -1,4 +1,4 @@
-import { Button, Collapsible, SimpleForm, SimpleInput, SubmitButton } from "@repo/ui";
+import { Button, Popover, SimpleForm, SimpleInput, SubmitButton } from "@repo/ui";
 import { Archive, ChevronDown, Plus } from "lucide-react";
 import { useState } from "react";
 import { styled } from "styled-system/jsx";
@@ -17,28 +17,6 @@ interface CharacterPanelProps {
   /** 캐릭터를 보관한다. 오류 메시지를 돌려주면 보여 준다. */
   onArchive: (characterId: string) => Promise<string | undefined>;
 }
-
-// 닫혀 있으면 버튼 하나만 자리를 차지한다. 열면 아래에 겹쳐 떠서 로그와 입력창을 밀어내지 않는다.
-const Anchor = styled("div", { base: { position: "relative" } });
-
-const Floating = styled("div", {
-  base: {
-    position: "absolute",
-    right: "0",
-    top: "100%",
-    zIndex: "dropdown",
-    width: "64",
-    maxHeight: "60dvh",
-    overflowY: "auto",
-    mt: "1",
-    p: "3",
-    bg: "bg.default",
-    borderWidth: "1px",
-    borderColor: "border",
-    borderRadius: "l2",
-    boxShadow: "lg",
-  },
-});
 
 const List = styled("ul", {
   base: { display: "flex", flexDirection: "column", gap: "1", listStyle: "none", p: "0" },
@@ -74,13 +52,17 @@ export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelP
   const [archiveError, setArchiveError] = useState<string>();
 
   return (
-    <Collapsible.Root>
-      <Anchor>
-        <Collapsible.Trigger>
+    // 패널은 트리거 옆에 떠서 로그와 입력창을 밀어내지 않고, 바깥을 누르거나 Esc로 닫힌다
+    <Popover.Root positioning={{ placement: "bottom-end" }}>
+      <Popover.Trigger asChild>
+        <Button variant="plain" size="sm">
           캐릭터 {active.length} <ChevronDown />
-        </Collapsible.Trigger>
-        <Collapsible.Content>
-          <Floating>
+        </Button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner>
+          <Popover.Content>
+            <Popover.Title>캐릭터</Popover.Title>
             <List aria-label="활성 캐릭터">
               {active.map((character) => (
                 <Row key={character.id} aria-label={character.name}>
@@ -132,9 +114,9 @@ export function CharacterPanel({ characters, onAdd, onArchive }: CharacterPanelP
                 </AddRow>
               </SimpleForm>
             </AddWrap>
-          </Floating>
-        </Collapsible.Content>
-      </Anchor>
-    </Collapsible.Root>
+          </Popover.Content>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
