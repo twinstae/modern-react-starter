@@ -41,6 +41,9 @@ const Remaining = styled("p", {
   base: { alignSelf: "flex-end", fontSize: "xs", color: "fg.subtle" },
 });
 
+/** 남은 글자 수는 덜 중요한 정보라, 이만큼 남았을 때부터 보인다. */
+const SHOW_REMAINING_AT = 20;
+
 export function MessageInput({
   side,
   characters,
@@ -92,11 +95,15 @@ export function MessageInput({
           </SubmitButton>
         </Row>
         <SimpleWatch name="text">
-          {(text) => (
-            <Remaining role="status" aria-label={`${label} 남은 글자 수`}>
-              {remainingGraphemes(String(text))}
-            </Remaining>
-          )}
+          {(text) => {
+            const remaining = remainingGraphemes(String(text));
+            if (remaining > SHOW_REMAINING_AT) return null;
+            return (
+              <Remaining role="status" aria-label={`${label} 남은 글자 수`}>
+                {remaining}
+              </Remaining>
+            );
+          }}
         </SimpleWatch>
       </Layout>
     </SimpleForm>

@@ -1,3 +1,4 @@
+import { screen } from "@testing-library/dom";
 import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
@@ -61,12 +62,19 @@ describe("MessageInput", () => {
     );
   });
 
-  it("입력하는 동안 남은 글자 수가 줄어든다", async () => {
+  it("남은 글자 수는 20자 이하로 남았을 때부터 보인다", async () => {
+    // siheom 0.3.0의 not.visible과 count(0)은 요소가 없음을 확인하지 못해서 직접 확인한다
+    const remaining = () => screen.queryByRole("status", { name: "마스터 남은 글자 수" });
+
+    await runSiheom(given.render(<MessageInput {...Stories.Master.args} />));
+    expect(remaining()).toBeNull();
+
+    await runSiheom(actions.fill(query.textbox("마스터 대화"), "가".repeat(119)));
+    expect(remaining()).toBeNull();
+
     await runSiheom(
-      given.render(<MessageInput {...Stories.Master.args} />),
-      assertions.textContent(query.status("마스터 남은 글자 수"), "140"),
-      actions.fill(query.textbox("마스터 대화"), "문이 열린다"),
-      assertions.textContent(query.status("마스터 남은 글자 수"), "134"),
+      actions.fill(query.textbox("마스터 대화"), "가".repeat(120)),
+      assertions.textContent(query.status("마스터 남은 글자 수"), "20"),
     );
   });
 
