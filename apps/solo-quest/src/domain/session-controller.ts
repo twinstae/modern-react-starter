@@ -78,6 +78,30 @@ export function createSessionController({
     publish();
   }
 
+  /**
+   * 엔티티에 일을 시키고 커밋한다. 규칙 위반, 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고,
+   * 성공하면 undefined다. 저장하지 못한 것 같은 다른 오류는 다시 던진다.
+   */
+  async function commit(record: (current: Session) => void): Promise<string | undefined> {
+    if (!session) return "아직 시작되지 않은 세션입니다";
+    const current = session;
+    try {
+      record(current);
+      await repository.commit(current);
+      events = [...events, ...committed];
+      publish();
+    } catch (error) {
+      if (error instanceof RuleViolation) return error.message;
+      if (error instanceof VersionConflictError) {
+        await readLog();
+        return "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
+      }
+      // 저장하지 못한 이벤트가 엔티티 큐에 남지 않게 메모리의 목록으로 되돌린다
+      session = (await restore(events)) ?? undefined;
+      throw error;
+    }
+  }
+
   return {
     subscribe(listener: () => void) {
       listeners.add(listener);
@@ -111,34 +135,18 @@ export function createSessionController({
       as: string;
       text: string;
     }): Promise<string | undefined> {
-      if (!session) return "아직 시작되지 않은 세션입니다";
-      const current = session;
       const input = parseInput(text);
       if (input.type === "error") return input.message;
-      let record: () => void;
+      let record: (current: Session) => void;
       if (input.type === "message") {
-        record = () => current.postMessage(side, as, input.content);
+        record = (current) => current.postMessage(side, as, input.content);
       } else {
         const notation = parseNotation(input.notation);
         if (!notation.ok) return notation.message;
         const result = roll(notation.terms, random);
-        record = () => current.rollDice(side, as, input.notation, result, input.label);
+        record = (current) => current.rollDice(side, as, input.notation, result, input.label);
       }
-      try {
-        record();
-        await repository.commit(session);
-        events = [...events, ...committed];
-        publish();
-      } catch (error) {
-        if (error instanceof RuleViolation) return error.message;
-        if (error instanceof VersionConflictError) {
-          await readLog();
-          return "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
-        }
-        // 저장하지 못한 이벤트가 엔티티 큐에 남지 않게 메모리의 목록으로 되돌린다
-        session = (await restore(events)) ?? undefined;
-        throw error;
-      }
+      return commit(record);
     },
   };
 }
