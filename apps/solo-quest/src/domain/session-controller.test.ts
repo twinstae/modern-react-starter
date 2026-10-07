@@ -317,4 +317,29 @@ describe("세션 컨트롤러", () => {
       "committed",
     ]);
   });
+
+  it("저장이 실패한 이벤트는 failed로 남고, 이미 저장된 이벤트는 그대로 committed다", async () => {
+    const log = createFakeEventLog();
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: log.store,
+      random: fixedRandom,
+      generateId: sequentialIds(),
+    });
+    await controller.load();
+    await controller.submit({ side: "master", as: "gm", text: "저장되는 기록" });
+    log.failNext(new Error("네트워크 오류"));
+
+    const result = await controller.submit({ side: "master", as: "gm", text: "저장 못 하는 기록" });
+
+    expect(result).toBeUndefined();
+    expect(
+      controller
+        .getSnapshot()
+        .entries.map((entry) => [entry.status, entry.kind === "message" && entry.content]),
+    ).toStrictEqual([
+      ["committed", "저장되는 기록"],
+      ["failed", "저장 못 하는 기록"],
+    ]);
+  });
 });

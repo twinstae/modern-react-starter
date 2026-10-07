@@ -20,6 +20,12 @@ export interface SessionView {
   characters: Character[];
 }
 
+/** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들과 그 상태 */
+interface Unsaved {
+  events: SessionEvent[];
+  status: Exclude<EntryStatus, "committed">;
+}
+
 /** 불러오기 전의 모습 */
 const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [] };
 
@@ -47,7 +53,7 @@ export function createSessionController({
   });
 
   /** 저장 전 묶음: 한 번의 mutation이 만든 이벤트들. 저장이 끝나기를 기다린다. */
-  let unsaved: Array<{ events: SessionEvent[] }> = [];
+  let unsaved: Unsaved[] = [];
   /** 저장을 한 번에 하나씩 순서대로 하도록 줄 세우는 꼬리 */
   let tail: Promise<void> = Promise.resolve();
   /**
@@ -57,10 +63,16 @@ export function createSessionController({
   const queuedStore: EventLogStore = {
     read: eventLog.read,
     append(id, expectedVersion, batch) {
-      const entry = { events: batch };
+      const entry: Unsaved = { events: batch, status: "pending" };
       unsaved.push(entry);
       const saving = tail.then(async () => {
-        await eventLog.append(id, expectedVersion, batch);
+        try {
+          await eventLog.append(id, expectedVersion, batch);
+        } catch (error) {
+          entry.status = "failed";
+          publish();
+          throw error;
+        }
         events = [...events, ...batch];
         unsaved = unsaved.filter((other) => other !== entry);
         publish();
@@ -83,7 +95,9 @@ export function createSessionController({
   const publish = () => {
     const all = [...events, ...unsaved.flatMap((entry) => entry.events)];
     const statuses = new Map<string, EntryStatus>(
-      unsaved.flatMap((entry) => entry.events.map((event) => [event.eventId, "pending"] as const)),
+      unsaved.flatMap((entry) =>
+        entry.events.map((event) => [event.eventId, entry.status] as const),
+      ),
     );
     snapshot = {
       events: all,
@@ -130,10 +144,8 @@ export function createSessionController({
         await readLog();
         return "다른 곳에서 먼저 기록했습니다. 최신 기록을 다시 불러왔습니다";
       }
-      // 저장하지 못한 이벤트가 엔티티 큐에 남지 않게 메모리의 목록으로 되돌린다
-      unsaved = [];
-      session = (await restore(events)) ?? undefined;
-      throw error;
+      // 저장하지 못한 이벤트는 failed로 화면에 남아 있다
+      return undefined;
     }
   }
 
