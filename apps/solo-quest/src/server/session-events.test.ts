@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { postedEvent, startedEvent } from "../domain/session.fixture.ts";
+import { postedEvent, rolledEvent, startedEvent } from "../domain/session.fixture.ts";
 import type { SessionEvent } from "../domain/session.ts";
 import { unwrap } from "../unwrap.ts";
 import { createTestClient, TEST_ID } from "./test-client.ts";
@@ -18,6 +18,15 @@ describe("세션 이벤트 API", () => {
 
     await unwrap(session.events.post({ expectedVersion: 0, events: [events[0]] }));
     await unwrap(session.events.post({ expectedVersion: 1, events: [events[1]] }));
+
+    expect(await unwrap(session.events.get())).toStrictEqual(events);
+  });
+
+  it("판정 이벤트도 커밋하고 조회하면 굴린 결과가 그대로 돌아온다", async () => {
+    const { session } = await setup();
+    const events = [startedEvent(TEST_ID), rolledEvent(TEST_ID, 2, "자물쇠 따기")];
+
+    await unwrap(session.events.post({ expectedVersion: 0, events }));
 
     expect(await unwrap(session.events.get())).toStrictEqual(events);
   });
@@ -46,6 +55,7 @@ describe("세션 이벤트 API", () => {
 
   it.each([
     ["141자 내용의 이벤트", 0, [postedEvent(TEST_ID, 1, "가".repeat(141))]],
+    ["141자 라벨의 판정 이벤트", 0, [rolledEvent(TEST_ID, 1, "가".repeat(141))]],
     ["스키마에 없는 이벤트", 0, [{ ...startedEvent(TEST_ID), eventName: "session:unknown" }]],
     ["버전을 건너뛴 이벤트", 0, [startedEvent(TEST_ID), postedEvent(TEST_ID, 3, "건너뜀")]],
     ["버전이 겹친 이벤트", 0, [startedEvent(TEST_ID), postedEvent(TEST_ID, 1, "겹침")]],
