@@ -1,14 +1,21 @@
 import type { Side, SessionEvent } from "./session.ts";
 
-/** 로그 화면이 그리는 항목 하나. 이벤트에서 만든 표시용 값이다. */
-export interface LogEntry {
+/** 어느 항목이든 가진 값 */
+interface BaseEntry {
   id: string;
   side: Side;
   speakerName: string;
-  content: string;
   /** Instant, ISO 문자열 */
   createdAt: string;
 }
+
+export interface MessageEntry extends BaseEntry {
+  kind: "message";
+  content: string;
+}
+
+/** 로그 화면이 그리는 항목 하나. 이벤트에서 만든 표시용 값이다. */
+export type LogEntry = MessageEntry;
 
 /**
  * 이벤트 로그를 화면 항목으로 바꾼다. 화자 이름은 로그에 적힌 캐릭터에서 찾으므로,
@@ -22,6 +29,7 @@ export function toLogEntries(events: SessionEvent[]): LogEntry[] {
       for (const character of event.body.characters) names.set(character.id, character.name);
     } else if (event.eventName === "session:message_posted") {
       entries.push({
+        kind: "message",
         id: event.eventId,
         side: event.body.side,
         speakerName: names.get(event.body.as) ?? event.body.as,

@@ -13,6 +13,7 @@ describe("이벤트를 로그 항목으로", () => {
 
     expect(toLogEntries(events)).toStrictEqual([
       {
+        kind: "message",
         id: "s-1-event-2",
         side: "master",
         speakerName: "GM",
@@ -20,6 +21,7 @@ describe("이벤트를 로그 항목으로", () => {
         createdAt: "2026-10-07T12:00:00Z",
       },
       {
+        kind: "message",
         id: "s-1-event-3",
         side: "player",
         speakerName: "Player",
