@@ -36,35 +36,42 @@ export type LogEntry = MessageEntry | RollEntry;
 export function toLogEntries(events: SessionEvent[]): LogEntry[] {
   const names = new Map<string, string>();
   const entries: LogEntry[] = [];
+  const baseOf = (event: Extract<SessionEvent, { body: { side: Side; as: string } }>) => ({
+    id: event.eventId,
+    side: event.body.side,
+    speakerId: event.body.as,
+    speakerName: names.get(event.body.as) ?? event.body.as,
+    createdAt: event.eventCreatedAt,
+  });
   for (const event of events) {
-    if (event.eventName === "session:started") {
-      for (const character of event.body.characters) names.set(character.id, character.name);
-      continue;
-    }
-    if (event.eventName === "session:character_added") {
-      names.set(event.body.characterId, event.body.name);
-      continue;
-    }
-    if (event.eventName === "session:character_archived") continue;
-    const base = {
-      id: event.eventId,
-      side: event.body.side,
-      speakerId: event.body.as,
-      speakerName: names.get(event.body.as) ?? event.body.as,
-      createdAt: event.eventCreatedAt,
-    };
-    if (event.eventName === "session:message_posted") {
-      entries.push({ kind: "message", ...base, content: event.body.content });
-    } else if (event.eventName === "session:dice_rolled") {
-      const { notation, terms, total, label } = event.body;
-      entries.push({
-        kind: "roll",
-        ...base,
-        notation,
-        terms,
-        total,
-        ...(label !== undefined && { label }),
-      });
+    // 이벤트를 새로 정의하면 여기서 어떻게 보일지 정하기 전까지 타입 검사가 실패한다.
+    switch (event.eventName) {
+      case "session:started":
+        for (const character of event.body.characters) names.set(character.id, character.name);
+        break;
+      case "session:character_added":
+        names.set(event.body.characterId, event.body.name);
+        break;
+      case "session:character_archived":
+        // 보관해도 이름은 남아 지난 기록에 그대로 보인다
+        break;
+      case "session:message_posted":
+        entries.push({ kind: "message", ...baseOf(event), content: event.body.content });
+        break;
+      case "session:dice_rolled": {
+        const { notation, terms, total, label } = event.body;
+        entries.push({
+          kind: "roll",
+          ...baseOf(event),
+          notation,
+          terms,
+          total,
+          ...(label !== undefined && { label }),
+        });
+        break;
+      }
+      default:
+        event satisfies never;
     }
   }
   return entries;
