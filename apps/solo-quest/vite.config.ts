@@ -19,7 +19,7 @@ export default defineConfig({
           // 도메인과 순수 로직, 저장소 계약 테스트
           name: "domain",
           environment: "node",
-          include: ["src/domain/**/*.test.ts"],
+          include: ["src/domain/**/*.test.ts", "src/persistence/**/*.test.ts"],
         },
       },
       {
