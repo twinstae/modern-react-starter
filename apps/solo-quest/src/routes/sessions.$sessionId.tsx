@@ -30,21 +30,27 @@ export const Route = createFileRoute("/sessions/$sessionId")({
   component: SessionPage,
 });
 
+// 화면 높이에 맞춘다. 로그만 스크롤하고 입력창은 아래에 남는다.
 const Main = styled("main", {
   base: {
-    maxWidth: "4xl",
+    maxWidth: "3xl",
+    height: "100dvh",
     mx: "auto",
     px: "4",
-    py: "8",
+    py: "4",
     display: "flex",
     flexDirection: "column",
-    gap: "6",
+    gap: "3",
   },
 });
 
+const Title = styled("h1", { base: { textStyle: "xl", fontWeight: "semibold" } });
+
+const LogScroll = styled("div", { base: { flex: "1", minHeight: "0", overflowY: "auto" } });
+
 // 마스터 입력창은 왼쪽, 플레이어 입력창은 오른쪽
 const Inputs = styled("div", {
-  base: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4" },
+  base: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3" },
 });
 
 const SIDES: Side[] = ["master", "player"];
@@ -57,8 +63,10 @@ function SessionPage() {
 
   return (
     <Main>
-      <h1>{session.title}</h1>
-      <SessionLog entries={view.entries} />
+      <Title>{session.title}</Title>
+      <LogScroll>
+        <SessionLog entries={view.entries} />
+      </LogScroll>
       <Inputs>
         {SIDES.map((side) => (
           <MessageInput
