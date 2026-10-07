@@ -123,4 +123,20 @@ describe("세션", () => {
       { side: "master", as: "gm", notation: "2d6+1", ...rolled },
     ]);
   });
+
+  it("캐릭터를 추가하면 앞뒤 공백을 뺀 이름의 활성 캐릭터가 목록 끝에 생기고, 커밋하고 다시 불러와도 같다", async () => {
+    const repository = createSessionRepository(createEventLogAdapter(createMemoryEventLogStore()));
+    const session = startSession();
+
+    session.addCharacter(" 경비병 ");
+    await repository.commit(session);
+    const reloaded = await repository.findOne({ entityId: "session-1" });
+
+    expect(session.version).toBe(2);
+    expect(session.state.characters.slice(0, 2)).toStrictEqual(DEFAULT_CHARACTERS);
+    expect(session.state.characters.slice(2)).toStrictEqual([
+      { id: expect.any(String), name: "경비병", archived: false, isDefault: false },
+    ]);
+    expect(reloaded?.state).toStrictEqual(session.state);
+  });
 });

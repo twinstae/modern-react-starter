@@ -38,12 +38,13 @@ export const DEFAULT_SPEAKER: Record<Side, string> = { master: "gm", player: "pl
 /**
  * 세션 하나가 엔티티 하나다. 브라우저와 서버가 이 스키마를 공유한다.
  * 이벤트 정의는 여기 `event` 한 곳이다. 이벤트를 추가하려면 여기에 본문을 적고 reducer를 고치면 된다.
- * 상태는 캐릭터 목록뿐이고, 대화는 상태를 바꾸지 않는다.
+ * 상태는 캐릭터 목록뿐이다. 캐릭터를 더하고 보관하는 이벤트만 상태를 바꾸고, 대화와 판정은 바꾸지 않는다.
  */
 export const sessionSchema = defineSchema("session", {
   schema: valibot({
     event: {
       started: v.object({ characters: v.array(Character) }),
+      character_added: v.object({ characterId: v.string(), name: ShortText }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
       /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
       dice_rolled: v.object({
@@ -88,6 +89,13 @@ const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
   switch (event.eventName) {
     case "session:started":
       return { characters: event.body.characters };
+    case "session:character_added":
+      return {
+        characters: [
+          ...prevState.characters,
+          { id: event.body.characterId, name: event.body.name, archived: false, isDefault: false },
+        ],
+      };
     default:
       return prevState;
   }
@@ -114,6 +122,14 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     const speaker = this.state.characters.find((character) => character.id === characterId);
     if (!speaker || speaker.archived) throw new RuleViolation("말할 수 없는 캐릭터입니다");
   }
+
+  /** 이름만 가진 활성 캐릭터를 더한다. 이름은 짧은 글 규칙을 따른다. */
+  addCharacter = mutation(this, (dispatch, name: string) => {
+    dispatch("session:character_added", {
+      characterId: uuidv7(),
+      name: parseShortText(name),
+    });
+  });
 
   postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {
     const content = parseShortText(text);

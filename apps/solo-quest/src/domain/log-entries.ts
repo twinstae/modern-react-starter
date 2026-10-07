@@ -39,6 +39,7 @@ export function toLogEntries(events: SessionEvent[]): LogEntry[] {
       for (const character of event.body.characters) names.set(character.id, character.name);
       continue;
     }
+    if (event.eventName === "session:character_added") continue;
     const base = {
       id: event.eventId,
       side: event.body.side,
