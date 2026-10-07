@@ -39,13 +39,22 @@ export function createFileEventLogStore(
         return { events: [], intactBytes: 0, broken: false };
       throw error;
     }
-    const intact = text.slice(0, text.lastIndexOf("\n") + 1);
-    const broken = intact.length < text.length;
-    if (broken) warn(`${sessionId}: 마지막 줄이 끊겨 있어 무시합니다`);
-    const events = intact
-      .split("\n")
-      .filter((line) => line !== "")
-      .map((line) => JSON.parse(line) as SessionEvent);
+    // 마지막 줄바꿈 뒤의 조각은 쓰다 만 것이다
+    const lines = text.split("\n");
+    let broken = lines.pop() !== "";
+    const parse = (line: string) => JSON.parse(line) as SessionEvent;
+    // 줄바꿈으로 끝났어도 마지막 줄이 JSON이 아니면 깨진 줄이다. 그 앞 줄이 깨졌다면 손상이라 오류로 둔다.
+    if (lines.length > 0) {
+      try {
+        parse(lines.at(-1) ?? "");
+      } catch {
+        lines.pop();
+        broken = true;
+      }
+    }
+    if (broken) warn(`${sessionId}: 마지막 줄이 깨져 있어 무시합니다`);
+    const events = lines.filter((line) => line !== "").map(parse);
+    const intact = lines.map((line) => `${line}\n`).join("");
     return { events, intactBytes: Buffer.byteLength(intact), broken };
   };
 
