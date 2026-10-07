@@ -85,4 +85,15 @@ describe("굴림", () => {
       total: 4 + 6 - 1 - 2 + 10,
     });
   });
+
+  const LARGEST_BELOW_ONE = 1 - Number.EPSILON / 2;
+
+  it.each([2, 3, 6, 7, 10, 20, 100, 999, MAX_SIDES])(
+    "난수가 0이면 d%i는 1이고, 1에 가장 가까우면 면 수가 나온다",
+    (sides) => {
+      const { terms } = roll([dice(2, sides)], sequence(0, LARGEST_BELOW_ONE));
+
+      expect(terms).toStrictEqual([{ type: "dice", sign: 1, sides, values: [1, sides] }]);
+    },
+  );
 });
