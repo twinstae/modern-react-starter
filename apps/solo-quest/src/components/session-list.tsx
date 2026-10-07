@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { styled } from "styled-system/jsx";
-import { Temporal } from "temporal-polyfill";
 
+import { formatInstant } from "../format-instant.ts";
 import type { SessionSummary } from "../server/session-list-store.ts";
 
 const List = styled("ul", {
@@ -23,9 +23,6 @@ const Item = styled("li", {
 });
 
 const CreatedAt = styled("time", { base: { color: "fg.muted", fontSize: "sm" } });
-
-const formatInstant = (iso: string) =>
-  Temporal.Instant.from(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 export function SessionList({ sessions }: { sessions: SessionSummary[] }) {
   return (
