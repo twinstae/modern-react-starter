@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { createDrizzleSessionListStore, openDatabase } from "./database.ts";
+import { sessions } from "./schema.ts";
 import {
   createMemorySessionListStore,
   type SessionListStore,
@@ -34,3 +36,10 @@ function describeSessionListStore(name: string, makeStore: () => Promise<Session
 }
 
 describeSessionListStore("메모리", async () => createMemorySessionListStore());
+// PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸리므로 DB는 파일에서 한 번만 열고, 테스트마다 비운다.
+const database = openDatabase();
+describeSessionListStore("drizzle, PGlite", async () => {
+  const db = await database;
+  await db.delete(sessions);
+  return createDrizzleSessionListStore(db);
+});

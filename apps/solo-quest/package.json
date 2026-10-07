@@ -10,7 +10,8 @@
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

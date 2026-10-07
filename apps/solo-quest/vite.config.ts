@@ -19,6 +19,8 @@ export default defineConfig({
           // 도메인과 순수 로직, 저장소 계약 테스트
           name: "domain",
           environment: "node",
+          // PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸린다. 기본 5초로는 첫 저장소 테스트가 넘친다.
+          testTimeout: 15_000,
           include: ["src/domain/**/*.test.ts", "src/persistence/**/*.test.ts"],
         },
       },
