@@ -5,10 +5,13 @@ import { postedEvent } from "./session.fixture.ts";
 import { createSessionController } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
 
+/** 항상 0.5를 내는 난수. d6은 4가 나온다. */
+const fixedRandom = () => 0.5;
+
 describe("세션 컨트롤러", () => {
   it("로그가 빈 세션을 불러오면 시작 이벤트를 커밋하고, 다시 불러와도 다시 시작하지 않는다", async () => {
     const eventLog = createMemoryEventLogStore();
-    const controller = createSessionController({ sessionId: "s-1", eventLog });
+    const controller = createSessionController({ sessionId: "s-1", eventLog, random: fixedRandom });
 
     const first = await controller.load();
     const second = await controller.load();
@@ -22,6 +25,7 @@ describe("세션 컨트롤러", () => {
     const controller = createSessionController({
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
     });
     await controller.load();
 
@@ -48,7 +52,11 @@ describe("세션 컨트롤러", () => {
       },
       append: memory.append,
     };
-    const controller = createSessionController({ sessionId: "s-1", eventLog: counting });
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: counting,
+      random: fixedRandom,
+    });
 
     await controller.load();
     await controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
@@ -64,6 +72,7 @@ describe("세션 컨트롤러", () => {
     const controller = createSessionController({
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
     });
     const notified: number[] = [];
     const unsubscribe = controller.subscribe(() => {
@@ -99,6 +108,7 @@ describe("세션 컨트롤러", () => {
     const controller = createSessionController({
       sessionId: "s-1",
       eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
     });
     await controller.load();
 
@@ -126,7 +136,11 @@ describe("세션 컨트롤러", () => {
         await memory.append(sessionId, expectedVersion, events);
       },
     };
-    const controller = createSessionController({ sessionId: "s-1", eventLog: racing });
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: racing,
+      random: fixedRandom,
+    });
     await controller.load();
     otherTabIsWriting = true;
 
@@ -137,5 +151,36 @@ describe("세션 컨트롤러", () => {
       { characters: DEFAULT_CHARACTERS },
       { side: "master", as: "gm", content: "다른 탭" },
     ]);
+  });
+
+  it("/r 입력은 주입한 난수로 굴려 굴린 결과를 라벨과 함께 판정으로 남긴다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
+    });
+    await controller.load();
+
+    const result = await controller.submit({
+      side: "player",
+      as: "player",
+      text: "/r 2d6+1 자물쇠 따기",
+    });
+
+    expect(result).toBeUndefined();
+    const { events, entries } = controller.getSnapshot();
+    expect(events.at(-1)?.eventName).toBe("session:dice_rolled");
+    expect(events.at(-1)?.body).toStrictEqual({
+      side: "player",
+      as: "player",
+      notation: "2d6+1",
+      terms: [
+        { type: "dice", sign: 1, sides: 6, values: [4, 4] },
+        { type: "constant", sign: 1, value: 1 },
+      ],
+      total: 9,
+      label: "자물쇠 따기",
+    });
+    expect(entries.map((entry) => entry.kind)).toStrictEqual(["roll"]);
   });
 });

@@ -1,4 +1,6 @@
+import { parseNotation, roll, type Random } from "./dice.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
+import { parseInput } from "./parse-input.ts";
 import { toLogEntries, type LogEntry } from "./log-entries.ts";
 import {
   createSessionRepository,
@@ -29,9 +31,12 @@ const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [] };
 export function createSessionController({
   sessionId,
   eventLog,
+  random,
 }: {
   sessionId: string;
   eventLog: EventLogStore;
+  /** 주사위를 굴릴 난수. 도메인은 난수를 만들지 않고 앱이 넘겨 준다. */
+  random: Random;
 }) {
   let committed: SessionEvent[] = [];
   const adapter = createEventLogAdapter(eventLog, (events) => {
@@ -93,7 +98,10 @@ export function createSessionController({
       return loading.then(() => snapshot);
     },
 
-    /** 대화를 남긴다. 규칙 위반이나 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 성공하면 undefined다. */
+    /**
+     * 입력창에 친 글을 해석해 대화나 판정으로 남긴다.
+     * 잘못된 입력, 규칙 위반, 충돌이면 사용자에게 보여 줄 오류 메시지를 돌려주고, 성공하면 undefined다.
+     */
     async submit({
       side,
       as,
@@ -104,8 +112,16 @@ export function createSessionController({
       text: string;
     }): Promise<string | undefined> {
       if (!session) return "아직 시작되지 않은 세션입니다";
+      const input = parseInput(text);
+      if (input.type === "error") return input.message;
+      const notation = input.type === "roll" ? parseNotation(input.notation) : undefined;
+      if (notation && !notation.ok) return notation.message;
       try {
-        session.postMessage(side, as, text);
+        if (input.type === "roll" && notation?.ok) {
+          session.rollDice(side, as, input.notation, roll(notation.terms, random), input.label);
+        } else if (input.type === "message") {
+          session.postMessage(side, as, input.content);
+        }
         await repository.commit(session);
         events = [...events, ...committed];
         publish();
