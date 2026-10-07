@@ -1,43 +1,51 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import { api } from "../api-client.ts";
-import { ServerStatus, type ServerStatusValue } from "../components/server-status.tsx";
+import { NewSessionForm, type NewSessionValues } from "../components/new-session-form.tsx";
+import { SessionList } from "../components/session-list.tsx";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 const Main = styled("main", {
   base: {
-    minHeight: "screen",
+    maxWidth: "2xl",
+    mx: "auto",
+    px: "4",
+    py: "8",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "2",
+    gap: "6",
   },
 });
 
 function Home() {
-  const health = useQuery({
-    queryKey: ["health"],
+  const queryClient = useQueryClient();
+  // 만든 뒤 폼을 비우기 위해 새로 마운트한다
+  const [formKey, setFormKey] = useState(0);
+  const sessions = useQuery({
+    queryKey: ["sessions"],
     queryFn: async () => {
-      const { data, error } = await api.health.get();
+      const { data, error } = await api.sessions.get();
       if (error) throw error;
       return data;
     },
   });
 
-  const status: ServerStatusValue = health.isPending
-    ? "checking"
-    : health.data?.status === "ok"
-      ? "ok"
-      : "unreachable";
+  const createSession = async (values: NewSessionValues) => {
+    const { error } = await api.sessions.post(values);
+    if (error) throw error;
+    await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    setFormKey((key) => key + 1);
+  };
 
   return (
     <Main>
       <h1>SOLO QUEST</h1>
-      <ServerStatus status={status} />
+      <NewSessionForm key={formKey} onSubmit={createSession} />
+      {sessions.data && <SessionList sessions={sessions.data} />}
     </Main>
   );
 }
