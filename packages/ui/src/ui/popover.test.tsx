@@ -12,18 +12,13 @@ const waitClosed = () =>
   waitFor(() => expect(screen.queryByRole("dialog", { name: "팝오버 제목" })).toBeNull());
 
 describe("Popover", () => {
-  it("트리거를 누르면 제목을 이름으로 가진 대화 상자가 열리고 초점이 안으로 들어간다", async () => {
+  it("트리거를 누르면 제목을 이름으로 가진 대화 상자가 열리고 초점이 안의 첫 버튼으로 간다", async () => {
     await runSiheom(
       given.render(<PopoverExample {...Stories.Default.args} />),
       actions.click(query.button("팝오버 열기")),
       assertions.visible(query.dialog("팝오버 제목")),
       assertions.expanded(query.button("팝오버 열기")),
-    );
-
-    await waitFor(() =>
-      expect(screen.getByRole("dialog", { name: "팝오버 제목" })).toContainElement(
-        document.activeElement as HTMLElement,
-      ),
+      assertions.focused(query.button("안의 버튼")),
     );
   });
 
@@ -33,10 +28,10 @@ describe("Popover", () => {
       actions.click(query.button("팝오버 열기")),
       assertions.visible(query.dialog("팝오버 제목")),
       actions.type(query.button("안의 버튼"), "{Escape}"),
+      assertions.focused(query.button("팝오버 열기")),
     );
 
     await waitClosed();
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "팝오버 열기" }));
   });
 
   it("바깥을 누르면 닫힌다", async () => {
