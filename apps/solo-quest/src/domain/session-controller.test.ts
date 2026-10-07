@@ -221,4 +221,25 @@ describe("세션 컨트롤러", () => {
     expect(reloaded.characters).toStrictEqual(controller.getSnapshot().characters);
     expect(reloaded.entries.map((entry) => entry.speakerName)).toStrictEqual(["경비병"]);
   });
+
+  it("보관한 캐릭터는 더 말할 수 없지만 지난 기록의 이름은 그대로 보인다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
+    });
+    await controller.load();
+    await controller.addCharacter({ name: "경비병" });
+    const guard = controller.getSnapshot().characters.find(({ name }) => name === "경비병")!;
+    await controller.submit({ side: "master", as: guard.id, text: "멈춰라" });
+
+    expect(await controller.archiveCharacter(guard.id)).toBeUndefined();
+
+    const { characters, entries } = controller.getSnapshot();
+    expect(characters.find(({ id }) => id === guard.id)?.archived).toBe(true);
+    expect(entries.map((entry) => entry.speakerName)).toStrictEqual(["경비병"]);
+    expect(await controller.submit({ side: "master", as: guard.id, text: "또 멈춰라" })).toBe(
+      "말할 수 없는 캐릭터입니다",
+    );
+  });
 });

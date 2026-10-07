@@ -152,5 +152,9 @@ export function createSessionController({
     /** 캐릭터를 추가한다. 이름 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
     addCharacter: ({ name }: { name: string }): Promise<string | undefined> =>
       commit((current) => current.addCharacter(name)),
+
+    /** 캐릭터를 보관한다. 규칙을 어기거나 충돌이면 오류 메시지를 돌려주고, 성공하면 undefined다. */
+    archiveCharacter: (characterId: string): Promise<string | undefined> =>
+      commit((current) => current.archiveCharacter(characterId)),
   };
 }
