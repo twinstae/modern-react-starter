@@ -28,8 +28,8 @@ export interface RollEntry extends BaseEntry {
 export type LogEntry = MessageEntry | RollEntry;
 
 /**
- * 이벤트 로그를 화면 항목으로 바꾼다. 화자 이름은 로그에 적힌 캐릭터에서 찾으므로,
- * 나중에 보관된 캐릭터의 지난 기록도 이름이 그대로 보인다.
+ * 이벤트 로그를 화면 항목으로 바꾼다. 화자 이름은 시작할 때 넘겨받았거나 나중에 추가한 캐릭터에서
+ * id로 찾는다. 보관해도 이름은 남으므로 보관된 캐릭터의 지난 기록도 이름이 그대로 보인다.
  */
 export function toLogEntries(events: SessionEvent[]): LogEntry[] {
   const names = new Map<string, string>();
@@ -39,12 +39,11 @@ export function toLogEntries(events: SessionEvent[]): LogEntry[] {
       for (const character of event.body.characters) names.set(character.id, character.name);
       continue;
     }
-    if (
-      event.eventName === "session:character_added" ||
-      event.eventName === "session:character_archived"
-    ) {
+    if (event.eventName === "session:character_added") {
+      names.set(event.body.characterId, event.body.name);
       continue;
     }
+    if (event.eventName === "session:character_archived") continue;
     const base = {
       id: event.eventId,
       side: event.body.side,

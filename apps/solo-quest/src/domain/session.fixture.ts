@@ -16,6 +16,7 @@ export const postedEvent = (
   version: number,
   content: string,
   side: "master" | "player" = "master",
+  speakerId = side === "master" ? "gm" : "player",
 ): SessionEvent => ({
   eventId: `${sessionId}-event-${version}`,
   eventName: "session:message_posted",
@@ -23,7 +24,7 @@ export const postedEvent = (
   entityName: "session",
   entityId: sessionId,
   version,
-  body: { side, as: side === "master" ? "gm" : "player", content },
+  body: { side, as: speakerId, content },
 });
 
 /** 마스터(GM)가 `2d6+1`을 굴려 [4, 6]과 상수 1, 합계 11이 나온 판정 */

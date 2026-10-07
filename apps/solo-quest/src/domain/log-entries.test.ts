@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { toLogEntries } from "./log-entries.ts";
-import { postedEvent, rolledEvent, startedEvent } from "./session.fixture.ts";
+import {
+  characterAddedEvent,
+  characterArchivedEvent,
+  postedEvent,
+  rolledEvent,
+  startedEvent,
+} from "./session.fixture.ts";
 
 describe("이벤트를 로그 항목으로", () => {
   it("대화 이벤트만 편과 화자 이름, 내용, 시각을 가진 항목이 되고 순서가 유지된다", () => {
@@ -58,5 +64,16 @@ describe("이벤트를 로그 항목으로", () => {
     });
     // 라벨이 없으면 label 키 자체가 없다
     expect(entries[2]).not.toHaveProperty("label");
+  });
+
+  it("나중에 추가한 캐릭터의 기록에도, 그 뒤 보관한 캐릭터의 지난 기록에도 이름이 보인다", () => {
+    const events = [
+      startedEvent("s-1"),
+      characterAddedEvent("s-1", 2, "guard", "경비병"),
+      postedEvent("s-1", 3, "멈춰라", "master", "guard"),
+      characterArchivedEvent("s-1", 4, "guard"),
+    ];
+
+    expect(toLogEntries(events).map(({ speakerName }) => speakerName)).toStrictEqual(["경비병"]);
   });
 });
