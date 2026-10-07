@@ -37,4 +37,16 @@ describe("CharacterPanel", () => {
 
     expect(archived).toBe("npc-1");
   });
+
+  it("보관된 캐릭터는 활성 캐릭터와 따로 보이고, 보관 버튼이 없다", async () => {
+    await runSiheom(
+      given.render(<CharacterPanel {...Stories.WithArchived.args} />),
+      actions.click(query.button(/^캐릭터/)),
+      assertions.textContent(query.list("활성 캐릭터"), "상인"),
+      assertions.textContent(query.list("보관된 캐릭터"), "경비병"),
+      // 보관 버튼은 활성 경비병 하나에만 있다
+      assertions.count(query.button("경비병 보관"), 1),
+      assertions.count(query.listitem("상인"), 1),
+    );
+  });
 });

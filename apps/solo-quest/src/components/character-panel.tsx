@@ -43,8 +43,23 @@ const Row = styled("li", {
   base: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "2" },
 });
 
+/** 보관된 캐릭터는 덜 중요한 정보라 작고 흐리게, 활성 캐릭터 아래에 보인다. */
+const Archived = styled("ul", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5",
+    listStyle: "none",
+    mt: "3",
+    p: "0",
+    fontSize: "sm",
+    color: "fg.subtle",
+  },
+});
+
 export function CharacterPanel({ characters, onArchive }: CharacterPanelProps) {
   const active = characters.filter((character) => !character.archived);
+  const archived = characters.filter((character) => character.archived);
 
   return (
     <Collapsible.Root>
@@ -72,6 +87,13 @@ export function CharacterPanel({ characters, onArchive }: CharacterPanelProps) {
                 </Row>
               ))}
             </List>
+            {archived.length > 0 && (
+              <Archived aria-label="보관된 캐릭터">
+                {archived.map((character) => (
+                  <li key={character.id}>{character.name}</li>
+                ))}
+              </Archived>
+            )}
           </Floating>
         </Collapsible.Content>
       </Anchor>
