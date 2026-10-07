@@ -2,9 +2,7 @@ import { styled } from "styled-system/jsx";
 
 import type { LogEntry } from "../domain/log-entries.ts";
 import { formatInstant } from "../format-instant.ts";
-import type { Side } from "../domain/session.ts";
-
-const SIDE_LABEL: Record<Side, string> = { master: "마스터", player: "플레이어" };
+import { SIDE_LABEL } from "./side-label.ts";
 
 const List = styled("ul", {
   base: { display: "flex", flexDirection: "column", gap: "2", listStyle: "none", p: "0" },
