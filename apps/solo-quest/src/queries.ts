@@ -12,10 +12,18 @@ export const sessionQueries = {
   list: () => queryOptions({ queryKey: ["sessions"], queryFn: () => unwrap(api.sessions.get()) }),
   detail: (id: string) =>
     queryOptions({ queryKey: ["sessions", id], queryFn: () => unwrap(api.sessions({ id }).get()) }),
-  /** 세션 화면이 그리는 이벤트 로그와 캐릭터. 로그가 비어 있으면 불러오면서 세션을 시작한다. */
-  view: (id: string) =>
+  /**
+   * 세션 하나를 메모리에서 이어 가는 컨트롤러. 만들면서 로그를 한 번 읽고(비어 있으면 세션을 시작한다),
+   * 그 뒤로는 컨트롤러가 상태를 들고 있으므로 다시 불러오지 않는다. 세션 목록 키와 따로 두어 무효화에 딸려 오지 않는다.
+   */
+  controller: (id: string) =>
     queryOptions({
-      queryKey: ["sessions", id, "view"],
-      queryFn: () => sessionController(id).load(),
+      queryKey: ["session-controllers", id],
+      queryFn: async () => {
+        const controller = sessionController(id);
+        await controller.load();
+        return controller;
+      },
+      staleTime: Infinity,
     }),
 };
