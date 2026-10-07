@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button, Field, Textarea } from "@repo/ui";
 import { styled } from "styled-system/jsx";
 
@@ -25,6 +25,8 @@ interface MessageInputProps {
 
 export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
   const [text, setText] = useState("");
+  const [error, setError] = useState<string>();
+  const errorId = useId();
   const label = SIDE_LABEL[side];
 
   return (
@@ -32,13 +34,24 @@ export function MessageInput({ side, speakerId, onSubmit }: MessageInputProps) {
       aria-label={`${label} 입력`}
       onSubmit={async (event) => {
         event.preventDefault();
-        await onSubmit({ side, as: speakerId, text: text.trim() });
-        setText("");
+        const message = await onSubmit({ side, as: speakerId, text: text.trim() });
+        setError(message);
+        if (!message) setText("");
       }}
     >
       <Field.Root>
         <Field.Label>{label} 대화</Field.Label>
-        <Textarea value={text} onChange={(event) => setText(event.target.value)} />
+        <Textarea
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          aria-invalid={!!error}
+          aria-errormessage={error ? errorId : undefined}
+        />
+        {error && (
+          <Field.ErrorText id={errorId} role="alert" aria-label={error}>
+            {error}
+          </Field.ErrorText>
+        )}
       </Field.Root>
       <Button type="submit">{label}로 남기기</Button>
     </Form>
