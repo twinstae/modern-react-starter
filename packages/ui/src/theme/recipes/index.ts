@@ -7,6 +7,7 @@ import { dialog } from "./dialog";
 import { field } from "./field";
 import { fieldset } from "./fieldset";
 import { input } from "./input";
+import { select } from "./select";
 import { table } from "./table";
 import { card } from "./card";
 import { spinner } from "./spinner";
@@ -32,6 +33,7 @@ export const slotRecipes = {
   table,
   fieldset,
   field,
+  select,
   checkbox,
   collapsible,
   fileUpload,
