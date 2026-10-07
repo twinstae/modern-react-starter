@@ -1,6 +1,7 @@
 import { styled } from "styled-system/jsx";
 
-import type { LogEntry } from "../domain/log-entries.ts";
+import type { RolledTerm } from "../domain/dice.ts";
+import type { LogEntry, RollEntry } from "../domain/log-entries.ts";
 import { formatInstant } from "../format-instant.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
@@ -36,6 +37,32 @@ const Meta = styled("div", {
 // 줄바꿈은 그대로 보이고, 내용은 텍스트 노드로만 그려 마크다운을 해석하지 않는다.
 const Content = styled("p", { base: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } });
 
+/** 굴린 항을 값 그대로 이어 보여 준다. 예: `[4, 6] + 1`, `[13] - 1` */
+function formatTerms(terms: RolledTerm[]) {
+  return terms
+    .map((term, index) => {
+      const value = term.type === "dice" ? `[${term.values.join(", ")}]` : String(term.value);
+      if (index === 0) return term.sign === -1 ? `-${value}` : value;
+      return `${term.sign === -1 ? "-" : "+"} ${value}`;
+    })
+    .join(" ");
+}
+
+function RollBody({ entry }: { entry: RollEntry }) {
+  return (
+    <>
+      <strong>{entry.notation}</strong>
+      {entry.label && (
+        <Content role="note" aria-label="판정 라벨">
+          {entry.label}
+        </Content>
+      )}
+      <p>{formatTerms(entry.terms)}</p>
+      <p>= {entry.total}</p>
+    </>
+  );
+}
+
 export function SessionLog({ entries }: { entries: LogEntry[] }) {
   return (
     <section aria-label="세션 로그">
@@ -53,7 +80,11 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                 <strong>{entry.speakerName}</strong>
                 <time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</time>
               </Meta>
-              {entry.kind === "message" && <Content>{entry.content}</Content>}
+              {entry.kind === "message" ? (
+                <Content>{entry.content}</Content>
+              ) : (
+                <RollBody entry={entry} />
+              )}
             </Item>
           ))}
         </List>

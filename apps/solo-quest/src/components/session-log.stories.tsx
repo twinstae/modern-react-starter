@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { MessageEntry } from "../domain/log-entries.ts";
+import type { MessageEntry, RollEntry } from "../domain/log-entries.ts";
 import { SessionLog } from "./session-log.tsx";
 
 const meta = {
@@ -33,5 +33,41 @@ export const Many: Story = {
 export const PlainText: Story = {
   args: {
     entries: [{ ...entry(1), content: "첫 줄\n**둘째 줄** `코드` # 제목" }],
+  },
+};
+
+/** 대화와 판정이 섞인 기록. 라벨이 있는 플레이어 판정과 라벨이 없는 마스터 판정이 있다. */
+export const Mixed: Story = {
+  args: {
+    entries: [
+      { ...entry(1), content: "자물쇠가 걸려 있다" },
+      {
+        kind: "roll",
+        id: "event-2",
+        side: "player",
+        speakerName: "Player",
+        notation: "2d6+1",
+        terms: [
+          { type: "dice", sign: 1, sides: 6, values: [4, 6] },
+          { type: "constant", sign: 1, value: 1 },
+        ],
+        total: 11,
+        label: "자물쇠 따기",
+        createdAt: "2026-10-07T12:02:00Z",
+      } satisfies RollEntry,
+      {
+        kind: "roll",
+        id: "event-3",
+        side: "master",
+        speakerName: "경비병",
+        notation: "d20-1",
+        terms: [
+          { type: "dice", sign: 1, sides: 20, values: [13] },
+          { type: "constant", sign: -1, value: 1 },
+        ],
+        total: 12,
+        createdAt: "2026-10-07T12:03:00Z",
+      } satisfies RollEntry,
+    ],
   },
 };

@@ -34,4 +34,25 @@ describe("SessionLog", () => {
       assertions.textContent(query.listitem("마스터 GM"), "첫 줄 **둘째 줄** `코드` # 제목"),
     );
   });
+
+  it("판정 항목에 표기와 주사위별 값, 합계, 라벨이 보인다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.Mixed.args} />),
+      assertions.textContent(query.listitem("플레이어 Player"), "2d6+1"),
+      assertions.textContent(query.listitem("플레이어 Player"), "[4, 6] + 1"),
+      assertions.textContent(query.listitem("플레이어 Player"), "= 11"),
+      assertions.textContent(query.listitem("플레이어 Player"), "자물쇠 따기"),
+      assertions.textContent(query.listitem("마스터 경비병"), "d20-1"),
+      assertions.textContent(query.listitem("마스터 경비병"), "[13] - 1"),
+      assertions.textContent(query.listitem("마스터 경비병"), "= 12"),
+    );
+  });
+
+  it("라벨이 없는 판정에는 라벨 자리가 없다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.Mixed.args} />),
+      // 라벨이 있는 판정 하나뿐이다
+      assertions.count(query.note("판정 라벨"), 1),
+    );
+  });
 });
