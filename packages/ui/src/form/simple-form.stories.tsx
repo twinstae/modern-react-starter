@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import * as v from "valibot";
 
 import { SimpleInput } from "./simple-field.tsx";
-import { SimpleForm } from "./simple-form.tsx";
+import { SimpleForm, SimpleWatch } from "./simple-form.tsx";
 import { SubmitButton } from "./submit-button.tsx";
 
 const NoteSchema = v.object({
@@ -16,11 +16,14 @@ export type NoteValues = v.InferOutput<typeof NoteSchema>;
 function NoteForm({
   onSubmit,
   resetOnSuccess,
+  showTitleLength,
 }: {
   /** 오류 메시지를 돌려주면 폼 수준 오류로 보여 준다. 성공하면 아무것도 돌려주지 않는다. */
   onSubmit: (values: NoteValues) => Promise<void | string>;
   /** 제출에 성공하면 기본값으로 되돌릴 필드 */
   resetOnSuccess?: string[];
+  /** 입력 중인 제목의 글자 수를 SimpleWatch로 보여 준다. */
+  showTitleLength?: boolean;
 }) {
   return (
     <SimpleForm
@@ -31,6 +34,15 @@ function NoteForm({
       resetOnSuccess={resetOnSuccess}
     >
       <SimpleInput name="title" label="제목" />
+      {showTitleLength && (
+        <SimpleWatch name="title">
+          {(title) => (
+            <p role="status" aria-label="제목 글자 수">
+              {String(title).length}
+            </p>
+          )}
+        </SimpleWatch>
+      )}
       <SimpleInput name="memo" label="메모" />
       <SubmitButton>저장</SubmitButton>
     </SimpleForm>
@@ -65,5 +77,14 @@ export const ResetTitleOnSuccess: Story = {
       console.log(values);
     },
     resetOnSuccess: ["title"],
+  },
+};
+
+export const WithTitleLength: Story = {
+  args: {
+    onSubmit: async (values) => {
+      console.log(values);
+    },
+    showTitleLength: true,
   },
 };

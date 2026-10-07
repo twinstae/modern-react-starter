@@ -1,4 +1,5 @@
-import { useForm, FormProvider, type FieldValues } from "react-hook-form";
+import type { ReactNode } from "react";
+import { useForm, useWatch, FormProvider, type FieldValues } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { styled } from "styled-system/jsx";
@@ -59,4 +60,15 @@ export function SimpleForm<Output>({
       </FormBase>
     </FormProvider>
   );
+}
+
+/** SimpleForm 안에서 필드의 현재 값을 읽어 그리는 곳. 글자 수 표시처럼 값에서 파생되는 화면에 쓴다. */
+export function SimpleWatch({
+  name,
+  children,
+}: {
+  name: string;
+  children: (value: unknown) => ReactNode;
+}) {
+  return <>{children(useWatch({ name }))}</>;
 }

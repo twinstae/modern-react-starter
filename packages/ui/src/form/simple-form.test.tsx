@@ -51,4 +51,13 @@ describe("SimpleForm", () => {
 
     expect(result).toStrictEqual({ title: "첫 노트", memo: "성공" });
   });
+
+  it("SimpleWatch는 입력하는 필드 값을 그때그때 보여 준다", async () => {
+    await runSiheom(
+      given.render(<NoteForm {...Stories.WithTitleLength.args} />),
+      assertions.textContent(query.status("제목 글자 수"), "0"),
+      actions.fill(query.textbox("제목"), "첫 노트"),
+      assertions.textContent(query.status("제목 글자 수"), "4"),
+    );
+  });
 });
