@@ -4,7 +4,7 @@ import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
 import type { Character, Side } from "../domain/session.ts";
-import { countGraphemes, SHORT_TEXT_MAX, ShortText } from "../domain/short-text.ts";
+import { remainingGraphemes, ShortText } from "../domain/short-text.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
 export interface MessageValues {
@@ -41,7 +41,7 @@ export function MessageInput({
   const errorId = useId();
   const label = SIDE_LABEL[side];
   const parsed = v.safeParse(ShortText, text);
-  const remaining = SHORT_TEXT_MAX - countGraphemes(text.trim());
+  const remaining = remainingGraphemes(text);
 
   return (
     <Form
