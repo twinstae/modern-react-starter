@@ -46,7 +46,10 @@ const Main = styled("main", {
 
 const Title = styled("h1", { base: { textStyle: "xl", fontWeight: "semibold" } });
 
-const LogScroll = styled("div", { base: { flex: "1", minHeight: "0", overflowY: "auto" } });
+// 말풍선 옆에 띄운 시각이 좁은 화면에서 가로 스크롤을 만들지 않게 가로로는 자른다
+const LogScroll = styled("div", {
+  base: { flex: "1", minHeight: "0", overflowY: "auto", overflowX: "hidden" },
+});
 
 // 마스터 입력창은 왼쪽, 플레이어 입력창은 오른쪽
 const Inputs = styled("div", {

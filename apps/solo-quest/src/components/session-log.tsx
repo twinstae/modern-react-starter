@@ -2,7 +2,7 @@ import { styled } from "styled-system/jsx";
 
 import type { RolledTerm } from "../domain/dice.ts";
 import type { LogEntry, RollEntry } from "../domain/log-entries.ts";
-import { formatInstant } from "../format-instant.ts";
+import { formatInstant, formatTime } from "../format-instant.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
 const List = styled("ul", {
@@ -29,17 +29,29 @@ const Item = styled("li", {
 /** 편마다 배경색이 다른 말풍선 */
 const Bubble = styled("div", {
   base: {
+    position: "relative",
     px: "3",
     py: "1.5",
     borderRadius: "l3",
-    // 시각은 덜 중요한 정보라 말풍선에 마우스를 올리거나 초점이 있을 때만 보인다
-    "& time": { opacity: "0", transition: "opacity {durations.fast}" },
+    // 시각은 덜 중요한 정보라 자리를 차지하지 않게 말풍선 바깥 옆에 띄우고,
+    // 말풍선에 마우스를 올리거나 초점이 있을 때만 보인다. 날짜까지는 title 툴팁으로 보인다.
+    "& time": {
+      position: "absolute",
+      bottom: "1.5",
+      whiteSpace: "nowrap",
+      fontSize: "xs",
+      color: "fg.subtle",
+      opacity: "0",
+      pointerEvents: "none",
+      transition: "opacity {durations.fast}",
+    },
     "&:hover time, &:focus-within time": { opacity: "1" },
   },
   variants: {
     side: {
-      master: { bg: "blue.a3" },
-      player: { bg: "gray.a3" },
+      // 시각은 말풍선이 붙은 쪽의 반대편 옆에 둔다
+      master: { bg: "blue.a3", "& time": { left: "100%", ml: "2" } },
+      player: { bg: "gray.a3", "& time": { right: "100%", mr: "2" } },
     },
     groupStart: { true: {}, false: {} },
   },
@@ -54,8 +66,6 @@ const Bubble = styled("div", {
 const Speaker = styled("strong", {
   base: { px: "1", fontSize: "xs", fontWeight: "semibold", color: "fg.muted" },
 });
-
-const Time = styled("time", { base: { ml: "2", fontSize: "xs", color: "fg.subtle" } });
 
 // 줄바꿈은 그대로 보이고, 내용은 텍스트 노드로만 그려 마크다운을 해석하지 않는다.
 const Content = styled("p", { base: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } });
@@ -121,11 +131,15 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                 aria-label={`${SIDE_LABEL[entry.side]} ${entry.speakerName}`}
               >
                 {groupStart && <Speaker>{entry.speakerName}</Speaker>}
-                <Bubble side={entry.side} groupStart={groupStart}>
+                <Bubble
+                  side={entry.side}
+                  groupStart={groupStart}
+                  title={formatInstant(entry.createdAt)}
+                >
                   <Content>
                     {entry.kind === "message" ? entry.content : <RollBody entry={entry} />}
-                    <Time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</Time>
                   </Content>
+                  <time dateTime={entry.createdAt}>{formatTime(entry.createdAt)}</time>
                 </Bubble>
               </Item>
             );
