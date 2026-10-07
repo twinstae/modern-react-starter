@@ -15,15 +15,19 @@ const sequentialIds = () => {
   return () => `character-${++count}`;
 };
 
+/** 고정 난수와 차례로 매기는 캐릭터 id를 쓰는 컨트롤러 */
+const newController = (eventLog: EventLogStore) =>
+  createSessionController({
+    sessionId: "s-1",
+    eventLog,
+    random: fixedRandom,
+    generateId: sequentialIds(),
+  });
+
 describe("세션 컨트롤러", () => {
   it("로그가 빈 세션을 불러오면 시작 이벤트를 커밋하고, 다시 불러와도 다시 시작하지 않는다", async () => {
     const eventLog = createMemoryEventLogStore();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(eventLog);
 
     const first = await controller.load();
     const second = await controller.load();
@@ -34,12 +38,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("제출한 대화는 오류 없이 로그에 편과 화자, 앞뒤 공백을 뺀 내용으로 순서대로 쌓인다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
 
     const results = [
@@ -65,12 +64,7 @@ describe("세션 컨트롤러", () => {
       },
       append: memory.append,
     };
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: counting,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(counting);
 
     await controller.load();
     await controller.submit({ side: "master", as: "gm", text: "문이 열린다" });
@@ -83,12 +77,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("구독자는 불러오기와 제출, 저장이 끝날 때마다 알림을 받고, 스냅샷에서 로그 항목과 캐릭터를 읽는다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     const notified: number[] = [];
     const unsubscribe = controller.subscribe(() => {
       notified.push(controller.getSnapshot().entries.length);
@@ -121,12 +110,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("규칙을 어긴 제출은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
 
     expect(await controller.submit({ side: "master", as: "gm", text: "  " })).toBe(
@@ -153,12 +137,7 @@ describe("세션 컨트롤러", () => {
         await memory.append(sessionId, expectedVersion, events);
       },
     };
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: racing,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(racing);
     await controller.load();
     otherTabIsWriting = true;
 
@@ -172,12 +151,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("/r 입력은 주입한 난수로 굴려 굴린 결과를 라벨과 함께 판정으로 남긴다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
 
     const result = await controller.submit({
@@ -210,12 +184,7 @@ describe("세션 컨트롤러", () => {
     ["알 수 없는 명령", "/desc 안개", "알 수 없는 명령입니다: /desc"],
     ["141자 라벨", `/r d20 ${"가".repeat(141)}`, "140자 이하로 입력해주세요"],
   ])("%s는 오류 메시지를 돌려주고 이벤트를 만들지 않는다", async (_name, text, message) => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
 
     expect(await controller.submit({ side: "master", as: "gm", text })).toBe(message);
@@ -224,12 +193,7 @@ describe("세션 컨트롤러", () => {
 
   it("추가한 캐릭터는 화자 목록에 나타나고, 그 이름으로 말한 기록이 남으며, 다시 불러와도 있다", async () => {
     const eventLog = createMemoryEventLogStore();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(eventLog);
     await controller.load();
 
     expect(await controller.addCharacter({ name: " 경비병 " })).toBeUndefined();
@@ -239,12 +203,7 @@ describe("세션 컨트롤러", () => {
     ).toBeUndefined();
     await controller.idle();
 
-    const reloaded = await createSessionController({
-      sessionId: "s-1",
-      eventLog,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    }).load();
+    const reloaded = await newController(eventLog).load();
     expect(reloaded.characters.at(-1)).toStrictEqual({
       id: "character-1",
       name: "경비병",
@@ -256,12 +215,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("보관한 캐릭터는 더 말할 수 없지만 지난 기록의 이름은 그대로 보인다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
     await controller.addCharacter({ name: "경비병" });
     const guard = { id: "character-1" };
@@ -278,12 +232,7 @@ describe("세션 컨트롤러", () => {
   });
 
   it("규칙을 어긴 캐릭터 추가와 보관은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: createMemoryEventLogStore(),
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(createMemoryEventLogStore());
     await controller.load();
     await controller.addCharacter({ name: "경비병" });
     await controller.idle();
@@ -299,12 +248,7 @@ describe("세션 컨트롤러", () => {
 
   it("제출 직후 저장이 끝나기 전에는 새 이벤트가 pending이고, 끝나면 committed가 된다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.hold();
 
@@ -323,12 +267,7 @@ describe("세션 컨트롤러", () => {
 
   it("저장이 실패한 이벤트는 failed로 남고, 이미 저장된 이벤트는 그대로 committed다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     await controller.submit({ side: "master", as: "gm", text: "저장되는 기록" });
     log.failNext(new Error("네트워크 오류"));
@@ -349,12 +288,7 @@ describe("세션 컨트롤러", () => {
 
   it("저장을 기다리는 중에 이어 제출한 세 기록은 순서대로 하나씩 저장된다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.hold();
     const statuses = () => controller.getSnapshot().entries.map((entry) => entry.status);
@@ -384,12 +318,7 @@ describe("세션 컨트롤러", () => {
 
   it("앞의 저장이 실패하면 뒤에서 기다리던 기록은 저장하지 않고 모두 failed로 남는다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.hold();
     log.failNext(new Error("네트워크 오류"));
@@ -413,12 +342,7 @@ describe("세션 컨트롤러", () => {
 
   it("제출은 저장을 기다리지 않고 곧바로 돌아오며, 저장은 뒤에서 끝난다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.hold();
 
@@ -438,12 +362,7 @@ describe("세션 컨트롤러", () => {
 
   it("다른 탭이 먼저 기록했다면 최신 로그를 다시 불러오고, 버려진 제출의 글을 그 편에 되돌려 준다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
 
@@ -459,12 +378,7 @@ describe("세션 컨트롤러", () => {
 
   it("충돌이 나면 뒤에서 기다리던 제출도 저장하지 않고 버리며, 버려진 글은 줄바꿈으로 이어 돌려준다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     await log.otherTab.append("s-1", 1, [postedEvent("s-1", 2, "다른 탭")]);
     log.hold();
@@ -483,12 +397,7 @@ describe("세션 컨트롤러", () => {
 
   it("저장에 실패한 뒤 다음 제출은 서버의 로그를 다시 불러온 위에서 저장되고, 실패한 기록은 사라진다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.failNext(new Error("네트워크 오류"));
     await controller.submit({ side: "master", as: "gm", text: "저장 못 하는 기록" });
@@ -508,12 +417,7 @@ describe("세션 컨트롤러", () => {
 
   it("실패한 뒤 이어서 제출한 둘은 한 번 다시 불러온 위에 순서대로 저장된다", async () => {
     const log = createFakeEventLog();
-    const controller = createSessionController({
-      sessionId: "s-1",
-      eventLog: log.store,
-      random: fixedRandom,
-      generateId: sequentialIds(),
-    });
+    const controller = newController(log.store);
     await controller.load();
     log.failNext(new Error("네트워크 오류"));
     await controller.submit({ side: "master", as: "gm", text: "저장 못 하는 기록" });
