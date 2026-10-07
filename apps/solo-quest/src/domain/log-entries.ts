@@ -5,6 +5,8 @@ import type { Side, SessionEvent } from "./session.ts";
 interface BaseEntry {
   id: string;
   side: Side;
+  /** 화자 캐릭터 id. 이름이 같은 다른 캐릭터와 구분한다. */
+  speakerId: string;
   speakerName: string;
   /** Instant, ISO 문자열 */
   createdAt: string;
@@ -47,6 +49,7 @@ export function toLogEntries(events: SessionEvent[]): LogEntry[] {
     const base = {
       id: event.eventId,
       side: event.body.side,
+      speakerId: event.body.as,
       speakerName: names.get(event.body.as) ?? event.body.as,
       createdAt: event.eventCreatedAt,
     };

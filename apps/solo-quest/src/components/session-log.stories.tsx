@@ -15,6 +15,7 @@ const entry = (n: number): MessageEntry => ({
   kind: "message",
   id: `event-${n}`,
   side: n % 2 === 1 ? "master" : "player",
+  speakerId: n % 2 === 1 ? "gm" : "player",
   speakerName: n % 2 === 1 ? "GM" : "Player",
   content: `${n}번째 기록`,
   createdAt: `2026-10-07T12:${String(n % 60).padStart(2, "0")}:00Z`,
@@ -45,6 +46,7 @@ export const Mixed: Story = {
         kind: "roll",
         id: "event-2",
         side: "player",
+        speakerId: "player",
         speakerName: "Player",
         notation: "2d6+1",
         terms: [
@@ -59,6 +61,7 @@ export const Mixed: Story = {
         kind: "roll",
         id: "event-3",
         side: "master",
+        speakerId: "guard",
         speakerName: "경비병",
         notation: "d20-1",
         terms: [
@@ -80,7 +83,7 @@ export const Consecutive: Story = {
       { ...entry(3), content: "안은 어둡다" },
       { ...entry(2), content: "들어간다" },
       { ...entry(5), content: "바닥이 삐걱인다" },
-      { ...entry(6), side: "player", speakerName: "GM", content: "혼잣말" },
+      { ...entry(6), side: "player", speakerId: "gm", speakerName: "GM", content: "혼잣말" },
     ],
   },
 };

@@ -22,6 +22,7 @@ describe("이벤트를 로그 항목으로", () => {
         kind: "message",
         id: "s-1-event-2",
         side: "master",
+        speakerId: "gm",
         speakerName: "GM",
         content: "문이 열린다",
         createdAt: "2026-10-07T12:00:00Z",
@@ -30,6 +31,7 @@ describe("이벤트를 로그 항목으로", () => {
         kind: "message",
         id: "s-1-event-3",
         side: "player",
+        speakerId: "player",
         speakerName: "Player",
         content: "안으로 들어간다",
         createdAt: "2026-10-07T12:00:00Z",
@@ -52,6 +54,7 @@ describe("이벤트를 로그 항목으로", () => {
       kind: "roll",
       id: "s-1-event-3",
       side: "master",
+      speakerId: "gm",
       speakerName: "GM",
       notation: "2d6+1",
       terms: [
@@ -74,6 +77,8 @@ describe("이벤트를 로그 항목으로", () => {
       characterArchivedEvent("s-1", 4, "guard"),
     ];
 
-    expect(toLogEntries(events).map(({ speakerName }) => speakerName)).toStrictEqual(["경비병"]);
+    expect(
+      toLogEntries(events).map(({ speakerId, speakerName }) => [speakerId, speakerName]),
+    ).toStrictEqual([["guard", "경비병"]]);
   });
 });
