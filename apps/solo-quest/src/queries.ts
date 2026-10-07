@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { api } from "./api-client.ts";
+import { sessionController } from "./session-client.ts";
 import { unwrap } from "./unwrap.ts";
 
 /**
@@ -11,4 +12,10 @@ export const sessionQueries = {
   list: () => queryOptions({ queryKey: ["sessions"], queryFn: () => unwrap(api.sessions.get()) }),
   detail: (id: string) =>
     queryOptions({ queryKey: ["sessions", id], queryFn: () => unwrap(api.sessions({ id }).get()) }),
+  /** 세션 화면이 그리는 이벤트 로그와 캐릭터. 로그가 비어 있으면 불러오면서 세션을 시작한다. */
+  view: (id: string) =>
+    queryOptions({
+      queryKey: ["sessions", id, "view"],
+      queryFn: () => sessionController(id).load(),
+    }),
 };
