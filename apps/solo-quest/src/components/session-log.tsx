@@ -49,17 +49,28 @@ function formatTerms(terms: RolledTerm[]) {
     .join(" ");
 }
 
+const RollLabel = styled("span", { base: { mr: "2" } });
+
+const RollDetail = styled("span", { base: { fontSize: "sm", color: "fg.muted" } });
+
+/** 판정에서 가장 중요한 값이라 가장 크게 보인다. */
+const RollTotal = styled("strong", {
+  base: { ml: "1", fontSize: "xl", fontWeight: "bold", color: "fg.default" },
+});
+
+/** 라벨, 표기와 주사위별 값, 합계를 한 줄에 둔다. 예: `자물쇠 따기 2d6+1 · [4, 6] + 1 = 11` */
 function RollBody({ entry }: { entry: RollEntry }) {
   return (
     <>
-      <strong>{entry.notation}</strong>
       {entry.label && (
-        <Content role="note" aria-label="판정 라벨">
+        <RollLabel role="note" aria-label="판정 라벨">
           {entry.label}
-        </Content>
+        </RollLabel>
       )}
-      <p>{formatTerms(entry.terms)}</p>
-      <p>= {entry.total}</p>
+      <RollDetail>
+        {entry.notation} · {formatTerms(entry.terms)} =
+      </RollDetail>{" "}
+      <RollTotal>{entry.total}</RollTotal>
     </>
   );
 }
@@ -77,19 +88,11 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
               side={entry.side}
               aria-label={`${SIDE_LABEL[entry.side]} ${entry.speakerName}`}
             >
-              {entry.kind === "message" ? (
-                <Content>
-                  <Speaker>{entry.speakerName}</Speaker>
-                  {entry.content}
-                  <Time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</Time>
-                </Content>
-              ) : (
-                <>
-                  <Speaker>{entry.speakerName}</Speaker>
-                  <RollBody entry={entry} />
-                  <Time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</Time>
-                </>
-              )}
+              <Content>
+                <Speaker>{entry.speakerName}</Speaker>
+                {entry.kind === "message" ? entry.content : <RollBody entry={entry} />}
+                <Time dateTime={entry.createdAt}>{formatInstant(entry.createdAt)}</Time>
+              </Content>
             </Item>
           ))}
         </List>
