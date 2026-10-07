@@ -242,4 +242,22 @@ describe("세션 컨트롤러", () => {
       "말할 수 없는 캐릭터입니다",
     );
   });
+
+  it("규칙을 어긴 캐릭터 추가와 보관은 오류 메시지를 돌려주고 로그에 아무것도 남기지 않는다", async () => {
+    const controller = createSessionController({
+      sessionId: "s-1",
+      eventLog: createMemoryEventLogStore(),
+      random: fixedRandom,
+    });
+    await controller.load();
+    await controller.addCharacter({ name: "경비병" });
+    const before = controller.getSnapshot();
+
+    expect(await controller.addCharacter({ name: "경비병" })).toBe(
+      "같은 이름의 캐릭터가 이미 있습니다",
+    );
+    expect(await controller.addCharacter({ name: "  " })).toBe("내용을 입력해주세요");
+    expect(await controller.archiveCharacter("gm")).toBe("기본 캐릭터는 보관할 수 없습니다");
+    expect(controller.getSnapshot()).toBe(before);
+  });
 });
