@@ -44,6 +44,9 @@
     "./helpers": {
       "types": "./styled-system/helpers.d.ts",
       "default": "./styled-system/helpers.js"
+    },
+    "./types": {
+      "types": "./styled-system/types/index.d.ts"
     }
   },
   "scripts": {
@@ -57,43 +60,43 @@
   "dependencies": {
     "@ark-ui/react": "^5.39.2",
     "@hookform/resolvers": "^5.9.1",
-    "@standard-schema/spec": "^1.1.0",
-    "lucide-react": "^1.51.0",
+    "@standard-schema/spec": "catalog:",
+    "lucide-react": "catalog:",
     "react-hook-form": "^7.89.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.4.0",
-    "@pandacss/dev": "^2.1.1",
-    "@pandacss/preset-base": "^2.1.1",
-    "@pandacss/preset-panda": "^2.1.1",
-    "@pandacss/vite": "^2.1.1",
-    "@siheom/react": "^0.4.0",
-    "@storybook/addon-a11y": "^10.6.1",
-    "@storybook/addon-docs": "^10.6.1",
+    "@pandacss/dev": "catalog:",
+    "@pandacss/preset-base": "catalog:",
+    "@pandacss/preset-panda": "catalog:",
+    "@pandacss/vite": "catalog:",
+    "@siheom/react": "catalog:",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-docs": "catalog:",
     "@storybook/addon-mcp": "latest",
     "@storybook/addon-vitest": "^10.6.1",
-    "@storybook/react-vite": "^10.6.1",
-    "@testing-library/dom": "^10.4.2",
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.7",
-    "@types/node": "^26.6.4",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/browser-playwright": "^5.0.3",
-    "@vitest/coverage-v8": "^5.0.3",
-    "playwright": "latest",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "storybook": "^10.6.1",
-    "typescript": "^7.0.2",
-    "valibot": "^1.5.0",
-    "vite": "^8.3.2",
-    "vitest": "^5.0.3"
+    "@storybook/react-vite": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "playwright": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "storybook": "catalog:",
+    "typescript": "catalog:",
+    "valibot": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }
