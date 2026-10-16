@@ -1,5 +1,3 @@
-// 브라우저 테스트·Storybook에는 카메라가 없다. @yudiel/react-qr-scanner 대신 alias로 연결된다.
-// "카메라에 비친 QR"에 내용을 적고 [비추기]를 누르면 인식된 것처럼 onScan을 부른다.
 import { useState } from "react";
 import type { IDetectedBarcode, IScannerError } from "@yudiel/react-qr-scanner";
 

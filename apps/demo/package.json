@@ -51,7 +51,7 @@
     "@pandacss/dev": "^2.1.1",
     "@pandacss/preset-base": "^2.1.1",
     "@pandacss/preset-panda": "^2.1.1",
-    "@siheom/react": "^0.3.0",
+    "@siheom/react": "^0.4.0",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/router-cli": "^1.167.40",
     "@testing-library/dom": "^10.4.2",

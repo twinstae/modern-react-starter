@@ -67,7 +67,7 @@
     "@pandacss/preset-base": "^2.1.1",
     "@pandacss/preset-panda": "^2.1.1",
     "@pandacss/vite": "^2.1.1",
-    "@siheom/react": "^0.3.0",
+    "@siheom/react": "^0.4.0",
     "@storybook/addon-a11y": "^10.6.1",
     "@storybook/addon-docs": "^10.6.1",
     "@storybook/addon-mcp": "latest",

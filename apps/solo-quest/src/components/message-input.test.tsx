@@ -1,4 +1,3 @@
-import { screen } from "@testing-library/dom";
 import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
@@ -64,16 +63,11 @@ describe("MessageInput", () => {
   });
 
   it("남은 글자 수는 20자 이하로 남았을 때부터 보인다", async () => {
-    // siheom 0.3.0의 not.visible과 count(0)은 요소가 없음을 확인하지 못해서 직접 확인한다
-    const remaining = () => screen.queryByRole("status", { name: "마스터 남은 글자 수" });
-
-    await runSiheom(given.render(<MessageInput {...Stories.Master.args} />));
-    expect(remaining()).toBeNull();
-
-    await runSiheom(actions.fill(query.textbox("마스터 대화"), "가".repeat(119)));
-    expect(remaining()).toBeNull();
-
     await runSiheom(
+      given.render(<MessageInput {...Stories.Master.args} />),
+      assertions.not.visible(query.status("마스터 남은 글자 수")),
+      actions.fill(query.textbox("마스터 대화"), "가".repeat(119)),
+      assertions.not.visible(query.status("마스터 남은 글자 수")),
       actions.fill(query.textbox("마스터 대화"), "가".repeat(120)),
       assertions.textContent(query.status("마스터 남은 글자 수"), "20"),
     );
@@ -153,8 +147,6 @@ describe("MessageInput", () => {
 
   it("화자 목록에는 활성 캐릭터만 나오고, 고른 캐릭터로 제출된다", async () => {
     let result: MessageValues | undefined;
-    // siheom 0.3.0은 요소가 없음을 확인하지 못해서 직접 확인한다
-    const optionNamed = (name: string) => screen.queryByRole("option", { name });
 
     await runSiheom(
       given.render(
@@ -168,13 +160,8 @@ describe("MessageInput", () => {
       ),
       actions.fill(query.textbox("마스터 대화"), "멈춰라"),
       actions.click(query.combobox("마스터 화자")),
-      assertions.visible(query.option("경비병")),
-    );
-    expect(optionNamed("GM")).not.toBeNull();
-    expect(optionNamed("Player")).not.toBeNull();
-    expect(optionNamed("상인")).toBeNull();
-
-    await runSiheom(
+      // 보관된 상인은 목록에 없다
+      assertions.textContents(query.listbox("마스터 화자"), ["GM", "Player", "경비병"]),
       actions.click(query.option("경비병")),
       assertions.not.expanded(query.combobox("마스터 화자")),
       actions.click(query.button("마스터로 남기기")),

@@ -1,5 +1,4 @@
-import { screen } from "@testing-library/dom";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import { assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SessionLog } from "./session-log.tsx";
@@ -16,7 +15,7 @@ describe("SessionLog", () => {
   it("기록 하나에 편과 화자 이름, 내용이 보인다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.One.args} />),
-      assertions.textContent(query.listitem("마스터 GM"), "문이 열린다"),
+      assertions.textContents(query.list("세션 로그"), [/^GM문이 열린다/]),
     );
   });
 
@@ -32,20 +31,18 @@ describe("SessionLog", () => {
     // toHaveTextContent는 공백을 정규화하므로 줄바꿈 자체는 확인하지 못한다(pre-wrap 스타일이 맡는다)
     await runSiheom(
       given.render(<SessionLog {...Stories.PlainText.args} />),
-      assertions.textContent(query.listitem("마스터 GM"), "첫 줄 **둘째 줄** `코드` # 제목"),
+      assertions.textContents(query.list("세션 로그"), [/^GM첫 줄 \*\*둘째 줄\*\* `코드` # 제목/]),
     );
   });
 
   it("판정 항목에 표기와 주사위별 값, 합계, 라벨이 보인다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.Mixed.args} />),
-      assertions.textContent(query.listitem("플레이어 Player"), "2d6+1"),
-      assertions.textContent(query.listitem("플레이어 Player"), "[4, 6] + 1"),
-      assertions.textContent(query.listitem("플레이어 Player"), "= 11"),
-      assertions.textContent(query.listitem("플레이어 Player"), "자물쇠 따기"),
-      assertions.textContent(query.listitem("마스터 경비병"), "d20-1"),
-      assertions.textContent(query.listitem("마스터 경비병"), "[13] - 1"),
-      assertions.textContent(query.listitem("마스터 경비병"), "= 12"),
+      assertions.textContents(query.list("세션 로그"), [
+        /^GM자물쇠가 걸려 있다/,
+        /^Player자물쇠 따기2d6\+1 · \[4, 6\] \+ 1 = 11/,
+        /^경비병d20-1 · \[13\] - 1 = 12/,
+      ]),
     );
   });
 
@@ -58,24 +55,29 @@ describe("SessionLog", () => {
   });
 
   it("같은 편의 같은 화자가 이어 말하면 이름을 다시 보이지 않는다", async () => {
-    await runSiheom(given.render(<SessionLog {...Stories.Consecutive.args} />));
-
-    // 내용 앞에 보이는 글자가 화자 이름이다. 이름을 숨겨도 항목의 접근성 이름에는 편과 화자가 남는다.
-    const shown = Stories.Consecutive.args.entries.map((entry, index) => {
-      const item = screen.getAllByRole("listitem")[index];
-      return entry.kind === "message" ? item?.textContent?.split(entry.content)[0] : undefined;
-    });
-    expect(shown).toStrictEqual(["GM", "", "Player", "GM", "GM"]);
+    await runSiheom(
+      given.render(<SessionLog {...Stories.Consecutive.args} />),
+      // 내용 앞에 보이는 글자가 화자 이름이다. 이름을 숨겨도 항목의 접근성 이름에는 편과 화자가 남는다.
+      assertions.textContents(query.list("세션 로그"), [
+        /^GM문이 열린다/,
+        /^안은 어둡다/,
+        /^Player들어간다/,
+        /^GM바닥이 삐걱인다/,
+        /^GM혼잣말/,
+      ]),
+    );
   });
 
   it("이름이 같아도 다른 캐릭터가 이어 말하면 묶음이 나뉘어 이름이 다시 보인다", async () => {
-    await runSiheom(given.render(<SessionLog {...Stories.ArchivedSpeaker.args} />));
-
-    const shown = Stories.ArchivedSpeaker.args.entries.map((entry, index) => {
-      const item = screen.getAllByRole("listitem")[index];
-      return entry.kind === "message" ? item?.textContent?.split(entry.content)[0] : undefined;
-    });
-    expect(shown).toStrictEqual(["경비병", "", "경비병", ""]);
+    await runSiheom(
+      given.render(<SessionLog {...Stories.ArchivedSpeaker.args} />),
+      assertions.textContents(query.list("세션 로그"), [
+        /^경비병멈춰라/,
+        /^누구냐/,
+        /^경비병교대할 시간이다/,
+        /^조용하군/,
+      ]),
+    );
   });
 
   it("보관된 캐릭터의 지난 기록에도 편과 이름이 보인다", async () => {
@@ -88,13 +90,11 @@ describe("SessionLog", () => {
   it("저장 중인 기록과 저장하지 못한 기록에는 각각 표시가 보이고, 저장된 기록에는 없다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.Unsaved.args} />),
-      assertions.textContent(query.listitem("플레이어 Player"), "저장 중"),
+      assertions.textContents(query.list("세션 로그"), [
+        /^GM문이 열린다/,
+        /^Player안으로 들어간다.*저장 중$/,
+        /^GM안은 어둡다.*실패$/,
+      ]),
     );
-
-    // 표시는 저장 중인 것과 실패한 것, 둘뿐이다(siheom 0.3.0은 부재를 확인하지 못해 직접 센다)
-    expect(screen.getAllByRole("status").map((mark) => mark.textContent)).toStrictEqual([
-      "저장 중",
-      "실패",
-    ]);
   });
 });

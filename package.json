@@ -17,11 +17,11 @@
     "ci": "bun run lint:fix && bun run format && bun run typecheck && bun run test"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "oxfmt": "^0.71.0",
-    "oxlint": "^1.86.0",
-    "turbo": "^2.11.7",
+    "@types/node": "^26.6.5",
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
+    "turbo": "^2.11.8",
     "typescript": "^7.0.2"
   },
-  "packageManager": "bun@1.4.2"
+  "packageManager": "bun@1.4.3"
 }

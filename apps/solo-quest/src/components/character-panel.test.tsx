@@ -1,4 +1,3 @@
-import { screen, waitFor } from "@testing-library/dom";
 import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
@@ -12,9 +11,8 @@ describe("CharacterPanel", () => {
       actions.click(query.button(/^캐릭터/)),
       assertions.visible(query.dialog("캐릭터")),
       actions.type(query.textbox("캐릭터 이름"), "{Escape}"),
+      assertions.not.visible(query.dialog("캐릭터")),
     );
-
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "캐릭터" })).toBeNull());
   });
 
   it("열면 활성 캐릭터의 이름이 보이고, 기본 캐릭터에는 보관 버튼이 없다", async () => {
@@ -23,10 +21,9 @@ describe("CharacterPanel", () => {
       actions.click(query.button(/^캐릭터/)),
       assertions.visible(query.listitem("GM")),
       assertions.visible(query.listitem("Player")),
+      assertions.not.visible(query.button("GM 보관")),
+      assertions.not.visible(query.button("Player 보관")),
     );
-
-    expect(screen.queryByRole("button", { name: "GM 보관" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Player 보관" })).toBeNull();
   });
 
   it("추가한 캐릭터의 보관 버튼을 누르면 onArchive에 그 캐릭터 id가 넘어간다", async () => {
@@ -53,11 +50,10 @@ describe("CharacterPanel", () => {
     await runSiheom(
       given.render(<CharacterPanel {...Stories.WithArchived.args} />),
       actions.click(query.button(/^캐릭터/)),
-      assertions.textContent(query.list("활성 캐릭터"), "상인"),
-      assertions.textContent(query.list("보관된 캐릭터"), "경비병"),
+      assertions.textContents(query.list("활성 캐릭터"), ["GM", "Player", "상인", "경비병"]),
+      assertions.textContents(query.list("보관된 캐릭터"), ["경비병"]),
       // 보관 버튼은 활성 경비병 하나에만 있다
       assertions.count(query.button("경비병 보관"), 1),
-      assertions.count(query.listitem("상인"), 1),
     );
   });
 
@@ -109,17 +105,18 @@ describe("CharacterPanel", () => {
       assertions.visible(query.alert("다른 곳에서 먼저 기록했습니다")),
     );
     result = undefined;
-    await runSiheom(actions.click(query.button("경비병 보관")));
-    // siheom 0.3.0은 요소가 없음을 확인하지 못해서 직접 기다린다
-    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    await runSiheom(
+      actions.click(query.button("경비병 보관")),
+      assertions.not.visible(query.alert("다른 곳에서 먼저 기록했습니다")),
+    );
   });
 
   it("캐릭터가 10개여도 모두 보이고, 기본 캐릭터를 뺀 8개에 보관 버튼이 있다", async () => {
     await runSiheom(
       given.render(<CharacterPanel {...Stories.Ten.args} />),
       actions.click(query.button(/^캐릭터 10/)),
-      assertions.count(query.listitem(/./), 10),
-      assertions.count(query.button(/ 보관$/), 8),
+      assertions.count(query.within(query.list("활성 캐릭터"), query.listitem(/./)), 10),
+      assertions.count(query.within(query.list("활성 캐릭터"), query.button(/ 보관$/)), 8),
     );
   });
 });
