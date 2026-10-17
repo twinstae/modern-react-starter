@@ -103,6 +103,8 @@ function SessionPage() {
             characters={view.characters}
             restored={view.restored[side]}
             onSubmit={controller.submit}
+            macros={view.macros}
+            onRollMacro={controller.rollMacro}
           />
         ))}
       </Inputs>
