@@ -8,6 +8,8 @@ import { amber } from "./src/theme/colors/amber";
 import { iris } from "./src/theme/colors/iris";
 import { brown } from "./src/theme/colors/brown";
 import { aliasPalette } from "./src/theme/colors/alias-palette";
+import { brick } from "./src/theme/colors/brick";
+import { trpgRed, trpgRedFontface } from "./src/theme/themes/trpg-red";
 import { animationStyles } from "./src/theme/animation-styles";
 import { zIndex } from "./src/theme/tokens/z-index";
 import { shadows } from "./src/theme/tokens/shadows";
@@ -103,6 +105,7 @@ export default defineConfig({
           amber: amber,
           iris: iris,
           brown: brown,
+          brick: brick,
         },
 
         shadows: shadows,
@@ -129,6 +132,12 @@ export default defineConfig({
       },
     },
   },
+
+  // 앱이 staticCss.themes로 골라 쓰는 테마
+  themes: {
+    "trpg-red": trpgRed,
+  },
+  globalFontface: trpgRedFontface,
 
   // The output directory for your css system
   outdir: "styled-system",
