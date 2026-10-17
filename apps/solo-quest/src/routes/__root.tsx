@@ -1,5 +1,6 @@
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
+import { trpgRedDocument } from "@repo/ui";
 
 import appCss from "../styles.css?url";
 
@@ -14,14 +15,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "SOLO QUEST" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      ...trpgRedDocument.stylesheets.map((href) => ({ rel: "stylesheet", href })),
+      { rel: "stylesheet", href: appCss },
+    ],
   }),
   shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" {...trpgRedDocument.attributes}>
       <head>
         <HeadContent />
       </head>

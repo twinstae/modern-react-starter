@@ -6,4 +6,8 @@ export default defineConfig({
   designSystem: "@repo/ui",
   include: ["./src/**/*.{ts,tsx}"],
   outdir: "styled-system",
+  // @repo/ui의 trpg-red 테마를 기본 스타일시트에 넣는다. <html>의 속성은 __root.tsx가 붙인다.
+  staticCss: {
+    themes: ["trpg-red"],
+  },
 });
