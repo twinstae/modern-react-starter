@@ -16,6 +16,7 @@ const dice = (count: number, sides: number, sign: 1 | -1 = 1): DiceTerm => ({
   count,
   sides,
 });
+const fate = (count: number, sign: 1 | -1 = 1): DiceTerm => ({ type: "fate", sign, count });
 const constant = (value: number, sign: 1 | -1 = 1): DiceTerm => ({ type: "constant", sign, value });
 
 describe("표기 파서", () => {
@@ -27,6 +28,8 @@ describe("표기 파서", () => {
     ["3d6-2+1d4", [dice(3, 6), constant(2, -1), dice(1, 4)]],
     ["2D6", [dice(2, 6)]],
     ["5", [constant(5)]],
+    ["4dF+3", [fate(4), constant(3)]],
+    ["df-2df", [fate(1), fate(2, -1)]],
     [`${MAX_DICE}d${MAX_SIDES}`, [dice(MAX_DICE, MAX_SIDES)]],
     [`${MAX_DICE - 1}d6+1d6`, [dice(MAX_DICE - 1, 6), dice(1, 6)]],
   ])("%s는 항 목록이 된다", (text, terms) => {
@@ -43,6 +46,8 @@ describe("표기 파서", () => {
     [""],
     ["+2d6"],
     ["2d6++1"],
+    ["0dF"],
+    [`${MAX_DICE}dF+1d6`],
     ["2 d6"],
     [`${MAX_DICE + 1}d6`],
     [`1d${MAX_SIDES + 1}`],
@@ -131,6 +136,18 @@ describe("굴림", () => {
         { type: "constant", sign: 1, value: 10 },
       ],
       total: 4 + 6 - 1 - 2 + 10,
+    });
+  });
+
+  it("Fate 주사위는 난수를 셋으로 나눠 -1, 0, +1이 나오고, 빼는 항은 합계에서 뺀다", () => {
+    const result = roll([fate(3), fate(1, -1)], sequence(0, 0.5, 0.99, 0.99));
+
+    expect(result).toStrictEqual({
+      terms: [
+        { type: "fate", sign: 1, values: [-1, 0, 1] },
+        { type: "fate", sign: -1, values: [1] },
+      ],
+      total: -1 + 0 + 1 - 1,
     });
   });
 

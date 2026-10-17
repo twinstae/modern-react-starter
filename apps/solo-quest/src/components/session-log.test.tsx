@@ -46,6 +46,15 @@ describe("SessionLog", () => {
     );
   });
 
+  it("Fate 주사위는 +, 0, -로 보인다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.FateRoll.args} />),
+      assertions.textContents(query.list("세션 로그"), [
+        /^Player4dF\+3 · \[\+, 0, -, \+\] \+ 3 = 4/,
+      ]),
+    );
+  });
+
   it("라벨이 없는 판정에는 라벨 자리가 없다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.Mixed.args} />),

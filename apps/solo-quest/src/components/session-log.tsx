@@ -89,11 +89,20 @@ const Speaker = styled("strong", {
 // 줄바꿈은 그대로 보이고, 내용은 텍스트 노드로만 그려 마크다운을 해석하지 않는다.
 const Content = styled("p", { base: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } });
 
-/** 굴린 항을 값 그대로 이어 보여 준다. 예: `[4, 6] + 1`, `[13] - 1` */
+const FATE_FACE = { [-1]: "-", 0: "0", 1: "+" } as const;
+
+/** 굴린 항 하나의 값. 주사위는 값 목록으로, Fate 주사위는 +, 0, -로 보인다. */
+const formatTerm = (term: RolledTerm) => {
+  if (term.type === "constant") return String(term.value);
+  const faces = term.type === "fate" ? term.values.map((value) => FATE_FACE[value]) : term.values;
+  return `[${faces.join(", ")}]`;
+};
+
+/** 굴린 항을 값 그대로 이어 보여 준다. 예: `[4, 6] + 1`, `[13] - 1`, `[+, 0, -] + 3` */
 function formatTerms(terms: RolledTerm[]) {
   return terms
     .map((term, index) => {
-      const value = term.type === "dice" ? `[${term.values.join(", ")}]` : String(term.value);
+      const value = formatTerm(term);
       if (index === 0) return term.sign === -1 ? `-${value}` : value;
       return `${term.sign === -1 ? "-" : "+"} ${value}`;
     })

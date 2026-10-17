@@ -8,19 +8,21 @@ export const MAX_SIDES = 1000;
 /** 굴리기 전의 항. 빼는 항은 sign이 -1이다. */
 export type DiceTerm =
   | { type: "dice"; sign: 1 | -1; count: number; sides: number }
+  | { type: "fate"; sign: 1 | -1; count: number }
   | { type: "constant"; sign: 1 | -1; value: number };
 
 export type NotationResult = { ok: true; terms: DiceTerm[] } | { ok: false; message: string };
 
 const DICE_TERM = /^(\d*)d(\d+)$/i;
+const FATE_TERM = /^(\d*)df$/i;
 
 /** 항 목록에서 굴릴 주사위 수 */
 const countDice = (terms: DiceTerm[]) =>
-  terms.reduce((sum, term) => sum + (term.type === "dice" ? term.count : 0), 0);
+  terms.reduce((sum, term) => sum + (term.type === "constant" ? 0 : term.count), 0);
 const CONSTANT_TERM = /^\d+$/;
 
 /**
- * 표기를 항 목록으로 바꾼다. 항은 `NdM`(N을 생략하면 1)이나 정수 상수이고 `+`/`-`로 잇는다.
+ * 표기를 항 목록으로 바꾼다. 항은 `NdM`, `NdF`(N을 생략하면 1)나 정수 상수이고 `+`/`-`로 잇는다.
  * 대소문자는 구분하지 않는다.
  */
 export function parseNotation(text: string): NotationResult {
@@ -38,7 +40,12 @@ export function parseNotation(text: string): NotationResult {
     const body = hasSign ? token.slice(1) : token;
 
     const diceMatch = DICE_TERM.exec(body);
-    if (diceMatch) {
+    const fateMatch = FATE_TERM.exec(body);
+    if (fateMatch) {
+      const count = fateMatch[1] === "" ? 1 : Number(fateMatch[1]);
+      if (count < 1) return invalid;
+      terms.push({ type: "fate", sign, count });
+    } else if (diceMatch) {
       const count = diceMatch[1] === "" ? 1 : Number(diceMatch[1]);
       const sides = Number(diceMatch[2]);
       if (count < 1 || sides < 1) return invalid;
@@ -124,6 +131,12 @@ export const RolledTerm = v.variant("type", [
     sides: Positive,
     values: v.array(Positive),
   }),
+  /** Fate 주사위. 값은 -1, 0, +1이다. */
+  v.object({
+    type: v.literal("fate"),
+    sign: Sign,
+    values: v.array(v.picklist([-1, 0, 1])),
+  }),
   v.object({
     type: v.literal("constant"),
     sign: Sign,
@@ -143,12 +156,21 @@ export type Random = () => number;
 
 /** 굴린 항이 합계에 더하는 값. 빼는 항은 음수다. */
 const termTotal = (term: RolledTerm) =>
-  term.sign * (term.type === "constant" ? term.value : term.values.reduce((a, b) => a + b, 0));
+  term.sign * (term.type === "constant" ? term.value : sum(term.values));
+
+const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+
+/** Fate 주사위 하나: 난수를 셋으로 나눠 -1, 0, +1 */
+const rollFate = (random: Random) => (Math.floor(random() * 3) - 1) as -1 | 0 | 1;
 
 /** 항을 굴린다. 난수는 주입받는다. 실제 앱은 `crypto.getRandomValues` 기반 난수를 넘긴다. */
 export function roll(terms: DiceTerm[], random: Random): RollResult {
   const rolled = terms.map((term): RolledTerm => {
     if (term.type === "constant") return term;
+    if (term.type === "fate") {
+      const values = Array.from({ length: term.count }, () => rollFate(random));
+      return { type: "fate", sign: term.sign, values };
+    }
     const values = Array.from({ length: term.count }, () => Math.floor(random() * term.sides) + 1);
     return { type: "dice", sign: term.sign, sides: term.sides, values };
   });

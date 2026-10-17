@@ -136,3 +136,32 @@ export const PendingRoll: Story = {
     ],
   },
 };
+
+/** 판정 하나만 있는 기록. 표기와 굴린 항만 바꿔 쓴다. */
+const rollEntry = (roll: Pick<RollEntry, "notation" | "terms" | "total"> & Partial<RollEntry>) =>
+  ({
+    kind: "roll",
+    id: "event-1",
+    status: "committed",
+    side: "player",
+    speakerId: "player",
+    speakerName: "Player",
+    createdAt: "2026-10-07T12:01:00Z",
+    ...roll,
+  }) satisfies RollEntry;
+
+/** Fate 주사위 판정. 빼는 Fate 항도 있다. */
+export const FateRoll: Story = {
+  args: {
+    entries: [
+      rollEntry({
+        notation: "4dF+3",
+        terms: [
+          { type: "fate", sign: 1, values: [1, 0, -1, 1] },
+          { type: "constant", sign: 1, value: 3 },
+        ],
+        total: 4,
+      }),
+    ],
+  },
+};
