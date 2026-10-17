@@ -12,6 +12,7 @@ export { Group, type GroupProps } from "./group";
 export { IconButton, type IconButtonProps } from "./icon-button";
 export { Input, type InputProps } from "./input";
 export { Loader, type LoaderProps } from "./loader";
+export { PageRoot, type PageRootProps } from "./page-root";
 export * as Popover from "./popover";
 export * as Select from "./select";
 export { Span, type SpanProps } from "./span";

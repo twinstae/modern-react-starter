@@ -3,6 +3,8 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 // import { TanStackDevtools } from "@tanstack/react-devtools";
 // import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
+import { PageRoot } from "@repo/ui";
+
 import appCss from "../styles.css?url";
 
 import type { QueryClient } from "@tanstack/react-query";
@@ -45,7 +47,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <PageRoot>{children}</PageRoot>
         {/*<TanStackDevtools
           config={{
             position: "bottom-right",

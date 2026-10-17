@@ -1,6 +1,6 @@
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
-import { trpgRedDocument } from "@repo/ui";
+import { PageRoot, trpgRedDocument } from "@repo/ui";
 
 import appCss from "../styles.css?url";
 
@@ -30,7 +30,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <PageRoot>{children}</PageRoot>
         <Scripts />
       </body>
     </html>
