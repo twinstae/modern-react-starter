@@ -7,6 +7,7 @@ import { tomato } from "./src/theme/colors/tomato";
 import { amber } from "./src/theme/colors/amber";
 import { iris } from "./src/theme/colors/iris";
 import { brown } from "./src/theme/colors/brown";
+import { aliasPalette } from "./src/theme/colors/alias-palette";
 import { animationStyles } from "./src/theme/animation-styles";
 import { zIndex } from "./src/theme/tokens/z-index";
 import { shadows } from "./src/theme/tokens/shadows";
@@ -90,6 +91,8 @@ export default defineConfig({
             },
           },
 
+          // 레시피의 기본 colorPalette. 테마는 이 별칭이 가리키는 팔레트를 바꾼다.
+          accent: aliasPalette("gray"),
           blue: blue,
           gray: mauve,
           red: red,
@@ -103,6 +106,12 @@ export default defineConfig({
         },
 
         shadows: shadows,
+
+        // 테마가 글꼴을 바꿀 수 있도록 전역 CSS는 이 토큰만 쓴다.
+        fonts: {
+          body: { value: "{fonts.sans}" },
+          heading: { value: "{fonts.body}" },
+        },
 
         radii: {
           l1: {
