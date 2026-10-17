@@ -13,6 +13,10 @@ export type DiceTerm =
 export type NotationResult = { ok: true; terms: DiceTerm[] } | { ok: false; message: string };
 
 const DICE_TERM = /^(\d*)d(\d+)$/i;
+
+/** 항 목록에서 굴릴 주사위 수 */
+const countDice = (terms: DiceTerm[]) =>
+  terms.reduce((sum, term) => sum + (term.type === "dice" ? term.count : 0), 0);
 const CONSTANT_TERM = /^\d+$/;
 
 /**
@@ -46,8 +50,7 @@ export function parseNotation(text: string): NotationResult {
     }
   }
 
-  const totalDice = terms.reduce((sum, term) => sum + (term.type === "dice" ? term.count : 0), 0);
-  if (totalDice > MAX_DICE) {
+  if (countDice(terms) > MAX_DICE) {
     return { ok: false, message: `주사위는 모두 ${MAX_DICE}개까지 굴릴 수 있습니다` };
   }
   if (terms.some((term) => term.type === "dice" && term.sides > MAX_SIDES)) {
@@ -98,8 +101,7 @@ export function parseRoll(text: string): RollPlanResult {
   if (!challenge.ok || challenge.terms.length !== 1 || term?.type !== "dice") {
     return { ok: false, message: "vs 뒤에는 2d10처럼 도전 주사위 하나를 적어주세요" };
   }
-  const totalDice = parsed.terms.reduce((sum, t) => sum + (t.type === "dice" ? t.count : 0), 0);
-  if (totalDice + term.count > MAX_DICE) {
+  if (countDice(parsed.terms) + term.count > MAX_DICE) {
     return { ok: false, message: `주사위는 모두 ${MAX_DICE}개까지 굴릴 수 있습니다` };
   }
   return {
