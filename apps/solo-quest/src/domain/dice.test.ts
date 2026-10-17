@@ -75,41 +75,69 @@ describe("표기 파서", () => {
 });
 
 describe("판정 표기 파서", () => {
+  const against = {
+    dice: (count: number, sides: number) => ({ type: "dice" as const, count, sides }),
+    number: (value: number) => ({ type: "number" as const, value }),
+  };
+
   it.each([
-    ["2d6+1", { terms: [dice(2, 6), constant(1)] }],
+    ["던전월드", "2d6+1", { terms: [dice(2, 6), constant(1)] }],
     [
-      "d6+2+1 max10 vs 2d10",
+      "Ironsworn",
+      "d6+2+1 max10 > 2d10",
       {
         terms: [dice(1, 6), constant(2), constant(1)],
-        challenge: { count: 2, sides: 10, cap: 10 },
+        check: { op: ">", cap: 10, against: against.dice(2, 10) },
       },
     ],
-    ["d6+2 vs 2d10", { terms: [dice(1, 6), constant(2)], challenge: { count: 2, sides: 10 } }],
-    ["D6 MAX10 VS 2D10", { terms: [dice(1, 6)], challenge: { count: 2, sides: 10, cap: 10 } }],
-    ["d6  vs   d10", { terms: [dice(1, 6)], challenge: { count: 1, sides: 10 } }],
-  ])("%s는 판정 계획이 된다", (text, plan) => {
+    [
+      "Cypher",
+      "d20 >= 3*3",
+      { terms: [dice(1, 20)], check: { op: ">=", against: against.number(9) } },
+    ],
+    [
+      "겁스",
+      "3d6 <= 12",
+      { terms: [dice(3, 6)], check: { op: "<=", against: against.number(12) } },
+    ],
+    [
+      "Fate",
+      "4dF+3 >= 2",
+      { terms: [fate(4), constant(3)], check: { op: ">=", against: against.number(2) } },
+    ],
+    ["작다", "d20 < 0", { terms: [dice(1, 20)], check: { op: "<", against: against.number(0) } }],
+    [
+      "대문자와 여러 공백",
+      "D6  MAX10   >  D10",
+      { terms: [dice(1, 6)], check: { op: ">", cap: 10, against: against.dice(1, 10) } },
+    ],
+  ])("%s: %s는 판정 계획이 된다", (_system, text, plan) => {
     expect(parseRoll(text)).toStrictEqual({ ok: true, plan });
   });
 
   it.each([
-    ["d6 vs 2d10+1"],
-    ["d6 vs 3"],
-    ["d6 vs"],
-    ["d6 vs 0d10"],
+    ["d6 > 2d10+1"],
+    ["d6 > d10*2"],
+    ["d6 > 4dF"],
+    ["d6 > -1"],
+    ["d6 > 3*"],
+    ["d6 >"],
+    ["d6 = 3"],
+    ["d6 > 0d10"],
     ["d6 max10"],
-    ["d6 max0 vs 2d10"],
-    ["d6 vs 2d10 max10"],
-    ["d6 vs 2d10 d6"],
-    ["2x6 vs 2d10"],
-    [`d6 vs ${MAX_DICE}d10`],
+    ["d6 max0 > 2d10"],
+    ["d6 > 2d10 max10"],
+    ["d6 > 2d10 d6"],
+    ["2x6 > 2d10"],
+    [`d6 > ${MAX_DICE}d10`],
   ])("%j는 오류다", (text) => {
     expect(parseRoll(text).ok).toBe(false);
   });
 
-  it("도전 주사위가 틀리면 고칠 방법을 알려 준다", () => {
-    expect(parseRoll("d6 vs 3")).toStrictEqual({
+  it("목표가 틀리면 고칠 방법을 알려 준다", () => {
+    expect(parseRoll("d6 > 2d10+1")).toStrictEqual({
       ok: false,
-      message: "vs 뒤에는 2d10처럼 도전 주사위 하나를 적어주세요",
+      message: "목표에는 2d10 같은 도전 주사위 하나나 9, 3*3 같은 목표치를 적어주세요",
     });
   });
 });

@@ -66,25 +66,52 @@ export function parseNotation(text: string): NotationResult {
   return { ok: true, terms };
 }
 
-/** 도전 판정에서 액션 점수와 하나씩 견줄 주사위. `cap`은 액션 점수의 상한이다. */
-export interface Challenge {
-  count: number;
-  sides: number;
+/** 비교 연산자. `>`, `>=`는 액션 점수가 커야, `<`, `<=`는 작아야 이긴다. */
+export const COMPARE_OPS = [">", ">=", "<", "<="] as const;
+
+export type CompareOp = (typeof COMPARE_OPS)[number];
+
+/** 비교 판정의 목표. 도전 주사위는 하나씩 견주고, 목표치는 한 번 견준다. */
+export type Against =
+  | { type: "dice"; count: number; sides: number }
+  | { type: "number"; value: number };
+
+/** 비교 판정에서 액션 점수를 견줄 방법. `cap`은 액션 점수의 상한이다. */
+export interface Check {
+  op: CompareOp;
   cap?: number;
+  against: Against;
 }
 
-/** 굴리기 전의 판정. 도전 판정이면 `challenge`가 있고, `terms`는 액션 쪽이다. */
+/** 굴리기 전의 판정. 비교 판정이면 `check`가 있고, `terms`는 액션 쪽이다. */
 export interface RollPlan {
   terms: DiceTerm[];
-  challenge?: Challenge;
+  check?: Check;
 }
 
 export type RollPlanResult = { ok: true; plan: RollPlan } | { ok: false; message: string };
 
 const CAP_TOKEN = /^max(\d+)$/i;
+const TARGET_NUMBER = /^\d+(\*\d+)*$/;
+
+const isCompareOp = (token: string | undefined): token is CompareOp =>
+  COMPARE_OPS.some((op) => op === token);
+
+/** 목표를 읽는다. `NdM` 하나는 도전 주사위, 정수나 정수의 곱은 목표치다. */
+function parseAgainst(text: string): Against | undefined {
+  if (TARGET_NUMBER.test(text)) {
+    return { type: "number", value: text.split("*").reduce((a, b) => a * Number(b), 1) };
+  }
+  const parsed = parseNotation(text);
+  const [term] = parsed.ok ? parsed.terms : [];
+  if (!parsed.ok || parsed.terms.length !== 1 || term?.type !== "dice" || term.sign !== 1) {
+    return undefined;
+  }
+  return { type: "dice", count: term.count, sides: term.sides };
+}
 
 /**
- * 판정 표기를 판정 계획으로 바꾼다. `<표기>[ max<N>] vs <NdM>`이면 도전 판정이고, `vs`가 없으면 표기 그대로다.
+ * 판정 표기를 판정 계획으로 바꾼다. `<표기>[ max<N>][ <비교> <목표>]`이고, 비교가 없으면 표기 그대로다.
  * 낱말은 공백으로 가르고, 대소문자는 구분하지 않는다.
  */
 export function parseRoll(text: string): RollPlanResult {
@@ -95,28 +122,28 @@ export function parseRoll(text: string): RollPlanResult {
 
   const capMatch = CAP_TOKEN.exec(rest[0] ?? "");
   const cap = capMatch ? Number(capMatch[1]) : undefined;
-  const [vs, challengeText, ...extra] = capMatch ? rest.slice(1) : rest;
-  if (vs?.toLowerCase() !== "vs" || extra.length > 0) {
+  const [op, targetText, ...extra] = capMatch ? rest.slice(1) : rest;
+  if (!isCompareOp(op) || extra.length > 0) {
     return { ok: false, message: `판정 표기가 올바르지 않습니다: ${text}` };
   }
   if (cap !== undefined && cap < 1) {
     return { ok: false, message: "max 뒤에는 1 이상의 상한을 적어주세요" };
   }
 
-  const challenge = parseNotation(challengeText ?? "");
-  const [term] = challenge.ok ? challenge.terms : [];
-  if (!challenge.ok || challenge.terms.length !== 1 || term?.type !== "dice") {
-    return { ok: false, message: "vs 뒤에는 2d10처럼 도전 주사위 하나를 적어주세요" };
+  const against = parseAgainst(targetText ?? "");
+  if (!against) {
+    return {
+      ok: false,
+      message: "목표에는 2d10 같은 도전 주사위 하나나 9, 3*3 같은 목표치를 적어주세요",
+    };
   }
-  if (countDice(parsed.terms) + term.count > MAX_DICE) {
+  const targetDice = against.type === "dice" ? against.count : 0;
+  if (countDice(parsed.terms) + targetDice > MAX_DICE) {
     return { ok: false, message: `주사위는 모두 ${MAX_DICE}개까지 굴릴 수 있습니다` };
   }
   return {
     ok: true,
-    plan: {
-      terms: parsed.terms,
-      challenge: { count: term.count, sides: term.sides, ...(cap !== undefined && { cap }) },
-    },
+    plan: { terms: parsed.terms, check: { op, ...(cap !== undefined && { cap }), against } },
   };
 }
 
