@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_DICE, MAX_SIDES, parseNotation, roll, type DiceTerm, type Random } from "./dice.ts";
+import {
+  MAX_DICE,
+  MAX_SIDES,
+  parseNotation,
+  parseRoll,
+  roll,
+  type DiceTerm,
+  type Random,
+} from "./dice.ts";
 
 const dice = (count: number, sides: number, sign: 1 | -1 = 1): DiceTerm => ({
   type: "dice",
@@ -57,6 +65,46 @@ describe("표기 파서", () => {
     expect(parseNotation(`1d${MAX_SIDES + 1}`)).toStrictEqual({
       ok: false,
       message: `주사위 면은 ${MAX_SIDES}개까지 쓸 수 있습니다`,
+    });
+  });
+});
+
+describe("판정 표기 파서", () => {
+  it.each([
+    ["2d6+1", { terms: [dice(2, 6), constant(1)] }],
+    [
+      "d6+2+1 max10 vs 2d10",
+      {
+        terms: [dice(1, 6), constant(2), constant(1)],
+        challenge: { count: 2, sides: 10, cap: 10 },
+      },
+    ],
+    ["d6+2 vs 2d10", { terms: [dice(1, 6), constant(2)], challenge: { count: 2, sides: 10 } }],
+    ["D6 MAX10 VS 2D10", { terms: [dice(1, 6)], challenge: { count: 2, sides: 10, cap: 10 } }],
+    ["d6  vs   d10", { terms: [dice(1, 6)], challenge: { count: 1, sides: 10 } }],
+  ])("%s는 판정 계획이 된다", (text, plan) => {
+    expect(parseRoll(text)).toStrictEqual({ ok: true, plan });
+  });
+
+  it.each([
+    ["d6 vs 2d10+1"],
+    ["d6 vs 3"],
+    ["d6 vs"],
+    ["d6 vs 0d10"],
+    ["d6 max10"],
+    ["d6 max0 vs 2d10"],
+    ["d6 vs 2d10 max10"],
+    ["d6 vs 2d10 d6"],
+    ["2x6 vs 2d10"],
+    [`d6 vs ${MAX_DICE}d10`],
+  ])("%j는 오류다", (text) => {
+    expect(parseRoll(text).ok).toBe(false);
+  });
+
+  it("도전 주사위가 틀리면 고칠 방법을 알려 준다", () => {
+    expect(parseRoll("d6 vs 3")).toStrictEqual({
+      ok: false,
+      message: "vs 뒤에는 2d10처럼 도전 주사위 하나를 적어주세요",
     });
   });
 });
