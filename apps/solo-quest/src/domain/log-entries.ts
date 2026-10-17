@@ -66,6 +66,10 @@ export function toLogEntries(
       case "session:character_archived":
         // 보관해도 이름은 남아 지난 기록에 그대로 보인다
         break;
+      case "session:macro_added":
+      case "session:macro_removed":
+        // 매크로는 굴릴 때 쓰는 세션 상태라 로그에 보이지 않는다
+        break;
       case "session:message_posted":
         entries.push({ kind: "message", ...baseOf(event), content: event.body.content });
         break;

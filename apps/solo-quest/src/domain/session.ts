@@ -10,6 +10,7 @@ import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
 import { RolledCheck, RolledTerm, type RollResult } from "./dice.ts";
+import { parseMacro } from "./macro.ts";
 import { ShortText } from "./short-text.ts";
 
 const Character = v.object({
@@ -20,6 +21,11 @@ const Character = v.object({
 });
 
 export type Character = v.InferOutput<typeof Character>;
+
+/** 이름을 붙여 등록한 판정 표기의 틀. 식은 굴릴 때마다 `parseMacro`로 읽는다. */
+const Macro = v.object({ id: v.string(), name: v.string(), definition: v.string() });
+
+export type Macro = v.InferOutput<typeof Macro>;
 
 /** 편: 기록이 마스터 쪽에서 나왔는지 플레이어 쪽에서 나왔는지 */
 export const Side = v.picklist(["master", "player"]);
@@ -42,7 +48,8 @@ export const DEFAULT_SPEAKER: Record<Side, string> = { master: "gm", player: "pl
 /**
  * 세션 하나가 엔티티 하나다. 브라우저와 서버가 이 스키마를 공유한다.
  * 이벤트 정의는 여기 `event` 한 곳이다. 이벤트를 추가하려면 여기에 본문을 적고 reducer를 고치면 된다.
- * 상태는 캐릭터 목록뿐이다. 캐릭터를 더하고 보관하는 이벤트만 상태를 바꾸고, 대화와 판정은 바꾸지 않는다.
+ * 상태는 캐릭터와 매크로 목록이다. 캐릭터와 매크로를 더하고 보관하거나 지우는 이벤트만 상태를 바꾸고,
+ * 대화와 판정은 바꾸지 않는다.
  */
 export const sessionSchema = defineSchema("session", {
   schema: valibot({
@@ -50,6 +57,8 @@ export const sessionSchema = defineSchema("session", {
       started: v.object({ characters: v.array(Character) }),
       character_added: v.object({ characterId: v.string(), name: ShortText }),
       character_archived: v.object({ characterId: v.string() }),
+      macro_added: v.object({ macroId: v.string(), name: ShortText, definition: v.string() }),
+      macro_removed: v.object({ macroId: v.string() }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
       /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
       dice_rolled: v.object({
@@ -63,7 +72,7 @@ export const sessionSchema = defineSchema("session", {
         label: v.optional(ShortText),
       }),
     },
-    state: v.object({ characters: v.array(Character) }),
+    state: v.object({ characters: v.array(Character), macros: v.array(Macro) }),
   }),
   initialEventName: "session:started",
 });
@@ -95,9 +104,10 @@ export const SessionEventSchema = v.pipe(
 const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
   switch (event.eventName) {
     case "session:started":
-      return { characters: event.body.characters };
+      return { characters: event.body.characters, macros: [] };
     case "session:character_added":
       return {
+        ...prevState,
         characters: [
           ...prevState.characters,
           { id: event.body.characterId, name: event.body.name, archived: false, isDefault: false },
@@ -105,9 +115,23 @@ const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
       };
     case "session:character_archived":
       return {
+        ...prevState,
         characters: prevState.characters.map((character) =>
           character.id === event.body.characterId ? { ...character, archived: true } : character,
         ),
+      };
+    case "session:macro_added":
+      return {
+        ...prevState,
+        macros: [
+          ...prevState.macros,
+          { id: event.body.macroId, name: event.body.name, definition: event.body.definition },
+        ],
+      };
+    case "session:macro_removed":
+      return {
+        ...prevState,
+        macros: prevState.macros.filter((macro) => macro.id !== event.body.macroId),
       };
     default:
       return prevState;
@@ -151,6 +175,26 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     if (character.isDefault) throw new RuleViolation("기본 캐릭터는 보관할 수 없습니다");
     if (character.archived) throw new RuleViolation("이미 보관된 캐릭터입니다");
     dispatch("session:character_archived", { characterId });
+  });
+
+  /** 매크로를 더한다. id는 호출하는 쪽이 정한다. 이름은 짧은 글이고 겹치지 않으며, 식은 올바른 매크로 식이다. */
+  addMacro = mutation(this, (dispatch, macroId: string, name: string, definition: string) => {
+    const parsedName = parseShortText(name);
+    if (this.state.macros.some((macro) => macro.name === parsedName)) {
+      throw new RuleViolation("같은 이름의 매크로가 이미 있습니다");
+    }
+    const trimmed = definition.trim();
+    const parsed = parseMacro(trimmed);
+    if (!parsed.ok) throw new RuleViolation(parsed.message);
+    dispatch("session:macro_added", { macroId, name: parsedName, definition: trimmed });
+  });
+
+  /** 매크로를 지운다. 이 매크로로 굴린 지난 판정은 그대로다. */
+  removeMacro = mutation(this, (dispatch, macroId: string) => {
+    if (!this.state.macros.some((macro) => macro.id === macroId)) {
+      throw new RuleViolation("없는 매크로입니다");
+    }
+    dispatch("session:macro_removed", { macroId });
   });
 
   postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {

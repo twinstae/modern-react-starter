@@ -234,4 +234,51 @@ describe("세션", () => {
 
     expect(session.version).toBe(4);
   });
+
+  const IRONSWORN =
+    "d6+{능력치:1..4}+{수정치:0..4} max10 > 2d10 => 0 실패 | 1 약한 성공 | 2 강한 성공";
+
+  it("새 세션에는 매크로가 없다", () => {
+    expect(startSession().state.macros).toStrictEqual([]);
+  });
+
+  it("매크로를 더하면 앞뒤 공백을 뺀 이름과 식으로 목록 끝에 생기고, 커밋하고 다시 불러와도 같다", async () => {
+    const repository = createSessionRepository(createEventLogAdapter(createMemoryEventLogStore()));
+    const session = startSession();
+
+    session.addMacro("m-1", " 행동 판정 ", ` ${IRONSWORN} `);
+    session.addMacro("m-2", "피해", "d6");
+    await repository.commit(session);
+    const reloaded = await repository.findOne({ entityId: "session-1" });
+
+    expect(session.state.macros).toStrictEqual([
+      { id: "m-1", name: "행동 판정", definition: IRONSWORN },
+      { id: "m-2", name: "피해", definition: "d6" },
+    ]);
+    expect(reloaded?.state).toStrictEqual(session.state);
+  });
+
+  it.each([
+    ["빈 이름", "", "d6", "내용을 입력해주세요"],
+    ["같은 이름", "피해", "d8", "같은 이름의 매크로가 이미 있습니다"],
+    ["잘못된 식", "새 매크로", "2x6", "주사위 표기가 올바르지 않습니다: 2x6"],
+  ])("%s의 매크로는 이벤트를 만들지 않고 오류를 낸다", (_name, name, definition, message) => {
+    const session = startSession();
+    session.addMacro("m-1", "피해", "d6");
+
+    expect(() => session.addMacro("m-2", name, definition)).toThrow(new RuleViolation(message));
+    expect(session.version).toBe(2);
+  });
+
+  it("매크로를 지우면 목록에서 빠지고, 없는 매크로는 지울 수 없다", () => {
+    const session = startSession();
+    session.addMacro("m-1", "피해", "d6");
+    session.addMacro("m-2", "행동 판정", IRONSWORN);
+
+    session.removeMacro("m-1");
+
+    expect(session.state.macros.map((macro) => macro.id)).toStrictEqual(["m-2"]);
+    expect(() => session.removeMacro("m-1")).toThrow(RuleViolation);
+    expect(session.version).toBe(4);
+  });
 });
