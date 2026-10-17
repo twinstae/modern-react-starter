@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SIDE_LABEL } from "./side-label.ts";
-import { MessageInput, type MessageValues } from "./message-input.tsx";
+import { MessageInput, type MacroRollValues, type MessageValues } from "./message-input.tsx";
 import * as Stories from "./message-input.stories.tsx";
 
 describe("MessageInput", () => {
@@ -215,6 +215,94 @@ describe("MessageInput", () => {
       given.render(<Stories.RestoredLater side="master" />),
       actions.click(query.button("글 되돌리기")),
       assertions.value(query.textbox("마스터 대화"), "되돌아온 글"),
+    );
+  });
+
+  it("매크로 버튼으로 빈칸을 고르고 굴리면 편, 화자, 매크로, 고른 값이 넘어가고 대화는 남지 않는다", async () => {
+    let rolled: MacroRollValues | undefined;
+    let posted: MessageValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithMacros.args}
+          onSubmit={async (values) => {
+            posted = values;
+            return undefined;
+          }}
+          onRollMacro={async (values) => {
+            rolled = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.click(query.combobox("플레이어 화자")),
+      actions.click(query.option("경비병")),
+      assertions.not.expanded(query.combobox("플레이어 화자")),
+      // 쓰던 대화가 있어도 매크로 굴림은 대화를 남기지 않고 글을 그대로 둔다
+      actions.fill(query.textbox("플레이어 대화"), "숲으로 들어간다"),
+      actions.click(query.button("행동 판정")),
+      assertions.visible(query.dialog("행동 판정")),
+      actions.click(query.combobox("능력치")),
+      actions.click(query.option("3")),
+      assertions.not.expanded(query.combobox("능력치")),
+      actions.click(query.combobox("수정치")),
+      actions.click(query.option("2")),
+      assertions.not.expanded(query.combobox("수정치")),
+      actions.click(query.button("굴리기")),
+      assertions.not.visible(query.dialog("행동 판정")),
+      assertions.value(query.textbox("플레이어 대화"), "숲으로 들어간다"),
+    );
+
+    expect(rolled).toStrictEqual({
+      side: "player",
+      as: "guard",
+      macroId: "ironsworn",
+      values: { 능력치: 3, 수정치: 2 },
+    });
+    expect(posted).toBeUndefined();
+  });
+
+  it("매크로 빈칸은 처음에 최솟값이고, 라벨을 적으면 함께 넘어간다", async () => {
+    let rolled: MacroRollValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithMacros.args}
+          onRollMacro={async (values) => {
+            rolled = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.click(query.button("과제 판정")),
+      assertions.textContent(query.combobox("난이도"), "0"),
+      actions.fill(query.textbox("판정 라벨"), "자물쇠 따기"),
+      actions.click(query.button("굴리기")),
+    );
+
+    expect(rolled).toStrictEqual({
+      side: "player",
+      as: "player",
+      macroId: "cypher",
+      values: { 난이도: 0 },
+      label: "자물쇠 따기",
+    });
+  });
+
+  it("매크로 굴림이 오류를 돌려주면 폼이 열린 채 오류가 보인다", async () => {
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithMacros.args}
+          onRollMacro={async () => "말할 수 없는 캐릭터입니다"}
+        />,
+      ),
+      actions.click(query.button("위험을 무릅쓰기")),
+      actions.click(query.button("굴리기")),
+      assertions.visible(query.alert("말할 수 없는 캐릭터입니다")),
+      assertions.visible(query.dialog("위험을 무릅쓰기")),
     );
   });
 });

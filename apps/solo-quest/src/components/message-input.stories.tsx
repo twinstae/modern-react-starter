@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 
+import { SYSTEM_MACRO_LIST } from "../domain/macro.fixture.ts";
 import { DEFAULT_CHARACTERS, type Character, type Side } from "../domain/session.ts";
 import { MessageInput, type MessageInputProps } from "./message-input.tsx";
 
@@ -25,6 +26,23 @@ export const Master: Story = {
 };
 export const Player: Story = {
   args: { side: "player", characters: DEFAULT_CHARACTERS, ...callbacks },
+};
+
+/** 다섯 시스템의 매크로 버튼이 있는 플레이어 입력창 */
+export const WithMacros: Story = {
+  args: {
+    side: "player",
+    characters: [
+      ...DEFAULT_CHARACTERS,
+      { id: "guard", name: "경비병", archived: false, isDefault: false },
+    ],
+    macros: SYSTEM_MACRO_LIST,
+    onRollMacro: async (values) => {
+      console.log(values);
+      return undefined;
+    },
+    ...callbacks,
+  },
 };
 
 /** 활성 캐릭터 경비병과 보관된 캐릭터 상인이 있다. 화자 목록에는 활성 캐릭터만 나온다. */

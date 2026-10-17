@@ -11,9 +11,18 @@ import { SendHorizontal } from "lucide-react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
-import { activeCharacters, DEFAULT_SPEAKER, type Character, type Side } from "../domain/session.ts";
+import {
+  activeCharacters,
+  DEFAULT_SPEAKER,
+  type Character,
+  type Macro,
+  type Side,
+} from "../domain/session.ts";
 import { remainingGraphemes, ShortText } from "../domain/short-text.ts";
+import { MacroButton, type MacroRollValues } from "./macro-button.tsx";
 import { SIDE_LABEL } from "./side-label.ts";
+
+export type { MacroRollValues };
 
 export interface MessageValues {
   side: Side;
@@ -35,13 +44,21 @@ export interface MessageInputProps {
   defaultSpeakerId?: string;
   /** 오류 메시지를 돌려주면 입력을 유지하고 보여 준다. 성공하면 undefined를 돌려준다. */
   onSubmit: (values: MessageValues) => Promise<string | undefined>;
+  /** 등록한 매크로. 화자 옆에 버튼으로 보인다. */
+  macros?: Macro[];
+  /** 매크로로 굴린다. 오류 메시지를 돌려주면 매크로 폼에 보여 준다. */
+  onRollMacro?: (values: MacroRollValues) => Promise<string | undefined>;
   /** 저장에 충돌해 버려진 제출의 글. `key`가 바뀔 때마다 입력창에 채워진다. */
   restored?: { key: number; as: string; text: string };
 }
 
 const Layout = styled("div", { base: { display: "flex", flexDirection: "column", gap: "1.5" } });
 
-/** 화자 선택은 입력창 위에 작게 붙는다. */
+/** 화자 선택과 매크로 버튼은 입력창 위에 한 줄로 작게 붙는다. */
+const Toolbar = styled("div", {
+  base: { display: "flex", flexWrap: "wrap", gap: "1.5", alignItems: "center" },
+});
+
 const Speaker = styled("div", { base: { width: "40" } });
 
 const Row = styled("div", { base: { display: "flex", gap: "2", alignItems: "flex-start" } });
@@ -88,6 +105,8 @@ export function MessageInput({
   characters,
   defaultSpeakerId = DEFAULT_SPEAKER[side],
   onSubmit,
+  macros = [],
+  onRollMacro,
   restored,
 }: MessageInputProps) {
   const label = SIDE_LABEL[side];
@@ -104,19 +123,25 @@ export function MessageInput({
     >
       <Layout>
         {restored && <RestoreInput restored={restored} />}
-        <Speaker>
-          <SimpleSelect
-            name="as"
-            label={`${label} 화자`}
-            hideLabel
-            size="sm"
-            items={active.map((character) => ({ label: character.name, value: character.id }))}
-          />
-          <SpeakerFallback
-            activeIds={active.map((character) => character.id)}
-            fallback={DEFAULT_SPEAKER[side]}
-          />
-        </Speaker>
+        <Toolbar>
+          <Speaker>
+            <SimpleSelect
+              name="as"
+              label={`${label} 화자`}
+              hideLabel
+              size="sm"
+              items={active.map((character) => ({ label: character.name, value: character.id }))}
+            />
+            <SpeakerFallback
+              activeIds={active.map((character) => character.id)}
+              fallback={DEFAULT_SPEAKER[side]}
+            />
+          </Speaker>
+          {onRollMacro &&
+            macros.map((macro) => (
+              <MacroButton key={macro.id} side={side} macro={macro} onRoll={onRollMacro} />
+            ))}
+        </Toolbar>
         <Row>
           <Grow>
             <SimpleTextarea
