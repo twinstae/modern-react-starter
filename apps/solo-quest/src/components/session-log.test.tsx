@@ -70,6 +70,17 @@ describe("SessionLog", () => {
     );
   });
 
+  it("매크로로 굴린 판정은 끝에 결과 이름과 눈 효과를 보여 준다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.MacroRolls.args} />),
+      assertions.textContents(query.list("세션 로그"), [
+        /^Player위험을 무릅쓰기2d6\+1 · \[3, 5\] \+ 1 = 9 · 약한 성공/,
+        /^과제 판정d20 >= 3\*3 · \[20\] = 20 O \+11 · 성공 · 큰 이득/,
+      ]),
+      assertions.textContent(query.note("눈 효과"), "큰 이득"),
+    );
+  });
+
   it("라벨이 없는 판정에는 라벨 자리가 없다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.Mixed.args} />),

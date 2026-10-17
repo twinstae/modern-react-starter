@@ -213,3 +213,32 @@ export const CheckRolls: Story = {
     ],
   },
 };
+
+/** 매크로로 굴린 판정들. 결과 이름만 있는 것(던전월드)과 눈 효과까지 있는 것(Cypher) */
+export const MacroRolls: Story = {
+  args: {
+    entries: [
+      rollEntry({
+        id: "event-1",
+        notation: "2d6+1",
+        terms: [
+          { type: "dice", sign: 1, sides: 6, values: [3, 5] },
+          { type: "constant", sign: 1, value: 1 },
+        ],
+        total: 9,
+        label: "위험을 무릅쓰기",
+        outcome: "약한 성공",
+      }),
+      rollEntry({
+        id: "event-2",
+        notation: "d20 >= 3*3",
+        terms: [{ type: "dice", sign: 1, sides: 20, values: [20] }],
+        total: 20,
+        check: { op: ">=", against: { type: "number", value: 9 } },
+        label: "과제 판정",
+        outcome: "성공",
+        effect: "큰 이득",
+      }),
+    ],
+  },
+};

@@ -121,6 +121,9 @@ const RollTotal = styled("strong", {
 /** 비교 판정의 승패. 액션 점수만큼 크지 않게, 합계 옆에 이어 둔다. */
 const CheckResult = styled("span", { base: { fontSize: "sm", fontWeight: "semibold" } });
 
+/** 매크로가 붙인 결과 이름과 눈 효과. 판정의 결론이라 진하게 보인다. */
+const RollName = styled("span", { base: { fontWeight: "semibold" } });
+
 /** 차이는 이긴 쪽이 +다. 0도 +0으로 보여 성공했음을 드러낸다. */
 const formatMargin = (margin: number) => (margin < 0 ? String(margin) : `+${margin}`);
 
@@ -163,6 +166,7 @@ function CheckBody({ entry }: { entry: RollEntry }) {
 /**
  * 라벨, 표기와 주사위별 값, 합계를 한 줄에 둔다. 예: `자물쇠 따기 2d6+1 · [4, 6] + 1 = 11`
  * 비교 판정은 합계 대신 액션 점수를 크게 보이고(상한에 걸리면 `14 → 10`), 뒤에 목표와 승패를 둔다.
+ * 매크로가 붙인 결과 이름과 눈 효과는 맨 끝에 `· 성공 · 큰 이득`처럼 붙는다.
  */
 function RollBody({ entry }: { entry: RollEntry }) {
   const { score } = judgeRoll(entry);
@@ -179,6 +183,22 @@ function RollBody({ entry }: { entry: RollEntry }) {
       </RollDetail>{" "}
       <RollTotal>{score}</RollTotal>
       <CheckBody entry={entry} />
+      {entry.outcome && (
+        <>
+          {" · "}
+          <RollName role="note" aria-label="결과 이름">
+            {entry.outcome}
+          </RollName>
+        </>
+      )}
+      {entry.effect && (
+        <>
+          {" · "}
+          <RollName role="note" aria-label="눈 효과">
+            {entry.effect}
+          </RollName>
+        </>
+      )}
     </>
   );
 }
