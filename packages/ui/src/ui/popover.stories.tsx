@@ -77,3 +77,6 @@ export const Default: Story = { args: {} };
 
 /** 팝오버 안에서 연 고르는 칸의 목록은 팝오버 위에 뜬다. */
 export const WithSelect: Story = { args: { withSelect: true } };
+
+/** 넓은 내용(긴 식, 여러 칸)을 담는 팝오버 */
+export const Wide: Story = { args: { size: "md" } };
