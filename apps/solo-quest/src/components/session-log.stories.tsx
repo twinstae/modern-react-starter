@@ -165,3 +165,51 @@ export const FateRoll: Story = {
     ],
   },
 };
+
+/** 비교 판정들. 도전 주사위(약한 성공, 상한과 Match), 목표치(성공, 실패) */
+export const CheckRolls: Story = {
+  args: {
+    entries: [
+      rollEntry({
+        id: "event-1",
+        notation: "d6+2+1 max10 > 2d10",
+        terms: [
+          { type: "dice", sign: 1, sides: 6, values: [3] },
+          { type: "constant", sign: 1, value: 2 },
+          { type: "constant", sign: 1, value: 1 },
+        ],
+        total: 6,
+        check: { op: ">", cap: 10, against: { type: "dice", sides: 10, values: [5, 7] } },
+        label: "정찰",
+      }),
+      rollEntry({
+        id: "event-2",
+        notation: "d6+4+4 max10 > 2d10",
+        terms: [
+          { type: "dice", sign: 1, sides: 6, values: [6] },
+          { type: "constant", sign: 1, value: 4 },
+          { type: "constant", sign: 1, value: 4 },
+        ],
+        total: 14,
+        check: { op: ">", cap: 10, against: { type: "dice", sides: 10, values: [9, 9] } },
+      }),
+      rollEntry({
+        id: "event-3",
+        side: "master",
+        speakerId: "gm",
+        speakerName: "GM",
+        notation: "d20 >= 3*3",
+        terms: [{ type: "dice", sign: 1, sides: 20, values: [12] }],
+        total: 12,
+        check: { op: ">=", against: { type: "number", value: 9 } },
+      }),
+      rollEntry({
+        id: "event-4",
+        notation: "3d6 <= 12",
+        terms: [{ type: "dice", sign: 1, sides: 6, values: [6, 6, 1] }],
+        total: 13,
+        check: { op: "<=", against: { type: "number", value: 12 } },
+      }),
+    ],
+  },
+};

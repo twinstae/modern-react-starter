@@ -1,6 +1,6 @@
 import { styled } from "styled-system/jsx";
 
-import type { RolledTerm } from "../domain/dice.ts";
+import { judgeRoll, type RolledTerm } from "../domain/dice.ts";
 import type { LogEntry, RollEntry } from "../domain/log-entries.ts";
 import { formatInstant, formatTime } from "../format-instant.ts";
 import { SIDE_LABEL } from "./side-label.ts";
@@ -118,8 +118,54 @@ const RollTotal = styled("strong", {
   base: { ml: "1", fontSize: "xl", fontWeight: "bold", color: "fg.default" },
 });
 
-/** 라벨, 표기와 주사위별 값, 합계를 한 줄에 둔다. 예: `자물쇠 따기 2d6+1 · [4, 6] + 1 = 11` */
+/** 비교 판정의 승패. 액션 점수만큼 크지 않게, 합계 옆에 이어 둔다. */
+const CheckResult = styled("span", { base: { fontSize: "sm", fontWeight: "semibold" } });
+
+/** 차이는 이긴 쪽이 +다. 0도 +0으로 보여 성공했음을 드러낸다. */
+const formatMargin = (margin: number) => (margin < 0 ? String(margin) : `+${margin}`);
+
+/**
+ * 비교 판정의 목표와 승패. 도전 주사위는 `> [5, 7] X O`(진 것을 앞에)와 Match,
+ * 목표치는 목표가 표기에 있으므로 `O +3`처럼 승패와 차이만 보인다.
+ */
+function CheckBody({ entry }: { entry: RollEntry }) {
+  const { check } = entry;
+  if (!check) return null;
+  const judged = judgeRoll(entry);
+  if (check.against.type === "number") {
+    return (
+      <>
+        {" "}
+        <CheckResult>
+          {judged.success ? "O" : "X"} {formatMargin(judged.value)}
+        </CheckResult>
+      </>
+    );
+  }
+  const wins = judged.wins ?? [];
+  const marks = [...wins.filter((win) => !win), ...wins.filter(Boolean)].map((win) =>
+    win ? "O" : "X",
+  );
+  return (
+    <>
+      <RollDetail>
+        {" "}
+        {check.op} [{check.against.values.join(", ")}]
+      </RollDetail>{" "}
+      <CheckResult>
+        {marks.join(" ")}
+        {judged.match && " Match"}
+      </CheckResult>
+    </>
+  );
+}
+
+/**
+ * 라벨, 표기와 주사위별 값, 합계를 한 줄에 둔다. 예: `자물쇠 따기 2d6+1 · [4, 6] + 1 = 11`
+ * 비교 판정은 합계 대신 액션 점수를 크게 보이고(상한에 걸리면 `14 → 10`), 뒤에 목표와 승패를 둔다.
+ */
 function RollBody({ entry }: { entry: RollEntry }) {
+  const { score } = judgeRoll(entry);
   return (
     <>
       {entry.label && (
@@ -129,8 +175,10 @@ function RollBody({ entry }: { entry: RollEntry }) {
       )}
       <RollDetail>
         {entry.notation} · {formatTerms(entry.terms)} =
+        {score !== entry.total && ` ${entry.total} →`}
       </RollDetail>{" "}
-      <RollTotal>{entry.total}</RollTotal>
+      <RollTotal>{score}</RollTotal>
+      <CheckBody entry={entry} />
     </>
   );
 }

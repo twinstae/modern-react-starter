@@ -55,6 +55,21 @@ describe("SessionLog", () => {
     );
   });
 
+  it("비교 판정은 액션 점수 뒤에 목표와 승패를 보여 준다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.CheckRolls.args} />),
+      assertions.textContents(query.list("세션 로그"), [
+        // 도전 주사위는 진 것(X)을 앞에 둔다
+        /^Player정찰d6\+2\+1 max10 > 2d10 · \[3\] \+ 2 \+ 1 = 6 > \[5, 7\] X O/,
+        // 상한에 걸리면 합계 뒤에 상한을 보이고, 도전 주사위가 같으면 Match
+        /^d6\+4\+4 max10 > 2d10 · \[6\] \+ 4 \+ 4 = 14 → 10 > \[9, 9\] O O Match/,
+        // 목표치는 승패와 차이
+        /^GMd20 >= 3\*3 · \[12\] = 12 O \+3/,
+        /^Player3d6 <= 12 · \[6, 6, 1\] = 13 X -1/,
+      ]),
+    );
+  });
+
   it("라벨이 없는 판정에는 라벨 자리가 없다", async () => {
     await runSiheom(
       given.render(<SessionLog {...Stories.Mixed.args} />),
