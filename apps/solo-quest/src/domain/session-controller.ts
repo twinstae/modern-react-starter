@@ -1,4 +1,4 @@
-import { parseNotation, roll, type Random } from "./dice.ts";
+import { parseRoll, rollPlan, type Random } from "./dice.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import { parseInput } from "./parse-input.ts";
 import { toLogEntries, type EntryStatus, type LogEntry } from "./log-entries.ts";
@@ -254,9 +254,9 @@ export function createSessionController({
       if (input.type === "message") {
         record = (current) => current.postMessage(side, as, input.content);
       } else {
-        const notation = parseNotation(input.notation);
-        if (!notation.ok) return notation.message;
-        const result = roll(notation.terms, random);
+        const parsed = parseRoll(input.notation);
+        if (!parsed.ok) return parsed.message;
+        const result = rollPlan(parsed.plan, random);
         record = (current) => current.rollDice(side, as, input.notation, result, input.label);
       }
       return apply(record, { side, as, text });

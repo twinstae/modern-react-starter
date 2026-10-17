@@ -9,7 +9,7 @@ import {
 import { v, valibot } from "ventyd/valibot";
 import { v7 as uuidv7 } from "uuid";
 
-import { RolledTerm, type RollResult } from "./dice.ts";
+import { RolledCheck, RolledTerm, type RollResult } from "./dice.ts";
 import { ShortText } from "./short-text.ts";
 
 const Character = v.object({
@@ -58,6 +58,8 @@ export const sessionSchema = defineSchema("session", {
         notation: v.string(),
         terms: v.array(RolledTerm),
         total: v.pipe(v.number(), v.integer()),
+        /** 비교 판정이면 있다. `terms`, `total`은 액션 쪽이다. */
+        check: v.optional(RolledCheck),
         label: v.optional(ShortText),
       }),
     },
@@ -169,6 +171,7 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
         notation,
         terms: result.terms,
         total: result.total,
+        ...(result.check && { check: result.check }),
         ...(parsedLabel !== undefined && { label: parsedLabel }),
       });
     },

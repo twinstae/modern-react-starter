@@ -1,4 +1,4 @@
-import type { RolledTerm } from "./dice.ts";
+import type { RolledCheck, RolledTerm } from "./dice.ts";
 import type { Side, SessionEvent } from "./session.ts";
 
 /** 저장된 기록인지, 저장을 기다리는 중인지, 저장하지 못했는지 */
@@ -27,6 +27,8 @@ export interface RollEntry extends BaseEntry {
   notation: string;
   terms: RolledTerm[];
   total: number;
+  /** 비교 판정이면 있다. `terms`, `total`은 액션 쪽이다. */
+  check?: RolledCheck;
   label?: string;
 }
 
@@ -68,13 +70,14 @@ export function toLogEntries(
         entries.push({ kind: "message", ...baseOf(event), content: event.body.content });
         break;
       case "session:dice_rolled": {
-        const { notation, terms, total, label } = event.body;
+        const { notation, terms, total, check, label } = event.body;
         entries.push({
           kind: "roll",
           ...baseOf(event),
           notation,
           terms,
           total,
+          ...(check !== undefined && { check }),
           ...(label !== undefined && { label }),
         });
         break;

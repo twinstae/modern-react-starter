@@ -194,7 +194,38 @@ describe("세션 컨트롤러", () => {
     expect(entries.map((entry) => entry.kind)).toStrictEqual(["roll"]);
   });
 
+  it("비교 판정은 굴린 목표까지 판정으로 남기고, 다시 불러와도 같다", async () => {
+    const eventLog = createMemoryEventLogStore();
+    const controller = newController(eventLog);
+    await controller.load();
+
+    await controller.submit({ side: "player", as: "player", text: "/r d6+2 max10 > 2d10 정찰" });
+    await controller.idle();
+
+    // 고정 난수 0.5: d6은 4, d10은 6
+    const check = { op: ">", cap: 10, against: { type: "dice", sides: 10, values: [6, 6] } };
+    expect(controller.getSnapshot().events.at(-1)?.body).toStrictEqual({
+      side: "player",
+      as: "player",
+      notation: "d6+2 max10 > 2d10",
+      terms: [
+        { type: "dice", sign: 1, sides: 6, values: [4] },
+        { type: "constant", sign: 1, value: 2 },
+      ],
+      total: 6,
+      check,
+      label: "정찰",
+    });
+    const [reloaded] = (await newController(eventLog).load()).entries;
+    expect(reloaded).toMatchObject({ kind: "roll", check });
+  });
+
   it.each([
+    [
+      "잘못된 목표",
+      "/r d6 > 2d10+1",
+      "목표에는 2d10 같은 도전 주사위 하나나 9, 3*3 같은 목표치를 적어주세요",
+    ],
     ["잘못된 표기", "/r 2x6 자물쇠", "주사위 표기가 올바르지 않습니다: 2x6"],
     ["상한을 넘는 표기", "/r 101d6", "주사위는 모두 100개까지 굴릴 수 있습니다"],
     ["표기가 없는 /r", "/r", "굴릴 주사위 표기를 적어주세요. 예: /r 2d6+1"],
