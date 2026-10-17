@@ -84,4 +84,30 @@ describe("SimpleForm", () => {
 
     expect(result).toStrictEqual({ title: "바깥에서 바꾼 제목", memo: "쓰던 메모" });
   });
+
+  it("폼 안에서 Portal로 띄운 폼을 제출해도 바깥 폼은 제출되지 않는다", async () => {
+    let note: NoteValues | undefined;
+    let tag: { tag: string } | undefined;
+
+    await runSiheom(
+      given.render(
+        <NoteForm
+          {...Stories.WithPortalForm.args}
+          onSubmit={async (values) => {
+            note = values;
+          }}
+          onTagSubmit={async (values) => {
+            tag = values;
+          }}
+        />,
+      ),
+      actions.fill(query.textbox("제목"), "첫 노트"),
+      actions.fill(query.textbox("태그 이름"), "모험"),
+      actions.click(query.button("태그 저장")),
+      assertions.value(query.textbox("태그 이름"), "모험"),
+    );
+
+    expect(tag).toStrictEqual({ tag: "모험" });
+    expect(note).toBeUndefined();
+  });
 });

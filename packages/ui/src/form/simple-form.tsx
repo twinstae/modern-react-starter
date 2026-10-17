@@ -50,7 +50,15 @@ export function SimpleForm<Output>({
 
   return (
     <FormProvider {...methods}>
-      <FormBase onSubmit={submit} {...props}>
+      <FormBase
+        onSubmit={(event) => {
+          // React 이벤트는 Portal을 지나 React 트리의 바깥 폼까지 올라간다.
+          // Popover처럼 폼 안에서 띄운 폼의 제출이 바깥 폼을 제출하지 않게 여기서 멈춘다.
+          event.stopPropagation();
+          return submit(event);
+        }}
+        {...props}
+      >
         {props.children}
         {rootError && (
           <Field.ErrorText role="alert" aria-label={rootError}>
