@@ -20,6 +20,19 @@ describe("입력 해석", () => {
   });
 
   it.each([
+    ["d6+2 max10 > 2d10 마녀의 숲 정찰", "d6+2 max10 > 2d10", "마녀의 숲 정찰"],
+    ["d20   >=  3*3", "d20 >= 3*3", undefined],
+    ["3d6 <= 12 자물쇠", "3d6 <= 12", "자물쇠"],
+    ["2d6 max10 정찰", "2d6 max10", "정찰"],
+  ])("비교 판정 /r %s는 표기 %j와 라벨 %j로 가른다", (args, notation, label) => {
+    expect(parseInput(`/r ${args}`)).toStrictEqual({
+      type: "roll",
+      notation,
+      ...(label !== undefined && { label }),
+    });
+  });
+
+  it.each([
     ["알 수 없는 명령", "/desc 안개", "알 수 없는 명령입니다: /desc"],
     ["표기가 없는 /r", "/r", "굴릴 주사위 표기를 적어주세요. 예: /r 2d6+1"],
     ["공백만 뒤따르는 /r", "/r   ", "굴릴 주사위 표기를 적어주세요. 예: /r 2d6+1"],
