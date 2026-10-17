@@ -70,6 +70,9 @@ export const sessionSchema = defineSchema("session", {
         /** 비교 판정이면 있다. `terms`, `total`은 액션 쪽이다. */
         check: v.optional(RolledCheck),
         label: v.optional(ShortText),
+        /** 매크로가 붙인 결과 이름과 눈 효과. 매크로를 지우거나 바꿔도 기록은 그대로다. */
+        outcome: v.optional(ShortText),
+        effect: v.optional(ShortText),
       }),
     },
     state: v.object({ characters: v.array(Character), macros: v.array(Macro) }),
@@ -203,10 +206,18 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     dispatch("session:message_posted", { side, as, content });
   });
 
-  /** 이미 굴린 결과를 판정으로 남긴다. 라벨이 없으면 생략한다. */
+  /** 이미 굴린 결과를 판정으로 남긴다. 라벨과 매크로가 붙인 이름이 없으면 생략한다. */
   rollDice = mutation(
     this,
-    (dispatch, side: Side, as: string, notation: string, result: RollResult, label?: string) => {
+    (
+      dispatch,
+      side: Side,
+      as: string,
+      notation: string,
+      result: RollResult,
+      label?: string,
+      names: { outcome?: string; effect?: string } = {},
+    ) => {
       const parsedLabel = label === undefined ? undefined : parseShortText(label);
       this.#assertActiveSpeaker(as);
       dispatch("session:dice_rolled", {
@@ -217,6 +228,8 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
         total: result.total,
         ...(result.check && { check: result.check }),
         ...(parsedLabel !== undefined && { label: parsedLabel }),
+        ...(names.outcome !== undefined && { outcome: names.outcome }),
+        ...(names.effect !== undefined && { effect: names.effect }),
       });
     },
   );

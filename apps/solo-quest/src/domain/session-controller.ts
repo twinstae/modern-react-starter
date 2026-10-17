@@ -1,4 +1,5 @@
-import { parseRoll, rollPlan, type Random } from "./dice.ts";
+import { judgeRoll, parseRoll, rollPlan, type Random } from "./dice.ts";
+import { fillMacro, nameResult, parseMacro } from "./macro.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import { parseInput } from "./parse-input.ts";
 import { toLogEntries, type EntryStatus, type LogEntry } from "./log-entries.ts";
@@ -7,6 +8,7 @@ import {
   DEFAULT_CHARACTERS,
   Session,
   type Character,
+  type Macro,
   RuleViolation,
   type Side,
   type SessionEvent,
@@ -19,6 +21,8 @@ export interface SessionView {
   events: SessionEvent[];
   entries: LogEntry[];
   characters: Character[];
+  /** 등록한 매크로. 입력창의 매크로 버튼이 된다. */
+  macros: Macro[];
   /** 충돌로 버려진 제출의 글. 그 편의 입력창이 다시 채운다. */
   restored: Partial<Record<Side, RestoredInput>>;
   /** 충돌로 다시 불러왔다는 알림. 캐릭터 변경처럼 되돌려 줄 글이 없는 제출도 이것으로 알린다. 다음 제출을 받으면 사라진다. */
@@ -47,7 +51,13 @@ const CONFLICT_NOTICE = "다른 곳에서 먼저 기록했습니다. 최신 기�
 const RELOAD_FAILED_NOTICE = "최신 기록을 불러오지 못했습니다. 다시 시도하려면 새로 기록하세요";
 
 /** 불러오기 전의 모습 */
-const EMPTY_VIEW: SessionView = { events: [], entries: [], characters: [], restored: {} };
+const EMPTY_VIEW: SessionView = {
+  events: [],
+  entries: [],
+  characters: [],
+  macros: [],
+  restored: {},
+};
 
 /**
  * 세션 하나에 대한 컨트롤러. UI를 모른다. 이벤트 로그 저장소(메모리 또는 HTTP)만 받는다.
@@ -64,7 +74,7 @@ export function createSessionController({
   eventLog: EventLogStore;
   /** 주사위를 굴릴 난수. 도메인은 난수를 만들지 않고 앱이 넘겨 준다. */
   random: Random;
-  /** 새 캐릭터의 id를 만든다. 도메인은 id를 만들지 않고 앱이 넘겨 준다. */
+  /** 새 캐릭터와 매크로의 id를 만든다. 도메인은 id를 만들지 않고 앱이 넘겨 준다. */
   generateId: () => string;
 }) {
   let committed: SessionEvent[] = [];
@@ -106,6 +116,7 @@ export function createSessionController({
       events: all,
       entries: toLogEntries(all, statuses),
       characters: session?.state.characters ?? [],
+      macros: session?.state.macros ?? [],
       restored,
       notice,
     };
@@ -269,5 +280,52 @@ export function createSessionController({
     /** 캐릭터를 보관한다. 규칙을 어기면 오류 메시지를 돌려주고, 아니면 undefined다. */
     archiveCharacter: async (characterId: string): Promise<string | undefined> =>
       apply((current) => current.archiveCharacter(characterId)),
+
+    /** 매크로를 더한다. 이름이나 식이 틀리면 오류 메시지를 돌려주고, 아니면 undefined다. */
+    addMacro: async ({
+      name,
+      definition,
+    }: {
+      name: string;
+      definition: string;
+    }): Promise<string | undefined> =>
+      apply((current) => current.addMacro(generateId(), name, definition)),
+
+    /** 매크로를 지운다. 없는 매크로면 오류 메시지를 돌려주고, 아니면 undefined다. */
+    removeMacro: async (macroId: string): Promise<string | undefined> =>
+      apply((current) => current.removeMacro(macroId)),
+
+    /**
+     * 매크로의 빈칸을 고른 값으로 채워 굴리고, 결과 이름과 눈 효과를 붙여 판정으로 남긴다.
+     * 라벨을 비우면 매크로 이름이 라벨이다. 잘못된 값이나 규칙 위반이면 오류 메시지를 돌려준다.
+     */
+    async rollMacro({
+      side,
+      as,
+      macroId,
+      values,
+      label,
+    }: {
+      side: Side;
+      as: string;
+      macroId: string;
+      values: Readonly<Record<string, number>>;
+      label?: string;
+    }): Promise<string | undefined> {
+      const macro = session?.state.macros.find(({ id }) => id === macroId);
+      if (!macro) return "없는 매크로입니다";
+      const parsed = parseMacro(macro.definition);
+      if (!parsed.ok) return parsed.message;
+      const filled = fillMacro(parsed.macro, values);
+      if (!filled.ok) return filled.message;
+      const plan = parseRoll(filled.notation);
+      if (!plan.ok) return plan.message;
+      const result = rollPlan(plan.plan, random);
+      const names = nameResult(parsed.macro, judgeRoll(result));
+      const recordedLabel = label?.trim() ? label : macro.name;
+      return apply((current) =>
+        current.rollDice(side, as, filled.notation, result, recordedLabel, names),
+      );
+    },
   };
 }

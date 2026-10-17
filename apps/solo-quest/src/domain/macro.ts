@@ -168,9 +168,11 @@ export function fillMacro(
 ): FillResult {
   for (const slot of macro.slots) {
     const value = values[slot.name];
-    if (value === undefined) return { ok: false, message: `${slot.name}을(를) 골라주세요` };
-    if (!Number.isInteger(value) || value < slot.min || value > slot.max) {
-      return { ok: false, message: `${slot.name}은(는) ${slot.min}..${slot.max} 사이 정수입니다` };
+    if (value === undefined || !Number.isInteger(value) || value < slot.min || value > slot.max) {
+      return {
+        ok: false,
+        message: `${slot.name}: ${slot.min}..${slot.max} 사이 정수를 골라주세요`,
+      };
     }
   }
   return { ok: true, notation: substitute(macro.template, (name) => values[name] ?? 0) };

@@ -30,6 +30,10 @@ export interface RollEntry extends BaseEntry {
   /** 비교 판정이면 있다. `terms`, `total`은 액션 쪽이다. */
   check?: RolledCheck;
   label?: string;
+  /** 매크로가 붙인 결과 이름 */
+  outcome?: string;
+  /** 매크로가 붙인 눈 효과 */
+  effect?: string;
 }
 
 /** 로그 화면이 그리는 항목 하나. 이벤트에서 만든 표시용 값이다. */
@@ -74,7 +78,7 @@ export function toLogEntries(
         entries.push({ kind: "message", ...baseOf(event), content: event.body.content });
         break;
       case "session:dice_rolled": {
-        const { notation, terms, total, check, label } = event.body;
+        const { notation, terms, total, check, label, outcome, effect } = event.body;
         entries.push({
           kind: "roll",
           ...baseOf(event),
@@ -83,6 +87,8 @@ export function toLogEntries(
           total,
           ...(check !== undefined && { check }),
           ...(label !== undefined && { label }),
+          ...(outcome !== undefined && { outcome }),
+          ...(effect !== undefined && { effect }),
         });
         break;
       }

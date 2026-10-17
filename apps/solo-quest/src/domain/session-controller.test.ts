@@ -587,4 +587,97 @@ describe("세션 컨트롤러", () => {
       "committed",
     ]);
   });
+
+  const IRONSWORN =
+    "d6+{능력치:1..4}+{수정치:0..4} max10 > 2d10 => 0 실패 | 1 약한 성공 | 2 강한 성공";
+
+  it("매크로를 더하면 스냅샷의 매크로 목록에 생기고, 지우면 빠진다", async () => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+
+    expect(await controller.addMacro({ name: "행동 판정", definition: IRONSWORN })).toBeUndefined();
+    expect(controller.getSnapshot().macros).toStrictEqual([
+      { id: "character-1", name: "행동 판정", definition: IRONSWORN },
+    ]);
+
+    expect(await controller.removeMacro("character-1")).toBeUndefined();
+    expect(controller.getSnapshot().macros).toStrictEqual([]);
+  });
+
+  it("잘못된 매크로 식은 오류 메시지를 돌려주고 매크로가 생기지 않는다", async () => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+
+    expect(await controller.addMacro({ name: "행동 판정", definition: "2x6" })).toBe(
+      "주사위 표기가 올바르지 않습니다: 2x6",
+    );
+    expect(controller.getSnapshot().macros).toStrictEqual([]);
+  });
+
+  it("매크로로 굴리면 빈칸을 채운 표기, 매크로 이름 라벨, 결과 이름으로 판정을 남긴다", async () => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+    await controller.addMacro({ name: "행동 판정", definition: IRONSWORN });
+
+    const result = await controller.rollMacro({
+      side: "player",
+      as: "player",
+      macroId: "character-1",
+      values: { 능력치: 2, 수정치: 1 },
+    });
+
+    expect(result).toBeUndefined();
+    // 고정 난수 0.5: d6은 4라 액션 점수 7, 도전 주사위 d10은 둘 다 6이라 2개를 이긴다
+    expect(controller.getSnapshot().events.at(-1)?.body).toMatchObject({
+      side: "player",
+      as: "player",
+      notation: "d6+2+1 max10 > 2d10",
+      total: 7,
+      label: "행동 판정",
+      outcome: "강한 성공",
+    });
+    expect(controller.getSnapshot().entries.at(-1)).toMatchObject({ outcome: "강한 성공" });
+  });
+
+  it("매크로로 굴릴 때 라벨을 적으면 매크로 이름 대신 그 라벨이 남는다", async () => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+    await controller.addMacro({ name: "피해", definition: "d6" });
+
+    await controller.rollMacro({
+      side: "master",
+      as: "gm",
+      macroId: "character-1",
+      values: {},
+      label: "늑대의 이빨",
+    });
+
+    expect(controller.getSnapshot().events.at(-1)?.body).toStrictEqual({
+      side: "master",
+      as: "gm",
+      notation: "d6",
+      terms: [{ type: "dice", sign: 1, sides: 6, values: [4] }],
+      total: 4,
+      label: "늑대의 이빨",
+    });
+  });
+
+  it.each([
+    ["없는 매크로", "nothing", { 능력치: 2, 수정치: 1 }, "없는 매크로입니다"],
+    [
+      "범위 밖의 빈칸",
+      "character-1",
+      { 능력치: 9, 수정치: 1 },
+      "능력치: 1..4 사이 정수를 골라주세요",
+    ],
+  ])("%s로는 굴리지 않고 오류 메시지를 돌려준다", async (_name, macroId, values, message) => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+    await controller.addMacro({ name: "행동 판정", definition: IRONSWORN });
+
+    expect(await controller.rollMacro({ side: "player", as: "player", macroId, values })).toBe(
+      message,
+    );
+    expect(controller.getSnapshot().entries).toStrictEqual([]);
+  });
 });
