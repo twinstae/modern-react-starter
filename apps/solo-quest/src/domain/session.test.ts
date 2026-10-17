@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SYSTEM_MACROS } from "./macro.fixture.ts";
 import { createMemoryEventLogStore } from "./event-log-store.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import type { RollResult } from "./dice.ts";
@@ -235,8 +236,7 @@ describe("세션", () => {
     expect(session.version).toBe(4);
   });
 
-  const IRONSWORN =
-    "d6+{능력치:1..4}+{수정치:0..4} max10 > 2d10 => 0 실패 | 1 약한 성공 | 2 강한 성공";
+  const IRONSWORN = SYSTEM_MACROS.ironsworn;
 
   it("새 세션에는 매크로가 없다", () => {
     expect(startSession().state.macros).toStrictEqual([]);

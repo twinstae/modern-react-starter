@@ -2,16 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import type { Judgement } from "./dice.ts";
 import { fillMacro, nameResult, parseMacro, type ParsedMacro } from "./macro.ts";
+import { SYSTEM_MACROS } from "./macro.fixture.ts";
 
-/** 문서와 화면 예시에 쓰는 다섯 시스템의 매크로 식 */
-const IRONSWORN =
-  "d6+{능력치:1..4}+{수정치:0..4} max10 > 2d10 => 0 실패 | 1 약한 성공 | 2 강한 성공";
-const CYPHER =
-  "d20 >= {난이도:0..10}*3 => ..-1 실패 | 0.. 성공 ; 20 큰 이득, 19 작은 이득, 1 마스터 개입";
-const GURPS =
-  "3d6 <= {기술:3..20} => ..-10 대실패 | -9..-1 실패 | 0.. 성공 ; 3..4 !대성공, 17 !실패, 18 !대실패";
-const FATE = "4dF+{기술:0..5} >= {상대:0..8} => ..-1 실패 | 0 동점 | 1..2 성공 | 3.. 멋진 성공";
-const DUNGEON_WORLD = "2d6+{능력치:-1..3} => ..6 실패 | 7..9 약한 성공 | 10.. 강한 성공";
+const {
+  ironsworn: IRONSWORN,
+  cypher: CYPHER,
+  gurps: GURPS,
+  fate: FATE,
+  dungeonWorld: DUNGEON_WORLD,
+} = SYSTEM_MACROS;
 
 describe("매크로 식 파서", () => {
   it("Ironsworn: 빈칸과 이긴 개수마다 결과 이름을 읽는다", () => {

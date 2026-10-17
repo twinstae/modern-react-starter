@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { SYSTEM_MACROS } from "./macro.fixture.ts";
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
 import { createFakeEventLog } from "./event-log-store.fake.ts";
 import { postedEvent } from "./session.fixture.ts";
@@ -588,8 +589,7 @@ describe("세션 컨트롤러", () => {
     ]);
   });
 
-  const IRONSWORN =
-    "d6+{능력치:1..4}+{수정치:0..4} max10 > 2d10 => 0 실패 | 1 약한 성공 | 2 강한 성공";
+  const IRONSWORN = SYSTEM_MACROS.ironsworn;
 
   it("매크로를 더하면 스냅샷의 매크로 목록에 생기고, 지우면 빠진다", async () => {
     const controller = newController(createMemoryEventLogStore());
