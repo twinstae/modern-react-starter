@@ -5,6 +5,7 @@ import { styled } from "styled-system/jsx";
 
 import { ConflictNotice } from "../components/conflict-notice.tsx";
 import { CharacterPanel } from "../components/character-panel.tsx";
+import { MacroPanel } from "../components/macro-panel.tsx";
 import { MessageInput } from "../components/message-input.tsx";
 import { SessionLog } from "../components/session-log.tsx";
 import type { Side } from "../domain/session.ts";
@@ -48,10 +49,12 @@ const Main = styled("main", {
 
 const Title = styled("h1", { base: { textStyle: "xl", fontWeight: "semibold" } });
 
-// 캐릭터 패널은 제목 옆에 접혀 있어 자리를 거의 차지하지 않는다
+// 캐릭터와 매크로 패널은 제목 옆에 접혀 있어 자리를 거의 차지하지 않는다
 const Header = styled("div", {
   base: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "3" },
 });
+
+const Panels = styled("div", { base: { display: "flex", gap: "1" } });
 
 // 말풍선 옆에 띄운 시각이 좁은 화면에서 가로 스크롤을 만들지 않게 가로로는 자른다
 const LogScroll = styled("div", {
@@ -75,11 +78,18 @@ function SessionPage() {
     <Main>
       <Header>
         <Title>{session.title}</Title>
-        <CharacterPanel
-          characters={view.characters}
-          onAdd={controller.addCharacter}
-          onArchive={controller.archiveCharacter}
-        />
+        <Panels>
+          <MacroPanel
+            macros={view.macros}
+            onAdd={controller.addMacro}
+            onRemove={controller.removeMacro}
+          />
+          <CharacterPanel
+            characters={view.characters}
+            onAdd={controller.addCharacter}
+            onArchive={controller.archiveCharacter}
+          />
+        </Panels>
       </Header>
       <ConflictNotice message={view.notice} />
       <LogScroll>
