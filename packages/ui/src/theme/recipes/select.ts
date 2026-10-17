@@ -63,8 +63,8 @@ export const select = defineSlotRecipe({
       },
     },
     positioner: {
+      // z-index를 쓰지 않는다. 열 때 body 끝에 붙어, 팝오버나 대화 상자 안에서 열어도 그 위에 그려진다.
       width: "var(--reference-width)",
-      zIndex: "dropdown",
     },
     content: {
       bg: "gray.surface.bg",

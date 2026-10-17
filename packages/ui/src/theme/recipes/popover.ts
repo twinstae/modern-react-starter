@@ -6,9 +6,8 @@ export const popover = defineSlotRecipe({
   className: "popover",
   slots: popoverAnatomy.keys(),
   base: {
-    positioner: {
-      zIndex: "popover",
-    },
+    // z-index를 쓰지 않는다. 떠 있는 층은 열 때 body 끝에 붙으므로 나중에 연 층이 위에 그려진다.
+    positioner: {},
     content: {
       display: "flex",
       flexDirection: "column",

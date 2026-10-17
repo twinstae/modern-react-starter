@@ -50,4 +50,16 @@ describe("Popover", () => {
       assertions.not.visible(query.dialog("팝오버 제목")),
     );
   });
+
+  it("팝오버 안에서 연 고르는 칸의 목록은 팝오버에 가려지지 않아 실제로 눌러 고를 수 있다", async () => {
+    await runSiheom(
+      given.render(<PopoverExample {...Stories.WithSelect.args} />),
+      actions.click(query.button("팝오버 열기")),
+      actions.click(query.combobox("숫자")),
+      // 실제 입력은 다른 요소에 가려진 요소를 누르지 못한다
+      // 목록 위쪽 항목은 팝오버의 아래 내용과 겹치는 자리에 뜬다
+      actions.click(query.option("2")),
+      assertions.textContent(query.combobox("숫자"), "2"),
+    );
+  });
 });

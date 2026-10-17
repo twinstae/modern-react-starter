@@ -7,12 +7,12 @@ export const dialog = defineSlotRecipe({
   // CSS로 뽑으므로 그냥 두면 클래스만 붙고 폭이 적용되지 않는다(reveal-animation과 같은 함정).
   staticCss: [{ size: ["*"] }],
   slots: [...dialogAnatomy.keys(), "root", "header", "body", "footer"],
+  // z-index를 쓰지 않는다. 열 때 body 끝에 붙으므로 페이지 위에, 그리고 먼저 연 층 위에 그려진다.
   base: {
     backdrop: {
       bg: "black.a8",
       position: "fixed",
       inset: "0",
-      zIndex: "overlay",
       _open: {
         animationName: "fade-in",
         animationDuration: "slow",
@@ -28,7 +28,6 @@ export const dialog = defineSlotRecipe({
       alignItems: "center",
       position: "fixed",
       inset: "0",
-      zIndex: "modal",
       padding: "4",
       overscrollBehaviorY: "none",
     },
