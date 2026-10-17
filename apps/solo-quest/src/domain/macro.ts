@@ -1,6 +1,6 @@
 import * as v from "valibot";
 
-import { parseRoll } from "./dice.ts";
+import { parseRoll, type Judgement } from "./dice.ts";
 import { ShortText } from "./short-text.ts";
 
 /** 매크로를 굴릴 때 고르는 정수. 최소와 최대를 포함한다. */
@@ -157,6 +157,43 @@ export function parseMacro(definition: string): MacroResult {
     if (error instanceof MacroError) return { ok: false, message: error.message };
     throw error;
   }
+}
+
+export type FillResult = { ok: true; notation: string } | { ok: false; message: string };
+
+/** 빈칸을 고른 값으로 채운 판정 표기를 만든다. 값은 빈칸의 범위 안의 정수여야 한다. */
+export function fillMacro(
+  macro: ParsedMacro,
+  values: Readonly<Record<string, number>>,
+): FillResult {
+  for (const slot of macro.slots) {
+    const value = values[slot.name];
+    if (value === undefined) return { ok: false, message: `${slot.name}을(를) 골라주세요` };
+    if (!Number.isInteger(value) || value < slot.min || value > slot.max) {
+      return { ok: false, message: `${slot.name}은(는) ${slot.min}..${slot.max} 사이 정수입니다` };
+    }
+  }
+  return { ok: true, notation: substitute(macro.template, (name) => values[name] ?? 0) };
+}
+
+const inRange = (range: Range, value: number) =>
+  (range.min ?? -Infinity) <= value && value <= (range.max ?? Infinity);
+
+/**
+ * 판정 값에 맞는 결과 이름과 눈 효과를 고른다. 결과 이름은 결과 값으로, 눈 효과는 눈으로 고른다.
+ * `!`가 붙은 눈 효과는 결과 이름을 바꾸고 따로 남지 않는다.
+ */
+export function nameResult(
+  macro: ParsedMacro,
+  { value, natural }: Judgement,
+): { outcome?: string; effect?: string } {
+  const outcome = macro.outcomes.find(({ range }) => inRange(range, value))?.name;
+  const effect = macro.effects.find(({ range }) => inRange(range, natural));
+  if (effect?.replace) return { outcome: effect.name };
+  return {
+    ...(outcome !== undefined && { outcome }),
+    ...(effect !== undefined && { effect: effect.name }),
+  };
 }
 
 /** 처음 나오는 구분자에서 둘로 가른다. 없으면 하나다. */

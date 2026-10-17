@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parseMacro } from "./macro.ts";
+import type { Judgement } from "./dice.ts";
+import { fillMacro, nameResult, parseMacro, type ParsedMacro } from "./macro.ts";
 
 /** 문서와 화면 예시에 쓰는 다섯 시스템의 매크로 식 */
 const IRONSWORN =
@@ -101,5 +102,60 @@ describe("매크로 식 파서", () => {
     ["141자 결과 이름", `2d6 => 0 ${"가".repeat(141)}`],
   ])("%s는 오류다: %s", (_name, definition) => {
     expect(parseMacro(definition).ok).toBe(false);
+  });
+});
+
+/** 올바른 식만 쓰는 테스트에서 읽은 매크로를 꺼낸다 */
+const macroOf = (definition: string): ParsedMacro => {
+  const result = parseMacro(definition);
+  if (!result.ok) throw new Error(result.message);
+  return result.macro;
+};
+
+describe("빈칸 채우기", () => {
+  it.each([
+    [IRONSWORN, { 능력치: 2, 수정치: 1 }, "d6+2+1 max10 > 2d10"],
+    [CYPHER, { 난이도: 3 }, "d20 >= 3*3"],
+    [DUNGEON_WORLD, { 능력치: -1 }, "2d6-1"],
+    ["2d6-{a:-2..2}", { a: -2 }, "2d6+2"],
+  ])("%s에 %j를 채우면 %s다", (definition, values, notation) => {
+    expect(fillMacro(macroOf(definition), values)).toStrictEqual({ ok: true, notation });
+  });
+
+  it.each([
+    ["빠진 빈칸", { 능력치: 2 }],
+    ["범위 밖", { 능력치: 5, 수정치: 0 }],
+    ["정수가 아님", { 능력치: 1.5, 수정치: 0 }],
+  ])("%s은 오류다", (_name, values) => {
+    expect(fillMacro(macroOf(IRONSWORN), values).ok).toBe(false);
+  });
+});
+
+/** 결과 이름을 고르는 데 쓰는 값만 채운 판정 값 */
+const judged = (value: number, natural: number): Judgement => ({
+  score: 0,
+  value,
+  match: false,
+  natural,
+});
+
+describe("결과 이름과 눈 효과", () => {
+  it.each([
+    [IRONSWORN, judged(1, 3), { outcome: "약한 성공" }],
+    [DUNGEON_WORLD, judged(6, 7), { outcome: "실패" }],
+    [DUNGEON_WORLD, judged(10, 9), { outcome: "강한 성공" }],
+    [FATE, judged(0, 0), { outcome: "동점" }],
+    [CYPHER, judged(11, 20), { outcome: "성공", effect: "큰 이득" }],
+    [CYPHER, judged(-8, 1), { outcome: "실패", effect: "마스터 개입" }],
+    [CYPHER, judged(1, 10), { outcome: "성공" }],
+    // !는 결과 이름을 바꾼다
+    [GURPS, judged(5, 4), { outcome: "대성공" }],
+    [GURPS, judged(-6, 18), { outcome: "대실패" }],
+    [GURPS, judged(0, 17), { outcome: "실패" }],
+    [GURPS, judged(-10, 13), { outcome: "대실패" }],
+    // 맞는 범위가 없으면 이름이 없다
+    ["2d6 => 2..5 보통", judged(12, 12), {}],
+  ])("%s에서 %j는 %j다", (definition, judgement, names) => {
+    expect(nameResult(macroOf(definition), judgement)).toStrictEqual(names);
   });
 });
