@@ -48,12 +48,16 @@ export const rolledEvent = (sessionId: string, version: number, label?: string):
   },
 });
 
-/** 마스터(GM)가 `행동` 오라클을 굴려 53이 나와 `절벽`이 나온 기록 */
+/**
+ * 마스터(GM)가 `행동` 오라클을 굴려 53이 나와 `절벽`이 나온 기록.
+ * 표의 줄에 설명과 링크가 있었으면 `detail`로 넘겨 그대로 담는다.
+ */
 export const oracleRolledEvent = (
   sessionId: string,
   version: number,
   result = "절벽",
   value = 53,
+  detail: { description?: string; url?: string } = {},
 ): SessionEvent => ({
   eventId: `${sessionId}-event-${version}`,
   eventName: "session:oracle_rolled",
@@ -69,6 +73,8 @@ export const oracleRolledEvent = (
     sides: 100,
     value,
     result,
+    ...(detail.description !== undefined && { description: detail.description }),
+    ...(detail.url !== undefined && { url: detail.url }),
   },
 });
 

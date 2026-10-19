@@ -4,7 +4,7 @@ import { SYSTEM_MACROS } from "./macro.fixture.ts";
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
 import { createFakeEventLog } from "./event-log-store.fake.ts";
 import { createMemoryOracleStore, type OracleStore } from "./oracle-store.ts";
-import { ORACLE_FIXTURES } from "./oracle.fixture.ts";
+import { ORACLE_CRYPTIC, ORACLE_FIXTURES } from "./oracle.fixture.ts";
 import { postedEvent } from "./session.fixture.ts";
 import { createSessionController, type SessionView } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
@@ -717,6 +717,39 @@ describe("세션 컨트롤러", () => {
 
     const reloaded = await newController(eventLog).load();
     expect(reloaded.entries.at(-1)).toMatchObject({ kind: "oracle", result: "불러낸다" });
+  });
+
+  it("줄에 설명과 링크가 있는 오라클을 굴리면 기록에 그것도 남는다", async () => {
+    const eventLog = createMemoryEventLogStore();
+    const oracles = () => createMemoryOracleStore([ORACLE_CRYPTIC]);
+    const controller = newController(eventLog, oracles());
+    await controller.load();
+
+    expect(
+      await controller.rollOracle({ side: "master", as: "gm", oracleId: "cryptic" }),
+    ).toBeUndefined();
+    await controller.idle();
+
+    expect(controller.getSnapshot().events.at(-1)?.body).toStrictEqual({
+      side: "master",
+      as: "gm",
+      oracleId: "cryptic",
+      oracleName: "사이퍼",
+      sides: 6,
+      value: 4,
+      result: "최적의 도구",
+      description: "도구를 쓸 때 보탬 두 개를 더 얻습니다.",
+      url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+    });
+
+    // 표를 고쳐도 지난 기록은 그대로다
+    const reloaded = await newController(eventLog, oracles()).load();
+    expect(reloaded.entries.at(-1)).toMatchObject({
+      kind: "oracle",
+      result: "최적의 도구",
+      description: "도구를 쓸 때 보탬 두 개를 더 얻습니다.",
+      url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+    });
   });
 
   it("없는 오라클이나 말할 수 없는 화자로는 굴리지 않는다", async () => {

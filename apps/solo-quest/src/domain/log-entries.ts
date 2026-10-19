@@ -32,6 +32,10 @@ export interface OracleEntry extends BaseEntry {
   value: number;
   /** 눈에 드는 줄의 결과 */
   result: string;
+  /** 결과 밑에 회색 글씨로 보이는 짧은 설명. 그 줄이 가지고 있었을 때만 있다. */
+  description?: string;
+  /** 결과에서 건너갈 바깥 주소. 그 줄이 가지고 있었을 때만 있다. */
+  url?: string;
 }
 
 export interface RollEntry extends BaseEntry {
@@ -90,7 +94,7 @@ export function toLogEntries(
         // 매크로와 오라클 등록은 굴릴 때 쓰는 세션 상태라 로그에 보이지 않는다
         break;
       case "session:oracle_rolled": {
-        const { oracleId, oracleName, sides, value, result } = event.body;
+        const { oracleId, oracleName, sides, value, result, description, url } = event.body;
         entries.push({
           kind: "oracle",
           ...baseOf(event),
@@ -99,6 +103,8 @@ export function toLogEntries(
           sides,
           value,
           result,
+          ...(description !== undefined && { description }),
+          ...(url !== undefined && { url }),
         });
         break;
       }

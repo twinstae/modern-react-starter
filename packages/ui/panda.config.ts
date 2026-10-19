@@ -53,7 +53,6 @@ export default defineConfig({
         durations: durations,
         zIndex: zIndex,
       },
-
       semanticTokens: {
         colors: {
           fg: {

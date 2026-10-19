@@ -1,15 +1,19 @@
 import type { Oracle } from "../domain/oracle.ts";
+import { CYPHER_ORACLES } from "./oracle-cypher-seed.ts";
 
 /**
  * Ironsworn 한국어 오라클 19개. `../trpg-stelo`의 `oracles-action-to-trouble.md`,
  * `oracles-role-to-rank.md`에서 한 번 옮겨 왔다. 여러 열이거나 여러 표인 오라클은
  * 같은 눈의 결과를 " / "로 이어 한 줄로 만들었다.
  */
-export const SEED_ORACLES: Oracle[] = [
+const IRONSWORN_ORACLES: Oracle[] = [
   {
     id: "ironsworn-action",
     name: "행동",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "single",
     rows: [
       { min: 1, max: 1, result: "꾸민다" },
       { min: 2, max: 2, result: "맞붙는다" },
@@ -116,7 +120,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-theme",
     name: "주제",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "single",
     rows: [
       { min: 1, max: 1, result: "위험" },
       { min: 2, max: 2, result: "능력" },
@@ -223,7 +230,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-region",
     name: "지역",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 12, result: "장벽 제도" },
       { min: 13, max: 24, result: "너덜 해안" },
@@ -240,7 +250,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-location",
     name: "장소",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 1, result: "은신처" },
       { min: 2, max: 2, result: "폐허" },
@@ -298,7 +311,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-coastal-water-location",
     name: "해안 수역 장소",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 1, result: "함대" },
       { min: 2, max: 2, result: "바다말" },
@@ -322,7 +338,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-location-descriptor",
     name: "장소 묘사",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 2, result: "높은" },
       { min: 3, max: 4, result: "외딴" },
@@ -379,7 +398,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-settlement-name",
     name: "정착지 이름",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     description: "구간마다 예시 표가 따로 있습니다. 예시를 결과에 함께 적었습니다.",
     rows: [
       {
@@ -429,7 +451,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-simple-settlement-name",
     name: "간단 정착지 이름 생성기",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     description: "앞부분 · 뒷부분 두 열을 합친 것입니다.",
     rows: [
       { min: 1, max: 4, result: "황량- / -황야" },
@@ -462,7 +487,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-troublesome-village",
     name: "마을 문제",
+    category: "철의 맹세",
+    group: "장소",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 2, result: "외부인이 거부됨" },
       { min: 3, max: 4, result: "위험한 발견" },
@@ -515,7 +543,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-character-role",
     name: "인물 역할",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 2, result: "범죄자" },
       { min: 3, max: 4, result: "치료사" },
@@ -552,7 +583,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-character-goal",
     name: "인물 목표",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 3, result: "물건을 얻는다" },
       { min: 4, max: 6, result: "합의를 이룬다" },
@@ -592,7 +626,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-character-descriptor",
     name: "인물 묘사어",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "single",
     rows: [
       { min: 1, max: 1, result: "무뚝뚝한" },
       { min: 2, max: 2, result: "매력적인" },
@@ -699,7 +736,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-ironlander-name",
     name: "철의 땅 사람 이름",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "single",
     description: "두 이름 표를 같은 눈끼리 합친 것입니다.",
     rows: [
       { min: 1, max: 1, result: "솔라나 / 세구라" },
@@ -807,7 +847,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-elf-name",
     name: "엘프 이름",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 2, result: "아르술라" },
       { min: 3, max: 4, result: "나이디타" },
@@ -864,7 +907,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-other-name",
     name: "다른 이름",
+    category: "철의 맹세",
+    group: "인물",
     sides: 100,
+    kind: "ranges",
     description: "거인 · 바루 · 트롤 세 열을 합친 것입니다.",
     rows: [
       { min: 1, max: 4, result: "초니 / 바타 / 래틀" },
@@ -897,7 +943,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-combat-action",
     name: "전투 행동",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 3, result: "항복을 강요한다." },
       { min: 4, max: 6, result: "동료와 호흡을 맞춘다." },
@@ -922,7 +971,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-magic-rebound",
     name: "마법의 반동",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 4, result: "의례가 반대의 결과를 낸다." },
       { min: 5, max: 8, result: "기력을 빼앗긴다." },
@@ -963,7 +1015,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-major-twist",
     name: "큰 반전",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 5, result: "전부 미끼였다." },
       { min: 6, max: 10, result: "어두운 비밀이 드러난다." },
@@ -995,7 +1050,10 @@ export const SEED_ORACLES: Oracle[] = [
   {
     id: "ironsworn-challenge-rank",
     name: "도전 등급",
+    category: "철의 맹세",
+    group: "일반",
     sides: 100,
+    kind: "ranges",
     rows: [
       { min: 1, max: 20, result: "성가신" },
       { min: 21, max: 55, result: "위험한" },
@@ -1005,3 +1063,12 @@ export const SEED_ORACLES: Oracle[] = [
     ],
   },
 ];
+
+/**
+ * 시드가 바뀔 때마다 올린다. 저장된 파일이 이보다 오래되면 아직 없는 시드만 더한다.
+ * 그래야 이미 쓰고 있던 사람에게도 새 표가 보이고, 지운 표가 되살아나지는 않는다.
+ */
+export const SEED_VERSION = 2;
+
+/** 앱이 처음 쓸 때 넣는 전체 오라클. 철의 맹세 19개와 사이퍼 시스템 8개다. */
+export const SEED_ORACLES: Oracle[] = [...IRONSWORN_ORACLES, ...CYPHER_ORACLES];

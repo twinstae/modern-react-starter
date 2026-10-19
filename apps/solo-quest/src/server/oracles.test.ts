@@ -18,7 +18,10 @@ describe("오라클 API", () => {
     const client = createTestClient({ oracleStore: seeded() });
     const weather = {
       name: "날씨",
+      category: "집안 규칙",
+      group: "기타",
       sides: 6,
+      kind: "ranges" as const,
       rows: [
         { min: 1, max: 3, result: "맑음" },
         { min: 4, max: 6, result: "폭풍" },
@@ -39,7 +42,10 @@ describe("오라클 API", () => {
     expect(await unwrap(client.oracles({ id: "weather" }).put(renamed))).toStrictEqual({
       id: "weather",
       name: "하늘",
+      category: "집안 규칙",
+      group: "기타",
       sides: 6,
+      kind: "ranges",
       description: "d6 표",
       rows: weather.rows,
     });
@@ -53,7 +59,10 @@ describe("오라클 API", () => {
       unwrap(
         client.oracles({ id: "broken" }).put({
           name: "빈틈",
+          category: "철의 맹세",
+          group: "일반",
           sides: 100,
+          kind: "ranges",
           rows: [{ min: 1, max: 99, result: "가" }],
         }),
       ),
@@ -62,6 +71,29 @@ describe("오라클 API", () => {
       "action",
       "trouble",
     ]);
+  });
+
+  it("한 칸씩 표에 구간 줄이 있으면 422다", async () => {
+    const client = createTestClient({ oracleStore: seeded() });
+
+    await expect(
+      unwrap(
+        client.oracles({ id: "mixed" }).put({
+          name: "섞임",
+          category: "철의 맹세",
+          group: "일반",
+          sides: 6,
+          kind: "single",
+          rows: [
+            { min: 1, max: 3, result: "맑음" },
+            { min: 4, max: 6, result: "폭풍" },
+          ],
+        }),
+      ),
+    ).rejects.toMatchObject({
+      status: 422,
+      value: "한 칸씩 표는 눈마다 결과가 하나여야 합니다: 1–3",
+    });
   });
 
   it("오라클을 지우면 목록에서 빠지고, 없는 id를 지워도 204다", async () => {

@@ -50,6 +50,9 @@ export default defineConfig({
           name: "component",
           setupFiles: ["src/setupTest.ts"],
           include: ["src/components/**/*.test.tsx"],
+          // 브라우저 모드는 파일을 여럿 동시에 불러오면 모듈 몇 개를 받지 못해 "Failed to import test file"로 죽는다.
+          // 한 파일씩 돌린다. 몇 초 느려지지만 결과가 흔들리지 않는다.
+          fileParallelism: false,
           browser: {
             enabled: true,
             headless: true,

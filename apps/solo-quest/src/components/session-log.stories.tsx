@@ -264,3 +264,30 @@ export const OracleRoll: Story = {
     ],
   },
 };
+
+/**
+ * 줄에 설명과 링크가 있는 오라클(사이퍼)을 굴린 기록. 결과 아래에 회색 설명이 붙고,
+ * 결과 글자가 그 설명으로 가는 링크가 된다.
+ */
+export const OracleWithDetail: Story = {
+  args: {
+    entries: [
+      {
+        kind: "oracle",
+        id: "event-1",
+        status: "committed",
+        side: "master",
+        speakerId: "gm",
+        speakerName: "GM",
+        oracleId: "cryptic",
+        oracleName: "사이퍼",
+        sides: 6,
+        value: 4,
+        result: "최적의 도구",
+        description: "도구를 쓸 때 보탬 두 개를 더 얻습니다.",
+        url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+        createdAt: "2026-10-07T12:05:00Z",
+      } satisfies OracleEntry,
+    ],
+  },
+};

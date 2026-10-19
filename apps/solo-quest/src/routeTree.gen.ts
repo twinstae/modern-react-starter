@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OraclesRouteImport } from './routes/oracles'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OraclesRoute = OraclesRouteImport.update({
+  id: '/oracles',
+  path: '/oracles',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -31,30 +37,34 @@ const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/oracles': typeof OraclesRoute
   '/api/$': typeof ApiSplatRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/oracles': typeof OraclesRoute
   '/api/$': typeof ApiSplatRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/oracles': typeof OraclesRoute
   '/api/$': typeof ApiSplatRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/$' | '/sessions/$sessionId'
+  fullPaths: '/' | '/oracles' | '/api/$' | '/sessions/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/$' | '/sessions/$sessionId'
-  id: '__root__' | '/' | '/api/$' | '/sessions/$sessionId'
+  to: '/' | '/oracles' | '/api/$' | '/sessions/$sessionId'
+  id: '__root__' | '/' | '/oracles' | '/api/$' | '/sessions/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OraclesRoute: typeof OraclesRoute
   ApiSplatRoute: typeof ApiSplatRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oracles': {
+      id: '/oracles'
+      path: '/oracles'
+      fullPath: '/oracles'
+      preLoaderRoute: typeof OraclesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OraclesRoute: OraclesRoute,
   ApiSplatRoute: ApiSplatRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
 }

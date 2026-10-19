@@ -1,7 +1,9 @@
 import { Button, Input, Popover, Select } from "@repo/ui";
-import { ChevronDown, Dices, Pencil, Plus, Star, StarOff, Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, Dices, Settings2, Star, StarOff } from "lucide-react";
 import { useState } from "react";
 import { styled } from "styled-system/jsx";
+import { button } from "styled-system/recipes";
 
 import type { Oracle } from "../domain/oracle.ts";
 import {
@@ -11,7 +13,6 @@ import {
   type OracleMacro,
   type Side,
 } from "../domain/session.ts";
-import { OracleEditor } from "./oracle-editor.tsx";
 import { SIDE_LABEL } from "./side-label.ts";
 
 /** 오라클 패널에서 굴릴 때 넘기는 값. 패널에서 고른 편과 화자로 기록된다. */
@@ -43,15 +44,15 @@ const Row = styled("li", {
 
 const Dice = styled("span", { base: { ml: "2", fontSize: "xs", color: "fg.subtle" } });
 
-const Registered = styled("span", {
-  base: { ml: "2", fontSize: "xs", color: "fg.subtle" },
-});
+const Registered = styled("span", { base: { ml: "2", fontSize: "xs", color: "fg.subtle" } });
 
 const Description = styled("p", { base: { fontSize: "xs", color: "fg.subtle" } });
 
 const Actions = styled("div", { base: { display: "flex", gap: "0.5" } });
 
-const Footer = styled("div", { base: { mt: "3" } });
+const Footer = styled("div", {
+  base: { mt: "3", display: "flex", justifyContent: "flex-end" },
+});
 
 const ErrorText = styled("p", { base: { fontSize: "sm", color: "error" } });
 
@@ -107,8 +108,8 @@ function Picker({
 }
 
 /**
- * 전역 오라클을 보고, 찾고, 고치고, 굴리는 패널. 세션 헤더에 있어 어느 세션에서나 쓴다.
- * 자주 쓰는 오라클은 이 세션의 매크로 버튼으로 등록한다. 등록하면 입력창 위에 버튼이 생긴다.
+ * 세션에서 쓰는 오라클 패널. 찾아서 바로 굴리고, 자주 쓰는 표를 이 세션의 매크로 버튼으로 등록한다.
+ * 표를 더하고 고치고 지우는 일은 세션 중에 할 일이 아니라 관리 페이지에서 한다.
  */
 export function OraclePanel({
   oracles,
@@ -117,8 +118,6 @@ export function OraclePanel({
   onRoll,
   onAddMacro,
   onRemoveMacro,
-  onSave,
-  onRemove,
 }: {
   oracles: Oracle[];
   /** 이 세션에 등록한 오라클 매크로 */
@@ -128,14 +127,11 @@ export function OraclePanel({
   onRoll: (values: OracleRoll) => Promise<string | undefined>;
   onAddMacro: (oracleId: string) => Promise<string | undefined>;
   onRemoveMacro: (macroId: string) => Promise<string | undefined>;
-  onSave: (oracle: Oracle) => Promise<string | undefined>;
-  onRemove: (oracleId: string) => Promise<string | undefined>;
 }) {
   const [search, setSearch] = useState("");
   const [side, setSide] = useState<Side>("player");
   const [speakerId, setSpeakerId] = useState(DEFAULT_SPEAKER.player);
   const [error, setError] = useState<string>();
-  const [editing, setEditing] = useState<Oracle | "new">();
 
   const keyword = search.trim().toLowerCase();
   const found = oracles.filter((oracle) => oracle.name.toLowerCase().includes(keyword));
@@ -235,24 +231,6 @@ export function OraclePanel({
                         >
                           {registered ? <StarOff /> : <Star />}
                         </Button>
-                        <Button
-                          variant="plain"
-                          size="xs"
-                          aria-label={`${oracle.name} 편집`}
-                          title={`${oracle.name} 편집`}
-                          onClick={() => setEditing(oracle)}
-                        >
-                          <Pencil />
-                        </Button>
-                        <Button
-                          variant="plain"
-                          size="xs"
-                          aria-label={`${oracle.name} 삭제`}
-                          title={`${oracle.name} 삭제`}
-                          onClick={async () => setError(await onRemove(oracle.id))}
-                        >
-                          <Trash2 />
-                        </Button>
                       </Actions>
                     </Row>
                   );
@@ -260,29 +238,17 @@ export function OraclePanel({
               </List>
             )}
             <Footer>
-              <Button
-                variant="subtle"
-                size="sm"
-                aria-label="새 오라클"
-                onClick={() => setEditing("new")}
+              <Link
+                to="/oracles"
+                className={button({ variant: "subtle", size: "sm" })}
+                aria-label="오라클 관리"
               >
-                <Plus /> 새 오라클
-              </Button>
+                <Settings2 /> 오라클 관리
+              </Link>
             </Footer>
           </Popover.Content>
         </Popover.Positioner>
       </Popover.Portal>
-
-      <OracleEditor
-        open={editing !== undefined}
-        oracle={editing === "new" || editing === undefined ? undefined : editing}
-        onClose={() => setEditing(undefined)}
-        onSave={async (oracle) => {
-          const message = await onSave(oracle);
-          if (!message) setEditing(undefined);
-          return message;
-        }}
-      />
     </Popover.Root>
   );
 }

@@ -113,6 +113,11 @@ const RollLabel = styled("span", { base: { mr: "2" } });
 
 const RollDetail = styled("span", { base: { fontSize: "sm", color: "fg.muted" } });
 
+/** 결과에 바깥 링크가 있으면 결과 글자가 그 링크가 된다. 클릭하면 새 창에서 설명을 연다. */
+const OracleLink = styled("a", {
+  base: { fontWeight: "semibold", textDecoration: "underline" },
+});
+
 /** 판정에서 가장 중요한 값이라 가장 크게 보인다. */
 const RollTotal = styled("strong", {
   base: { ml: "1", fontSize: "xl", fontWeight: "bold", color: "fg.default" },
@@ -203,9 +208,15 @@ function RollBody({ entry }: { entry: RollEntry }) {
   );
 }
 
+/** 결과 밑에 한 줄로 붙는 설명. 판정의 곁들이라 흐리게 보이고, 결과보다 한 단계 작게 둔다. */
+const OracleDescription = styled("span", {
+  base: { display: "block", fontSize: "sm", color: "fg.subtle" },
+});
+
 /**
  * 오라클 굴림은 `행동 d100 · 53 절벽`처럼 보인다. 오라클 이름, 굴린 주사위와 눈, 나온 결과 순서다.
  * 매크로와 달리 결과가 글이라 말풍선 안에서 읽는 순서대로 이어 둔다.
+ * 결과에 딸린 설명은 아래 줄에 회색으로, 링크는 결과 글자 자체에 붙는다(새 창으로 연다).
  */
 function OracleBody({ entry }: { entry: OracleEntry }) {
   return (
@@ -216,9 +227,20 @@ function OracleBody({ entry }: { entry: OracleEntry }) {
       <RollDetail>
         d{entry.sides} · {entry.value}
       </RollDetail>{" "}
-      <RollName role="note" aria-label="오라클 결과">
-        {entry.result}
-      </RollName>
+      {entry.url === undefined ? (
+        <RollName role="note" aria-label="오라클 결과">
+          {entry.result}
+        </RollName>
+      ) : (
+        <OracleLink href={entry.url} target="_blank" rel="noreferrer">
+          {entry.result}
+        </OracleLink>
+      )}
+      {entry.description !== undefined && (
+        <OracleDescription role="note" aria-label="오라클 설명">
+          {entry.description}
+        </OracleDescription>
+      )}
     </>
   );
 }

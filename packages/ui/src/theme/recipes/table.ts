@@ -27,7 +27,6 @@ export const table = defineSlotRecipe({
         overflow: "unset",
         position: "sticky",
         shadowColor: "border",
-        zIndex: 1,
       },
     },
     row: {
@@ -41,7 +40,6 @@ export const table = defineSlotRecipe({
       _pinned: {
         position: "sticky",
         bg: "inherit",
-        zIndex: 2,
       },
     },
     head: {
@@ -94,7 +92,6 @@ export const table = defineSlotRecipe({
           "& :where(tr)": {
             top: "var(--table-sticky-offset, 0)",
             position: "sticky",
-            zIndex: 2,
           },
         },
       },

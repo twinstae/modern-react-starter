@@ -11,7 +11,10 @@ export function createHttpOracleStore(client: ReturnType<typeof createApiClient>
       await unwrap(
         client.oracles({ id: oracle.id }).put({
           name: oracle.name,
+          category: oracle.category,
+          group: oracle.group,
           sides: oracle.sides,
+          kind: oracle.kind,
           ...(oracle.description !== undefined && { description: oracle.description }),
           rows: oracle.rows,
         }),

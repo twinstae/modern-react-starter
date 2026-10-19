@@ -319,7 +319,8 @@ export function createSessionController({
       if (!oracle) return "없는 오라클입니다";
       const rolled = rollOracle(oracle, random);
       if (!rolled.ok) return rolled.message;
-      return apply((current) => current.rollOracle(side, as, oracle, rolled.value, rolled.result));
+      // 설명과 링크는 표의 줄에서 왔다. 굴린 그대로 이벤트에 담아 화면이 그것을 보여 준다.
+      return apply((current) => current.rollOracle(side, as, oracle, rolled));
     },
 
     /** 자주 쓰는 오라클을 이 세션의 버튼으로 등록한다. 없는 오라클이거나 이미 있으면 오류다. */

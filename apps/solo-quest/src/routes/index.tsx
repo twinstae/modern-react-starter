@@ -1,5 +1,5 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { styled } from "styled-system/jsx";
 
@@ -8,6 +8,8 @@ import { NewSessionForm, type NewSessionValues } from "../components/new-session
 import { SessionList } from "../components/session-list.tsx";
 import { sessionQueries } from "../queries.ts";
 import { unwrap } from "../unwrap.ts";
+import { button } from "styled-system/recipes/index.js";
+import { Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   // 이미 불러온 데이터가 있으면 loader가 막지 않는다. 신선도는 useSuspenseQuery의 기본 동작이 맡는다.
@@ -43,6 +45,13 @@ function Home() {
   return (
     <Main>
       <h1>SOLO QUEST</h1>
+      <Link
+        to="/oracles"
+        className={button({ variant: "subtle", size: "sm" })}
+        aria-label="오라클 관리"
+      >
+        <Settings2 /> 오라클 관리
+      </Link>
       <NewSessionForm key={formKey} onSubmit={createSession} />
       <SessionList sessions={sessions} />
     </Main>

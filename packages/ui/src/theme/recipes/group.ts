@@ -6,11 +6,6 @@ export const group = defineRecipe({
     display: "inline-flex",
     position: "relative",
     gap: "2",
-    "& > *": {
-      _focusVisible: {
-        zIndex: 1,
-      },
-    },
   },
   defaultVariants: {
     orientation: "horizontal",

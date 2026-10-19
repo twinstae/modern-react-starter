@@ -106,4 +106,33 @@ describe("이벤트를 로그 항목으로", () => {
       },
     ]);
   });
+
+  it("줄에 설명과 링크가 있었으면 오라클 항목이 그것도 가진다", () => {
+    const events = [
+      startedEvent("s-1"),
+      oracleRolledEvent("s-1", 2, "최적의 도구", 5, {
+        description: "도구를 쓸 때 보탬 두 개를 더 얻습니다.",
+        url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+      }),
+    ];
+
+    expect(toLogEntries(events)).toStrictEqual([
+      {
+        kind: "oracle",
+        id: "s-1-event-2",
+        status: "committed",
+        side: "master",
+        speakerId: "gm",
+        speakerName: "GM",
+        oracleId: "location",
+        oracleName: "장소",
+        sides: 100,
+        value: 5,
+        result: "최적의 도구",
+        description: "도구를 쓸 때 보탬 두 개를 더 얻습니다.",
+        url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+        createdAt: "2026-10-07T12:00:00Z",
+      },
+    ]);
+  });
 });

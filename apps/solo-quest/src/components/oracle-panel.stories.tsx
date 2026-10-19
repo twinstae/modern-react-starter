@@ -24,14 +24,6 @@ const callbacks = {
     console.log(macroId);
     return undefined;
   },
-  onSave: async (oracle: unknown) => {
-    console.log(oracle);
-    return undefined;
-  },
-  onRemove: async (oracleId: string) => {
-    console.log(oracleId);
-    return undefined;
-  },
 };
 
 export const Empty: Story = {

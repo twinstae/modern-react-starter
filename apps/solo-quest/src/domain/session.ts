@@ -11,7 +11,13 @@ import { v7 as uuidv7 } from "uuid";
 
 import { RolledCheck, RolledTerm, type RollResult } from "./dice.ts";
 import { parseMacro } from "./macro.ts";
-import { OracleDice, OracleResultText, type Oracle } from "./oracle.ts";
+import {
+  OracleDescription,
+  OracleDice,
+  OracleResultText,
+  OracleUrl,
+  type Oracle,
+} from "./oracle.ts";
 import { ShortText } from "./short-text.ts";
 
 const Character = v.object({
@@ -27,6 +33,17 @@ export type Character = v.InferOutput<typeof Character>;
 const Macro = v.object({ id: v.string(), name: v.string(), definition: v.string() });
 
 export type Macro = v.InferOutput<typeof Macro>;
+
+/**
+ * 이미 굴려 확정된 오라클 결과. 눈과 결과에, 표의 줄이 가지고 있던 설명과 링크가 딸려 온다.
+ * 이벤트에 담기는 값이라 여기서 한 번 더 다듬지 않는다.
+ */
+export interface OracleRolled {
+  value: number;
+  result: string;
+  description?: string;
+  url?: string;
+}
 
 /** 자주 쓰는 오라클을 세션마다 입력창 위 버튼으로 등록한 것. 표는 전역 오라클을 id로 가리킨다. */
 const OracleMacro = v.object({ id: v.string(), oracleId: v.string() });
@@ -68,7 +85,10 @@ export const sessionSchema = defineSchema("session", {
       /** 세션마다 등록한 오라클 매크로. 표 자체는 전역 오라클에 있다. */
       oracle_macro_added: v.object({ macroId: v.string(), oracleId: v.string() }),
       oracle_macro_removed: v.object({ macroId: v.string() }),
-      /** 오라클 표를 굴려 나온 결과. 다시 굴리지 않도록 눈과 결과를 그대로 담는다. */
+      /**
+       * 오라클 표를 굴려 나온 결과. 다시 굴리지 않도록 눈과 결과를 그대로 담는다.
+       * 표의 줄에 설명과 링크가 있었으면 함께 담아, 나중에 표를 고치거나 지워도 기록은 그대로 남는다.
+       */
       oracle_rolled: v.object({
         side: Side,
         as: v.string(),
@@ -77,6 +97,8 @@ export const sessionSchema = defineSchema("session", {
         sides: OracleDice,
         value: v.pipe(v.number(), v.integer(), v.minValue(1)),
         result: OracleResultText,
+        description: v.optional(OracleDescription),
+        url: v.optional(OracleUrl),
       }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
       /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
@@ -255,7 +277,7 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
   /** 이미 굴린 오라클 결과를 기록으로 남긴다. 굴림은 컨트롤러가 하고 여기에는 확정된 값만 온다. */
   rollOracle = mutation(
     this,
-    (dispatch, side: Side, as: string, oracle: Oracle, value: number, result: string) => {
+    (dispatch, side: Side, as: string, oracle: Oracle, rolled: OracleRolled) => {
       this.#assertActiveSpeaker(as);
       dispatch("session:oracle_rolled", {
         side,
@@ -263,8 +285,10 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
         oracleId: oracle.id,
         oracleName: oracle.name,
         sides: oracle.sides,
-        value,
-        result,
+        value: rolled.value,
+        result: rolled.result,
+        ...(rolled.description !== undefined && { description: rolled.description }),
+        ...(rolled.url !== undefined && { url: rolled.url }),
       });
     },
   );

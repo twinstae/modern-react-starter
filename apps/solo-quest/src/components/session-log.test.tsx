@@ -139,4 +139,19 @@ describe("SessionLog", () => {
       assertions.textContents(query.list("세션 로그"), [/^GM장소d100 · 53 절벽/]),
     );
   });
+
+  it("줄에 설명과 링크가 있으면 결과 밑에 설명이 보이고 결과가 링크가 된다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.OracleWithDetail.args} />),
+      assertions.textContents(query.list("세션 로그"), [
+        // 결과 글자에 링크가 붙고, 그 뒤에 회색 설명이 이어진다(뒤에 시각이 더 붙는다)
+        /^GM사이퍼d6 · 4 최적의 도구도구를 쓸 때 보탬 두 개를 더 얻습니다\./,
+      ]),
+      assertions.textContent(query.note("오라클 설명"), "도구를 쓸 때 보탬 두 개를 더 얻습니다."),
+      assertions.href(
+        query.link("최적의 도구"),
+        "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
+      ),
+    );
+  });
 });
