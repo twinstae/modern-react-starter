@@ -1,4 +1,5 @@
 import {
+  Button,
   SimpleForm,
   SimpleSelect,
   SimpleTextarea,
@@ -7,19 +8,22 @@ import {
   useSimpleField,
 } from "@repo/ui";
 import { useEffect, useRef } from "react";
-import { SendHorizontal } from "lucide-react";
+import { Dices, SendHorizontal } from "lucide-react";
 import { styled } from "styled-system/jsx";
 import * as v from "valibot";
 
+import type { Oracle } from "../domain/oracle.ts";
 import {
   activeCharacters,
   DEFAULT_SPEAKER,
   type Character,
   type Macro,
+  type OracleMacro,
   type Side,
 } from "../domain/session.ts";
 import { remainingGraphemes, ShortText } from "../domain/short-text.ts";
 import { MacroButton, type MacroRollValues } from "./macro-button.tsx";
+import { OracleButton, type OracleRollValues } from "./oracle-button.tsx";
 import { SIDE_LABEL } from "./side-label.ts";
 
 export type { MacroRollValues };
@@ -48,6 +52,12 @@ export interface MessageInputProps {
   macros?: Macro[];
   /** 매크로로 굴린다. 오류 메시지를 돌려주면 매크로 폼에 보여 준다. */
   onRollMacro?: (values: MacroRollValues) => Promise<string | undefined>;
+  /** 이 세션에 등록한 오라클 버튼. */
+  oracleMacros?: OracleMacro[];
+  /** 전역 오라클. 등록한 버튼의 이름과 주사위를 읽는다. */
+  oracles?: Oracle[];
+  /** 오라클을 굴린다. 오류 메시지를 돌려주면 버튼 옆에 보여 준다. */
+  onRollOracle?: (values: OracleRollValues) => Promise<string | undefined>;
   /** 저장에 충돌해 버려진 제출의 글. `key`가 바뀔 때마다 입력창에 채워진다. */
   restored?: { key: number; as: string; text: string };
 }
@@ -107,6 +117,9 @@ export function MessageInput({
   onSubmit,
   macros = [],
   onRollMacro,
+  oracleMacros = [],
+  oracles = [],
+  onRollOracle,
   restored,
 }: MessageInputProps) {
   const label = SIDE_LABEL[side];
@@ -141,6 +154,28 @@ export function MessageInput({
             macros.map((macro) => (
               <MacroButton key={macro.id} side={side} macro={macro} onRoll={onRollMacro} />
             ))}
+          {onRollOracle &&
+            oracleMacros.map((macro) => {
+              const oracle = oracles.find(({ id }) => id === macro.oracleId);
+              // 표가 지워졌으면 굴릴 수 없다. 세션 패널에서 지울 수 있다는 것만 알려 준다.
+              if (!oracle) {
+                return (
+                  <Button
+                    key={macro.id}
+                    variant="outline"
+                    size="xs"
+                    disabled
+                    aria-label="없는 오라클"
+                    title="오라클이 지워졌습니다. 오라클 패널에서 지울 수 있습니다"
+                  >
+                    <Dices /> 없는 오라클
+                  </Button>
+                );
+              }
+              return (
+                <OracleButton key={macro.id} side={side} oracle={oracle} onRoll={onRollOracle} />
+              );
+            })}
         </Toolbar>
         <Row>
           <Grow>

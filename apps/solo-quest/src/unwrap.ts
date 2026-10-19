@@ -21,3 +21,8 @@ export async function unwrap<R extends EdenResponse>(request: Promise<R>): Promi
   if (error) throw new ApiError(Number(error.status), error.value);
   return data as SuccessData<R>;
 }
+
+/** API 오류가 보낸 글(대개 422의 규칙 위반 메시지)을 꺼낸다. 없으면 대신할 메시지다. */
+export function messageOfApiError(error: unknown, fallback: string): string {
+  return error instanceof ApiError && typeof error.value === "string" ? error.value : fallback;
+}

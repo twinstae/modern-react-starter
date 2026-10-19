@@ -4,6 +4,7 @@ import { toLogEntries } from "./log-entries.ts";
 import {
   characterAddedEvent,
   characterArchivedEvent,
+  oracleRolledEvent,
   postedEvent,
   rolledEvent,
   startedEvent,
@@ -83,5 +84,26 @@ describe("이벤트를 로그 항목으로", () => {
     expect(
       toLogEntries(events).map(({ speakerId, speakerName }) => [speakerId, speakerName]),
     ).toStrictEqual([["guard", "경비병"]]);
+  });
+
+  it("오라클 굴림은 오라클 이름과 주사위, 눈, 결과를 가진 항목이 된다", () => {
+    const events = [startedEvent("s-1"), oracleRolledEvent("s-1", 2)];
+
+    expect(toLogEntries(events)).toStrictEqual([
+      {
+        kind: "oracle",
+        id: "s-1-event-2",
+        status: "committed",
+        side: "master",
+        speakerId: "gm",
+        speakerName: "GM",
+        oracleId: "location",
+        oracleName: "장소",
+        sides: 100,
+        value: 53,
+        result: "절벽",
+        createdAt: "2026-10-07T12:00:00Z",
+      },
+    ]);
   });
 });

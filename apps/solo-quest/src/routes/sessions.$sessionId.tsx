@@ -1,16 +1,19 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useSyncExternalStore } from "react";
 import { styled } from "styled-system/jsx";
 
+import { api } from "../api-client.ts";
 import { ConflictNotice } from "../components/conflict-notice.tsx";
 import { CharacterPanel } from "../components/character-panel.tsx";
 import { MacroPanel } from "../components/macro-panel.tsx";
 import { MessageInput } from "../components/message-input.tsx";
+import { OraclePanel } from "../components/oracle-panel.tsx";
 import { SessionLog } from "../components/session-log.tsx";
+import type { Oracle } from "../domain/oracle.ts";
 import type { Side } from "../domain/session.ts";
-import { sessionQueries } from "../queries.ts";
-import { ApiError } from "../unwrap.ts";
+import { oracleQueries, sessionQueries } from "../queries.ts";
+import { ApiError, messageOfApiError, unwrap } from "../unwrap.ts";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
   loader: async ({ context, params }) => {
@@ -24,6 +27,7 @@ export const Route = createFileRoute("/sessions/$sessionId")({
         ...sessionQueries.controller(params.sessionId),
         staleTime: "static",
       });
+      await context.queryClient.query({ ...oracleQueries.list(), staleTime: "static" });
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) throw notFound();
       throw error;
@@ -70,15 +74,54 @@ const SIDES: Side[] = ["master", "player"];
 
 function SessionPage() {
   const { sessionId } = Route.useParams();
+  const queryClient = useQueryClient();
   const { data: session } = useSuspenseQuery(sessionQueries.detail(sessionId));
   const { data: controller } = useSuspenseQuery(sessionQueries.controller(sessionId));
+  const { data: oracles } = useSuspenseQuery(oracleQueries.list());
   const view = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
+
+  const saveOracle = async (oracle: Oracle) => {
+    try {
+      await unwrap(
+        api.oracles({ id: oracle.id }).put({
+          name: oracle.name,
+          sides: oracle.sides,
+          ...(oracle.description !== undefined && { description: oracle.description }),
+          rows: oracle.rows,
+        }),
+      );
+    } catch (error) {
+      return messageOfApiError(error, "오라클을 저장하지 못했습니다");
+    }
+    await queryClient.invalidateQueries({ queryKey: oracleQueries.list().queryKey });
+    return undefined;
+  };
+
+  const removeOracle = async (oracleId: string) => {
+    try {
+      await unwrap(api.oracles({ id: oracleId }).delete());
+    } catch (error) {
+      return messageOfApiError(error, "오라클을 지우지 못했습니다");
+    }
+    await queryClient.invalidateQueries({ queryKey: oracleQueries.list().queryKey });
+    return undefined;
+  };
 
   return (
     <Main>
       <Header>
         <Title>{session.title}</Title>
         <Panels>
+          <OraclePanel
+            oracles={oracles}
+            macros={view.oracleMacros}
+            characters={view.characters}
+            onRoll={controller.rollOracle}
+            onAddMacro={(oracleId) => controller.addOracleMacro({ oracleId })}
+            onRemoveMacro={controller.removeOracleMacro}
+            onSave={saveOracle}
+            onRemove={removeOracle}
+          />
           <MacroPanel
             macros={view.macros}
             onAdd={controller.addMacro}
@@ -105,6 +148,9 @@ function SessionPage() {
             onSubmit={controller.submit}
             macros={view.macros}
             onRollMacro={controller.rollMacro}
+            oracleMacros={view.oracleMacros}
+            oracles={oracles}
+            onRollOracle={controller.rollOracle}
           />
         ))}
       </Inputs>

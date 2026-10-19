@@ -48,6 +48,30 @@ export const rolledEvent = (sessionId: string, version: number, label?: string):
   },
 });
 
+/** 마스터(GM)가 `행동` 오라클을 굴려 53이 나와 `절벽`이 나온 기록 */
+export const oracleRolledEvent = (
+  sessionId: string,
+  version: number,
+  result = "절벽",
+  value = 53,
+): SessionEvent => ({
+  eventId: `${sessionId}-event-${version}`,
+  eventName: "session:oracle_rolled",
+  eventCreatedAt: "2026-10-07T12:00:00Z",
+  entityName: "session",
+  entityId: sessionId,
+  version,
+  body: {
+    side: "master",
+    as: "gm",
+    oracleId: "location",
+    oracleName: "장소",
+    sides: 100,
+    value,
+    result,
+  },
+});
+
 export const characterAddedEvent = (
   sessionId: string,
   version: number,

@@ -1,7 +1,7 @@
 import { styled } from "styled-system/jsx";
 
 import { judgeRoll, type RolledTerm } from "../domain/dice.ts";
-import type { LogEntry, RollEntry } from "../domain/log-entries.ts";
+import type { LogEntry, OracleEntry, RollEntry } from "../domain/log-entries.ts";
 import { formatInstant, formatTime } from "../format-instant.ts";
 import { SIDE_LABEL } from "./side-label.ts";
 
@@ -203,6 +203,26 @@ function RollBody({ entry }: { entry: RollEntry }) {
   );
 }
 
+/**
+ * 오라클 굴림은 `행동 d100 · 53 절벽`처럼 보인다. 오라클 이름, 굴린 주사위와 눈, 나온 결과 순서다.
+ * 매크로와 달리 결과가 글이라 말풍선 안에서 읽는 순서대로 이어 둔다.
+ */
+function OracleBody({ entry }: { entry: OracleEntry }) {
+  return (
+    <>
+      <RollLabel role="note" aria-label="오라클 이름">
+        {entry.oracleName}
+      </RollLabel>
+      <RollDetail>
+        d{entry.sides} · {entry.value}
+      </RollDetail>{" "}
+      <RollName role="note" aria-label="오라클 결과">
+        {entry.result}
+      </RollName>
+    </>
+  );
+}
+
 /** 바로 앞 기록과 편과 화자가 같으면 이름을 다시 보이지 않는다. 화자는 이름이 아니라 캐릭터 id로 가른다. */
 const continuesPrevious = (entries: LogEntry[], index: number) => {
   const previous = entries[index - 1];
@@ -234,7 +254,13 @@ export function SessionLog({ entries }: { entries: LogEntry[] }) {
                   title={formatInstant(entry.createdAt)}
                 >
                   <Content>
-                    {entry.kind === "message" ? entry.content : <RollBody entry={entry} />}
+                    {entry.kind === "message" ? (
+                      entry.content
+                    ) : entry.kind === "roll" ? (
+                      <RollBody entry={entry} />
+                    ) : (
+                      <OracleBody entry={entry} />
+                    )}
                   </Content>
                   <time dateTime={entry.createdAt}>{formatTime(entry.createdAt)}</time>
                 </Bubble>

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { MessageEntry, RollEntry } from "../domain/log-entries.ts";
+import type { MessageEntry, OracleEntry, RollEntry } from "../domain/log-entries.ts";
 import { SessionLog } from "./session-log.tsx";
 
 const meta = {
@@ -239,6 +239,28 @@ export const MacroRolls: Story = {
         outcome: "성공",
         effect: "큰 이득",
       }),
+    ],
+  },
+};
+
+/** 오라클 표를 굴린 기록. 오라클 이름, 굴린 주사위와 눈, 결과가 이어진다. */
+export const OracleRoll: Story = {
+  args: {
+    entries: [
+      {
+        kind: "oracle",
+        id: "event-1",
+        status: "committed",
+        side: "master",
+        speakerId: "gm",
+        speakerName: "GM",
+        oracleId: "location",
+        oracleName: "장소",
+        sides: 100,
+        value: 53,
+        result: "절벽",
+        createdAt: "2026-10-07T12:04:00Z",
+      } satisfies OracleEntry,
     ],
   },
 };

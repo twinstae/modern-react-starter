@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SIDE_LABEL } from "./side-label.ts";
+import type { OracleRollValues } from "./oracle-button.tsx";
 import { MessageInput, type MacroRollValues, type MessageValues } from "./message-input.tsx";
 import * as Stories from "./message-input.stories.tsx";
 
@@ -303,6 +304,62 @@ describe("MessageInput", () => {
       actions.click(query.button("굴리기")),
       assertions.visible(query.alert("말할 수 없는 캐릭터입니다")),
       assertions.visible(query.dialog("위험을 무릅쓰기")),
+    );
+  });
+
+  it("오라클 버튼을 누르면 그 입력창에서 고른 편과 화자로 굴리고, 대화는 남지 않는다", async () => {
+    let rolled: OracleRollValues | undefined;
+    let posted: MessageValues | undefined;
+
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithOracles.args}
+          onSubmit={async (values) => {
+            posted = values;
+            return undefined;
+          }}
+          onRollOracle={async (values) => {
+            rolled = values;
+            return undefined;
+          }}
+        />,
+      ),
+      actions.fill(query.textbox("플레이어 대화"), "숲으로 들어간다"),
+      actions.click(query.combobox("플레이어 화자")),
+      actions.click(query.option("경비병")),
+      assertions.not.expanded(query.combobox("플레이어 화자")),
+      actions.click(query.button("행동 굴리기")),
+      assertions.value(query.textbox("플레이어 대화"), "숲으로 들어간다"),
+    );
+
+    expect(rolled).toStrictEqual({ side: "player", as: "guard", oracleId: "action" });
+    expect(posted).toBeUndefined();
+  });
+
+  it("오라클 굴림이 오류를 돌려주면 버튼 옆에 오류가 보인다", async () => {
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithOracles.args}
+          onRollOracle={async () => "말할 수 없는 캐릭터입니다"}
+        />,
+      ),
+      actions.click(query.button("행동 굴리기")),
+      assertions.visible(query.alert("말할 수 없는 캐릭터입니다")),
+    );
+  });
+
+  it("지워진 오라클은 누를 수 없는 없는 오라클 버튼으로 보인다", async () => {
+    await runSiheom(
+      given.render(
+        <MessageInput
+          {...Stories.WithOracles.args}
+          oracleMacros={[{ id: "om-2", oracleId: "없는-오라클" }]}
+          onRollOracle={async () => undefined}
+        />,
+      ),
+      assertions.visible(query.button("없는 오라클")),
     );
   });
 });

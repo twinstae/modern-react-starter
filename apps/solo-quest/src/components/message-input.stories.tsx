@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 
 import { SYSTEM_MACRO_LIST } from "../domain/macro.fixture.ts";
+import { ORACLE_FIXTURES } from "../domain/oracle.fixture.ts";
 import { DEFAULT_CHARACTERS, type Character, type Side } from "../domain/session.ts";
 import { MessageInput, type MessageInputProps } from "./message-input.tsx";
 
@@ -38,6 +39,24 @@ export const WithMacros: Story = {
     ],
     macros: SYSTEM_MACRO_LIST,
     onRollMacro: async (values) => {
+      console.log(values);
+      return undefined;
+    },
+    ...callbacks,
+  },
+};
+
+/** `행동` 오라클을 매크로로 등록한 플레이어 입력창. 화자 옆에 오라클 버튼이 있다. */
+export const WithOracles: Story = {
+  args: {
+    side: "player",
+    characters: [
+      ...DEFAULT_CHARACTERS,
+      { id: "guard", name: "경비병", archived: false, isDefault: false },
+    ],
+    oracleMacros: [{ id: "om-1", oracleId: "action" }],
+    oracles: ORACLE_FIXTURES,
+    onRollOracle: async (values) => {
       console.log(values);
       return undefined;
     },

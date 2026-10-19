@@ -132,4 +132,11 @@ describe("SessionLog", () => {
       ]),
     );
   });
+
+  it("오라클 굴림은 오라클 이름과 굴린 주사위, 눈, 결과가 보인다", async () => {
+    await runSiheom(
+      given.render(<SessionLog {...Stories.OracleRoll.args} />),
+      assertions.textContents(query.list("세션 로그"), [/^GM장소d100 · 53 절벽/]),
+    );
+  });
 });

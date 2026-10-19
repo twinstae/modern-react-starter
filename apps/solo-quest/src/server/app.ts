@@ -2,6 +2,8 @@ import { Elysia, status } from "elysia";
 import * as v from "valibot";
 
 import { SessionEventSchema, type SessionEvent } from "../domain/session.ts";
+import { OracleInputSchema, parseOracle } from "../domain/oracle.ts";
+import type { OracleStore } from "../domain/oracle-store.ts";
 import { ShortText } from "../domain/short-text.ts";
 import { VersionConflictError, type EventLogStore } from "../domain/event-log-store.ts";
 import type { SessionListStore } from "../domain/session-list-store.ts";
@@ -9,6 +11,7 @@ import type { SessionListStore } from "../domain/session-list-store.ts";
 export interface AppDeps {
   sessionListStore: SessionListStore;
   eventLogStore: EventLogStore;
+  oracleStore: OracleStore;
   /** 현재 시각 Instant (ISO 문자열) */
   now: () => string;
   generateId: () => string;
@@ -26,7 +29,13 @@ function findEventProblem(sessionId: string, expectedVersion: number, events: Se
 /**
  * 서버 앱. 저장소 같은 의존성은 인자로 받아, 테스트가 메모리 구현을 주입할 수 있게 한다.
  */
-export function createApp({ sessionListStore, eventLogStore, now, generateId }: AppDeps) {
+export function createApp({
+  sessionListStore,
+  eventLogStore,
+  oracleStore,
+  now,
+  generateId,
+}: AppDeps) {
   return new Elysia({ prefix: "/api" })
     .get("/health", () => ({ status: "ok" as const }))
     .get("/sessions", () => sessionListStore.list())
@@ -42,6 +51,21 @@ export function createApp({ sessionListStore, eventLogStore, now, generateId }: 
     .get("/sessions/:id", async ({ params }) => {
       const session = await sessionListStore.get(params.id);
       return session ?? status(404, "세션이 없습니다");
+    })
+    .get("/oracles", () => oracleStore.list())
+    .put(
+      "/oracles/:id",
+      async ({ params, body }) => {
+        const parsed = parseOracle({ id: params.id, ...body });
+        if (!parsed.ok) return status(422, parsed.message);
+        await oracleStore.save(parsed.oracle);
+        return parsed.oracle;
+      },
+      { body: OracleInputSchema },
+    )
+    .delete("/oracles/:id", async ({ params }) => {
+      await oracleStore.remove(params.id);
+      return new Response(null, { status: 204 });
     })
     .get("/sessions/:id/events", async ({ params }) => {
       if (!(await sessionListStore.get(params.id))) return status(404, "세션이 없습니다");

@@ -11,6 +11,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import { RolledCheck, RolledTerm, type RollResult } from "./dice.ts";
 import { parseMacro } from "./macro.ts";
+import { OracleDice, OracleResultText, type Oracle } from "./oracle.ts";
 import { ShortText } from "./short-text.ts";
 
 const Character = v.object({
@@ -26,6 +27,11 @@ export type Character = v.InferOutput<typeof Character>;
 const Macro = v.object({ id: v.string(), name: v.string(), definition: v.string() });
 
 export type Macro = v.InferOutput<typeof Macro>;
+
+/** 자주 쓰는 오라클을 세션마다 입력창 위 버튼으로 등록한 것. 표는 전역 오라클을 id로 가리킨다. */
+const OracleMacro = v.object({ id: v.string(), oracleId: v.string() });
+
+export type OracleMacro = v.InferOutput<typeof OracleMacro>;
 
 /** 편: 기록이 마스터 쪽에서 나왔는지 플레이어 쪽에서 나왔는지 */
 export const Side = v.picklist(["master", "player"]);
@@ -59,6 +65,19 @@ export const sessionSchema = defineSchema("session", {
       character_archived: v.object({ characterId: v.string() }),
       macro_added: v.object({ macroId: v.string(), name: ShortText, definition: v.string() }),
       macro_removed: v.object({ macroId: v.string() }),
+      /** 세션마다 등록한 오라클 매크로. 표 자체는 전역 오라클에 있다. */
+      oracle_macro_added: v.object({ macroId: v.string(), oracleId: v.string() }),
+      oracle_macro_removed: v.object({ macroId: v.string() }),
+      /** 오라클 표를 굴려 나온 결과. 다시 굴리지 않도록 눈과 결과를 그대로 담는다. */
+      oracle_rolled: v.object({
+        side: Side,
+        as: v.string(),
+        oracleId: v.string(),
+        oracleName: ShortText,
+        sides: OracleDice,
+        value: v.pipe(v.number(), v.integer(), v.minValue(1)),
+        result: OracleResultText,
+      }),
       message_posted: v.object({ side: Side, as: v.string(), content: ShortText }),
       /** 굴린 결과가 확정된 판정. 재생할 때 다시 굴리지 않는다. */
       dice_rolled: v.object({
@@ -75,7 +94,11 @@ export const sessionSchema = defineSchema("session", {
         effect: v.optional(ShortText),
       }),
     },
-    state: v.object({ characters: v.array(Character), macros: v.array(Macro) }),
+    state: v.object({
+      characters: v.array(Character),
+      macros: v.array(Macro),
+      oracleMacros: v.array(OracleMacro),
+    }),
   }),
   initialEventName: "session:started",
 });
@@ -107,7 +130,7 @@ export const SessionEventSchema = v.pipe(
 const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
   switch (event.eventName) {
     case "session:started":
-      return { characters: event.body.characters, macros: [] };
+      return { characters: event.body.characters, macros: [], oracleMacros: [] };
     case "session:character_added":
       return {
         ...prevState,
@@ -135,6 +158,19 @@ const sessionReducer = defineReducer(sessionSchema, (prevState, event) => {
       return {
         ...prevState,
         macros: prevState.macros.filter((macro) => macro.id !== event.body.macroId),
+      };
+    case "session:oracle_macro_added":
+      return {
+        ...prevState,
+        oracleMacros: [
+          ...prevState.oracleMacros,
+          { id: event.body.macroId, oracleId: event.body.oracleId },
+        ],
+      };
+    case "session:oracle_macro_removed":
+      return {
+        ...prevState,
+        oracleMacros: prevState.oracleMacros.filter((macro) => macro.id !== event.body.macroId),
       };
     default:
       return prevState;
@@ -199,6 +235,39 @@ export class Session extends Entity(sessionSchema, sessionReducer, { generateId:
     }
     dispatch("session:macro_removed", { macroId });
   });
+
+  /** 자주 쓰는 오라클을 이 세션의 버튼으로 등록한다. 같은 오라클을 두 번 등록할 수 없다. */
+  addOracleMacro = mutation(this, (dispatch, macroId: string, oracleId: string) => {
+    if (this.state.oracleMacros.some((macro) => macro.oracleId === oracleId)) {
+      throw new RuleViolation("이미 등록한 오라클입니다");
+    }
+    dispatch("session:oracle_macro_added", { macroId, oracleId });
+  });
+
+  /** 등록한 오라클 버튼을 지운다. 지난 굴림 기록은 그대로다. */
+  removeOracleMacro = mutation(this, (dispatch, macroId: string) => {
+    if (!this.state.oracleMacros.some((macro) => macro.id === macroId)) {
+      throw new RuleViolation("없는 오라클 매크로입니다");
+    }
+    dispatch("session:oracle_macro_removed", { macroId });
+  });
+
+  /** 이미 굴린 오라클 결과를 기록으로 남긴다. 굴림은 컨트롤러가 하고 여기에는 확정된 값만 온다. */
+  rollOracle = mutation(
+    this,
+    (dispatch, side: Side, as: string, oracle: Oracle, value: number, result: string) => {
+      this.#assertActiveSpeaker(as);
+      dispatch("session:oracle_rolled", {
+        side,
+        as,
+        oracleId: oracle.id,
+        oracleName: oracle.name,
+        sides: oracle.sides,
+        value,
+        result,
+      });
+    },
+  );
 
   postMessage = mutation(this, (dispatch, side: Side, as: string, text: string) => {
     const content = parseShortText(text);

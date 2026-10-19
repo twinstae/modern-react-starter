@@ -1,6 +1,7 @@
 import { createApiClient } from "../api-client.ts";
 import { createApp, type AppDeps } from "./app.ts";
 import { createMemoryEventLogStore } from "../domain/event-log-store.ts";
+import { createMemoryOracleStore } from "../domain/oracle-store.ts";
 import { createMemorySessionListStore } from "../domain/session-list-store.ts";
 
 export const TEST_NOW = "2026-10-07T12:00:00Z";
@@ -14,6 +15,7 @@ export function createTestClient(deps: Partial<AppDeps> = {}) {
   const app = createApp({
     sessionListStore: createMemorySessionListStore(),
     eventLogStore: createMemoryEventLogStore(),
+    oracleStore: createMemoryOracleStore(),
     now: () => TEST_NOW,
     generateId: () => TEST_ID,
     ...deps,

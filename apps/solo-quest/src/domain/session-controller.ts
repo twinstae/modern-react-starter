@@ -3,12 +3,15 @@ import { fillMacro, nameResult, parseMacro } from "./macro.ts";
 import { createEventLogAdapter } from "./event-log-adapter.ts";
 import { parseInput } from "./parse-input.ts";
 import { toLogEntries, type EntryStatus, type LogEntry } from "./log-entries.ts";
+import { rollOracle } from "./oracle.ts";
+import type { OracleSource } from "./oracle-store.ts";
 import {
   createSessionRepository,
   DEFAULT_CHARACTERS,
   Session,
   type Character,
   type Macro,
+  type OracleMacro,
   RuleViolation,
   type Side,
   type SessionEvent,
@@ -23,6 +26,8 @@ export interface SessionView {
   characters: Character[];
   /** 등록한 매크로. 입력창의 매크로 버튼이 된다. */
   macros: Macro[];
+  /** 이 세션에 등록한 오라클 버튼. 표 자체는 전역 오라클에서 읽는다. */
+  oracleMacros: OracleMacro[];
   /** 충돌로 버려진 제출의 글. 그 편의 입력창이 다시 채운다. */
   restored: Partial<Record<Side, RestoredInput>>;
   /** 충돌로 다시 불러왔다는 알림. 캐릭터 변경처럼 되돌려 줄 글이 없는 제출도 이것으로 알린다. 다음 제출을 받으면 사라진다. */
@@ -56,6 +61,7 @@ const EMPTY_VIEW: SessionView = {
   entries: [],
   characters: [],
   macros: [],
+  oracleMacros: [],
   restored: {},
 };
 
@@ -69,6 +75,7 @@ export function createSessionController({
   eventLog,
   random,
   generateId,
+  oracles,
 }: {
   sessionId: string;
   eventLog: EventLogStore;
@@ -76,6 +83,8 @@ export function createSessionController({
   random: Random;
   /** 새 캐릭터와 매크로의 id를 만든다. 도메인은 id를 만들지 않고 앱이 넘겨 준다. */
   generateId: () => string;
+  /** 세션에 묶이지 않는 전역 오라클 표. 오라클 굴림에 쓴다. */
+  oracles: OracleSource;
 }) {
   let committed: SessionEvent[] = [];
   const adapter = createEventLogAdapter(eventLog, (events) => {
@@ -117,6 +126,7 @@ export function createSessionController({
       entries: toLogEntries(all, statuses),
       characters: session?.state.characters ?? [],
       macros: session?.state.macros ?? [],
+      oracleMacros: session?.state.oracleMacros ?? [],
       restored,
       notice,
     };
@@ -294,6 +304,33 @@ export function createSessionController({
     /** 매크로를 지운다. 없는 매크로면 오류 메시지를 돌려주고, 아니면 undefined다. */
     removeMacro: async (macroId: string): Promise<string | undefined> =>
       apply((current) => current.removeMacro(macroId)),
+
+    /** 오라클을 굴려 그 편과 화자의 기록으로 남긴다. 없는 오라클이면 오류 메시지를 돌려준다. */
+    async rollOracle({
+      side,
+      as,
+      oracleId,
+    }: {
+      side: Side;
+      as: string;
+      oracleId: string;
+    }): Promise<string | undefined> {
+      const oracle = (await oracles.list()).find(({ id }) => id === oracleId);
+      if (!oracle) return "없는 오라클입니다";
+      const rolled = rollOracle(oracle, random);
+      if (!rolled.ok) return rolled.message;
+      return apply((current) => current.rollOracle(side, as, oracle, rolled.value, rolled.result));
+    },
+
+    /** 자주 쓰는 오라클을 이 세션의 버튼으로 등록한다. 없는 오라클이거나 이미 있으면 오류다. */
+    async addOracleMacro({ oracleId }: { oracleId: string }): Promise<string | undefined> {
+      if (!(await oracles.list()).some(({ id }) => id === oracleId)) return "없는 오라클입니다";
+      return apply((current) => current.addOracleMacro(generateId(), oracleId));
+    },
+
+    /** 등록한 오라클 버튼을 지운다. 없는 매크로면 오류 메시지를 돌려준다. */
+    removeOracleMacro: async (macroId: string): Promise<string | undefined> =>
+      apply((current) => current.removeOracleMacro(macroId)),
 
     /**
      * 매크로의 빈칸을 고른 값으로 채워 굴리고, 결과 이름과 눈 효과를 붙여 판정으로 남긴다.

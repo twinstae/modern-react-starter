@@ -5,6 +5,7 @@ export * as Card from "./card";
 export * as Checkbox from "./checkbox";
 export * as Clipboard from "./clipboard";
 export * as Collapsible from "./collapsible";
+export * as Dialog from "./dialog";
 export * as Field from "./field";
 export * as Fieldset from "./fieldset";
 export * as FileUpload from "./file-upload";

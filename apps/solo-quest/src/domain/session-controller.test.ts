@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { SYSTEM_MACROS } from "./macro.fixture.ts";
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";
 import { createFakeEventLog } from "./event-log-store.fake.ts";
+import { createMemoryOracleStore, type OracleStore } from "./oracle-store.ts";
+import { ORACLE_FIXTURES } from "./oracle.fixture.ts";
 import { postedEvent } from "./session.fixture.ts";
 import { createSessionController, type SessionView } from "./session-controller.ts";
 import { DEFAULT_CHARACTERS } from "./session.ts";
@@ -17,10 +19,14 @@ const sequentialIds = () => {
 };
 
 /** 고정 난수와 차례로 매기는 캐릭터 id를 쓰는 컨트롤러 */
-const newController = (eventLog: EventLogStore) =>
+const newController = (
+  eventLog: EventLogStore,
+  oracles: OracleStore = createMemoryOracleStore(ORACLE_FIXTURES),
+) =>
   createSessionController({
     sessionId: "s-1",
     eventLog,
+    oracles,
     random: fixedRandom,
     generateId: sequentialIds(),
   });
@@ -679,5 +685,75 @@ describe("세션 컨트롤러", () => {
       message,
     );
     expect(controller.getSnapshot().entries).toStrictEqual([]);
+  });
+
+  it("오라클을 굴리면 눈과 결과가 기록으로 남고, 다시 불러와도 같다", async () => {
+    const eventLog = createMemoryEventLogStore();
+    const controller = newController(eventLog);
+    await controller.load();
+
+    expect(
+      await controller.rollOracle({ side: "master", as: "gm", oracleId: "action" }),
+    ).toBeUndefined();
+    await controller.idle();
+
+    expect(controller.getSnapshot().events.at(-1)?.body).toStrictEqual({
+      side: "master",
+      as: "gm",
+      oracleId: "action",
+      oracleName: "행동",
+      sides: 100,
+      value: 51,
+      result: "불러낸다",
+    });
+    expect(controller.getSnapshot().entries.at(-1)).toMatchObject({
+      kind: "oracle",
+      oracleId: "action",
+      oracleName: "행동",
+      sides: 100,
+      value: 51,
+      result: "불러낸다",
+    });
+
+    const reloaded = await newController(eventLog).load();
+    expect(reloaded.entries.at(-1)).toMatchObject({ kind: "oracle", result: "불러낸다" });
+  });
+
+  it("없는 오라클이나 말할 수 없는 화자로는 굴리지 않는다", async () => {
+    const controller = newController(createMemoryEventLogStore());
+    await controller.load();
+    const before = controller.getSnapshot();
+
+    expect(await controller.rollOracle({ side: "master", as: "gm", oracleId: "없음" })).toBe(
+      "없는 오라클입니다",
+    );
+    expect(await controller.rollOracle({ side: "master", as: "유령", oracleId: "action" })).toBe(
+      "말할 수 없는 캐릭터입니다",
+    );
+    expect(controller.getSnapshot()).toBe(before);
+  });
+
+  it("오라클을 매크로로 등록하고 지우면 세션에 남고, 같은 오라클은 두 번 등록할 수 없다", async () => {
+    const eventLog = createMemoryEventLogStore();
+    const controller = newController(eventLog);
+    await controller.load();
+
+    expect(await controller.addOracleMacro({ oracleId: "action" })).toBeUndefined();
+    const macro = controller.getSnapshot().oracleMacros[0];
+    expect(macro).toStrictEqual({ id: "character-1", oracleId: "action" });
+    expect(await controller.addOracleMacro({ oracleId: "action" })).toBe(
+      "이미 등록한 오라클입니다",
+    );
+    expect(await controller.addOracleMacro({ oracleId: "없음" })).toBe("없는 오라클입니다");
+    await controller.idle();
+
+    expect((await newController(eventLog).load()).oracleMacros).toStrictEqual([
+      { id: "character-1", oracleId: "action" },
+    ]);
+
+    expect(await controller.removeOracleMacro(macro.id)).toBeUndefined();
+    await controller.idle();
+    expect(controller.getSnapshot().oracleMacros).toStrictEqual([]);
+    expect(await controller.removeOracleMacro("없는-매크로")).toBe("없는 오라클 매크로입니다");
   });
 });

@@ -21,6 +21,19 @@ export interface MessageEntry extends BaseEntry {
   content: string;
 }
 
+export interface OracleEntry extends BaseEntry {
+  kind: "oracle";
+  /** 굴린 전역 오라클 */
+  oracleId: string;
+  oracleName: string;
+  /** 굴린 주사위의 면 수 */
+  sides: number;
+  /** 나온 눈 */
+  value: number;
+  /** 눈에 드는 줄의 결과 */
+  result: string;
+}
+
 export interface RollEntry extends BaseEntry {
   kind: "roll";
   /** 입력한 그대로의 표기 */
@@ -37,7 +50,7 @@ export interface RollEntry extends BaseEntry {
 }
 
 /** 로그 화면이 그리는 항목 하나. 이벤트에서 만든 표시용 값이다. */
-export type LogEntry = MessageEntry | RollEntry;
+export type LogEntry = MessageEntry | RollEntry | OracleEntry;
 
 /**
  * 이벤트 로그를 화면 항목으로 바꾼다. 화자 이름은 시작할 때 넘겨받았거나 나중에 추가한 캐릭터에서
@@ -72,8 +85,23 @@ export function toLogEntries(
         break;
       case "session:macro_added":
       case "session:macro_removed":
-        // 매크로는 굴릴 때 쓰는 세션 상태라 로그에 보이지 않는다
+      case "session:oracle_macro_added":
+      case "session:oracle_macro_removed":
+        // 매크로와 오라클 등록은 굴릴 때 쓰는 세션 상태라 로그에 보이지 않는다
         break;
+      case "session:oracle_rolled": {
+        const { oracleId, oracleName, sides, value, result } = event.body;
+        entries.push({
+          kind: "oracle",
+          ...baseOf(event),
+          oracleId,
+          oracleName,
+          sides,
+          value,
+          result,
+        });
+        break;
+      }
       case "session:message_posted":
         entries.push({ kind: "message", ...baseOf(event), content: event.body.content });
         break;

@@ -7,6 +7,11 @@ import { unwrap } from "./unwrap.ts";
 /**
  * 서버 상태의 query option 모음. 같은 option을 라우트 loader의 `queryClient.query`(staleTime: "static"), useSuspenseQuery, 무효화에서 함께 쓴다.
  */
+export const oracleQueries = {
+  /** 세션과 무관한 전역 오라클 목록. 오라클을 고치면 이 키로 무효화한다. */
+  list: () => queryOptions({ queryKey: ["oracles"], queryFn: () => unwrap(api.oracles.get()) }),
+};
+
 export const sessionQueries = {
   /** 세션 목록. 이 키로 무효화하면 세션 단건 조회도 함께 무효화된다. */
   list: () => queryOptions({ queryKey: ["sessions"], queryFn: () => unwrap(api.sessions.get()) }),
