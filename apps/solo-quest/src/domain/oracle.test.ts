@@ -400,8 +400,8 @@ describe("오라클 굴림", () => {
 });
 
 describe("오라클 시드", () => {
-  it("27개의 오라클이 모두 올바른 표다", () => {
-    expect(SEED_ORACLES).toHaveLength(27);
+  it("32개의 오라클이 모두 올바른 표다", () => {
+    expect(SEED_ORACLES).toHaveLength(32);
 
     const problems = SEED_ORACLES.map((oracle) => [oracle.id, parseOracle(oracle)] as const).filter(
       ([, parsed]) => !parsed.ok,
@@ -445,9 +445,10 @@ describe("오라클 시드", () => {
 
 describe("사이퍼 오라클 시드", () => {
   const cyphers = SEED_ORACLES.filter(({ category }) => category === "사이퍼 시스템");
+  const csrd = cyphers.filter(({ id }) => id.startsWith("csrd-"));
 
-  it("8개가 모두 `사이퍼` 묶음에 들어 있다", () => {
-    expect(cyphers.map(({ id }) => id)).toStrictEqual([
+  it("CSRD 표 8개가 모두 `사이퍼` 묶음에 들어 있다", () => {
+    expect(csrd.map(({ id }) => id)).toStrictEqual([
       "csrd-cypher",
       "csrd-manifest-cypher-power",
       "csrd-manifest-cypher-하급",
@@ -461,12 +462,12 @@ describe("사이퍼 오라클 시드", () => {
   });
 
   it("줄마다 설명과 그 사이퍼 설명으로 가는 링크가 있다", () => {
-    const missing = cyphers.flatMap((oracle) =>
+    const missing = csrd.flatMap((oracle) =>
       oracle.rows
         .filter(({ description, url }) => description === undefined || url === undefined)
         .map(({ result }) => `${oracle.name}: ${result}`),
     );
-    const wrongLink = cyphers.flatMap((oracle) =>
+    const wrongLink = csrd.flatMap((oracle) =>
       oracle.rows
         .filter(
           ({ url }) =>
@@ -494,5 +495,56 @@ describe("사이퍼 오라클 시드", () => {
       url: "https://trpg-stelo.netlify.app/ko/cypher-srd/cyphers/#최적의-도구",
     });
     expect(cypher?.rows.at(-1)?.max).toBe(100);
+  });
+});
+
+describe("아서투르 경 사이퍼 목록 시드", () => {
+  const lists = SEED_ORACLES.filter(({ id }) => id.startsWith("arthour-cypher-list-"));
+
+  it("A–E 다섯 표가 `사이퍼` 묶음에 100면 주사위로 들어 있다", () => {
+    expect(lists.map(({ id }) => id)).toStrictEqual([
+      "arthour-cypher-list-a",
+      "arthour-cypher-list-b",
+      "arthour-cypher-list-c",
+      "arthour-cypher-list-d",
+      "arthour-cypher-list-e",
+    ]);
+    expect(lists.map(({ name }) => name)).toStrictEqual([
+      "아서투르 경 사이퍼 목록 A",
+      "아서투르 경 사이퍼 목록 B",
+      "아서투르 경 사이퍼 목록 C",
+      "아서투르 경 사이퍼 목록 D",
+      "아서투르 경 사이퍼 목록 E",
+    ]);
+    expect(lists.map(({ sides, kind }) => ({ sides, kind }))).toStrictEqual(
+      Array.from({ length: 5 }, () => ({ sides: 100, kind: "single" })),
+    );
+    expect(new Set(lists.map(({ group }) => group))).toStrictEqual(new Set(["사이퍼"]));
+  });
+
+  it("표마다 1부터 100까지 덮고, 줄마다 설명이 있으며 링크는 없다", () => {
+    for (const list of lists) {
+      expect(list.rows).toHaveLength(100);
+      expect(list.rows.at(0)).toMatchObject({ min: 1, max: 1 });
+      expect(list.rows.at(-1)).toMatchObject({ min: 100, max: 100 });
+      expect(list.rows.filter(({ description }) => description === undefined)).toStrictEqual([]);
+      expect(list.rows.filter(({ url }) => url !== undefined)).toStrictEqual([]);
+    }
+  });
+
+  it("책의 목록 차례대로 옮겼고, 두 칸을 차지하는 사이퍼는 같은 줄이 둘이다", () => {
+    expect(lists[0]?.rows.at(0)?.result).toBe("출입 안경");
+    expect(lists[0]?.rows.at(99)?.result).toBe("폭발통 (치유)");
+    expect(lists[4]?.rows.at(0)?.result).toBe("감각 교란기");
+    expect(lists[4]?.rows.at(99)?.result).toBe("투시기");
+    const first = lists[3]?.rows.at(75);
+    const second = lists[3]?.rows.at(76);
+    expect(first).toMatchObject({ min: 76, max: 76 });
+    expect(second).toMatchObject({ min: 77, max: 77 });
+    expect({ result: second?.result, description: second?.description }).toStrictEqual({
+      result: first?.result,
+      description: first?.description,
+    });
+    expect(first?.result).toBe("재생약");
   });
 });

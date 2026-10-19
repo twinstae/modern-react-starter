@@ -1,4 +1,5 @@
 import type { Oracle } from "../domain/oracle.ts";
+import { ARTHOUR_CYPHER_ORACLES } from "./oracle-arthour-cypher-seed.ts";
 import { CYPHER_ORACLES } from "./oracle-cypher-seed.ts";
 
 /**
@@ -1068,7 +1069,14 @@ const IRONSWORN_ORACLES: Oracle[] = [
  * 시드가 바뀔 때마다 올린다. 저장된 파일이 이보다 오래되면 아직 없는 시드만 더한다.
  * 그래야 이미 쓰고 있던 사람에게도 새 표가 보이고, 지운 표가 되살아나지는 않는다.
  */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
-/** 앱이 처음 쓸 때 넣는 전체 오라클. 철의 맹세 19개와 사이퍼 시스템 8개다. */
-export const SEED_ORACLES: Oracle[] = [...IRONSWORN_ORACLES, ...CYPHER_ORACLES];
+/**
+ * 앱이 처음 쓸 때 넣는 전체 오라클. 철의 맹세 19개와 사이퍼 시스템 13개다.
+ * 사이퍼 시스템은 CSRD 표 8개와 아서투르 경 사이퍼 목록 A–E 5개다.
+ */
+export const SEED_ORACLES: Oracle[] = [
+  ...IRONSWORN_ORACLES,
+  ...CYPHER_ORACLES,
+  ...ARTHOUR_CYPHER_ORACLES,
+];
