@@ -85,6 +85,20 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 
 - `domain/question-set.ts`: `QuestionSetSchema`, `parseQuestionSet`, `toQuestionSetDto`,
   `toQuestionSetJson`, `parseQuestionSetJson`, `drawerOrder`. 모르는 필드는 거부한다.
+  `statementTemplate`(공통), 서랍별 `statement`(없으면 `null`), `citationTemplates`
+  (item/choice)는 생략하면 기본 문형으로 정규화된다.
+- `domain/josa.ts`: `attachJosa(word, pair)`. 이/가, 을/를, 은/는, 와/과, (으)로.
+  한글 음절 받침과 ㄹ 받침을 보고, 한글이 아닌 끝은 받침 없음으로 본다.
+- `domain/statement.ts`: `NicknameSchema`/`parseNickname`(trim, 1~10 코드 포인트),
+  `renderStatement(template, { drawerName, nickname })`, `renderCitation(template, { quote })`.
+  자리표시는 `{nickname}`, `{drawer}`, `{drawer:이/가}`, `{quote}`(인용만). 모르는
+  자리표시·조사는 `UnknownPlaceholderError`/`UnknownJosaError`로 거부한다.
+- `domain/citation.ts`: `cite(set, scores, drawer)` → `{ question, drawer, answer, quote, text }`.
+  긍정 기여가 가장 큰 답, 같으면 문항 순서가 빠른 답. 없으면 `NoCitationError`.
+- `domain/curate.ts`: `curate(set, answers, nickname)` → `{ drawers, scores, ranking,
+  statements: { first, second, recommended }, citation, customer }`. `customer`는
+  `firstStatement`, `secondStatement`, `recommendedDrawerName`, `recommendedStatement`,
+  `citation`만 가진 손님 view model이다(I-9). 주인 확인(TICKET-00005)은 내부 값을 쓴다.
 - `domain/answer.ts`: `AnswerValueSchema`(1~5 정수 또는 선택지 id), `answerValueFor`,
   `InvalidAnswerError`.
 - `domain/turn.ts`: `startTurn(nickname)`, `answer(set, turn, value)`, `back(turn)`,
@@ -98,9 +112,10 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   `SAMPLE_SIZE`(4,000), 서랍별 1순위 10~18% 게이트(`FIRST_RATE_MIN/MAX`), 구조·
   기준 응답·실패/경고를 한 보고에 담는다. 같은 시드는 같은 보고를 낸다.
 - `domain/random.ts`: `seededRng(seed)` 시드 고정 난수. 도메인에서 `Math.random` 대신 쓴다.
-- `domain/seed-question-set.ts`: MVP 시드 7서랍×2문항과 서윤 기준 응답.
-  `SEED_RANDOM_SEED`(79)로 점검한다.
+- `domain/seed-question-set.ts`: MVP 시드 7서랍×2문항과 서윤 기준 응답. 상태 문장과
+  인용 문형도 데이터로 들어 있다. `SEED_RANDOM_SEED`(79)로 점검한다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
+  `curatableAnsweredQuestionSetArbitrary`는 모든 서랍에 긍정 기여가 남는 세트다.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.
 
 ## 6. 도구와 명령
