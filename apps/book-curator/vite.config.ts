@@ -27,6 +27,8 @@ export default defineConfig({
           // 순수 코어, 유스케이스, 저장소 계약 테스트
           name: "domain",
           environment: "node",
+          // PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸린다.
+          testTimeout: 15_000,
           include: [
             "src/domain/**/*.test.ts",
             "src/application/**/*.test.ts",

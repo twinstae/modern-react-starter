@@ -14,6 +14,7 @@
     "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run"
   },
   "dependencies": {
+    "@electric-sql/pglite": "catalog:",
     "@elysiajs/eden": "catalog:",
     "@pandacss/vite": "catalog:",
     "@repo/ui": "workspace:*",
@@ -21,6 +22,7 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "drizzle-orm": "catalog:",
     "elysia": "catalog:",
     "nitro": "catalog:",
     "react": "catalog:",
@@ -43,6 +45,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vitest/browser-playwright": "catalog:",
+    "drizzle-kit": "catalog:",
     "fast-check": "catalog:",
     "playwright": "catalog:",
     "storybook": "catalog:",
