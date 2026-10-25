@@ -35,6 +35,12 @@ describe("renderStatement", () => {
     );
   });
 
+  it("별명에 님이 이미 있어도 두 번 붙이지 않는다", () => {
+    expect(renderStatement(DEFAULT_STATEMENT_TEMPLATE, { drawerName, nickname: "토끼 님" })).toBe(
+      "토끼 님에게는 지금 삶의 방식을 바꾸는 책이 필요한 상태입니다",
+    );
+  });
+
   it("템플릿에 님이 이미 있어도 두 번 붙이지 않는다", () => {
     expect(
       renderStatement("{nickname}님에게는 {drawer:이/가} 필요합니다", {

@@ -144,6 +144,7 @@ function parseTemplate(template: string, allowed: readonly PlaceholderName[]): T
 }
 
 const HONORIFIC_AFTER_NICKNAME = /^[ \t]*님/u;
+const HONORIFIC_SUFFIX = /[ \t]*님$/u;
 
 export interface StatementContext {
   readonly drawerName: string;
@@ -178,7 +179,8 @@ export function renderStatement(template: string, context: StatementContext): st
         rendered += token.value;
         break;
       case "nickname": {
-        rendered += `${nickname} 님`;
+        // 손님이 이미 "토끼 님"처럼 님을 붙여 넣어도 한 번만 쓴다.
+        rendered += HONORIFIC_SUFFIX.test(nickname) ? nickname : `${nickname} 님`;
         const next = tokens[index + 1];
         if (next?.type === "text") {
           const honorific = HONORIFIC_AFTER_NICKNAME.exec(next.value);
