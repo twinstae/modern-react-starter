@@ -100,6 +100,20 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   statements: { first, second, recommended }, citation, customer }`. `customer`는
   `firstStatement`, `secondStatement`, `recommendedDrawerName`, `recommendedStatement`,
   `citation`만 가진 손님 view model이다(I-9). 주인 확인(TICKET-00005)은 내부 값을 쓴다.
+- `domain/book.ts`: `BookSchema`/`parseBook`, `BookRelevanceSchema`(B1~B7 모두 0~5 정수),
+  `toBookDto`/`toBookJson`/`parseBookJson`. 모르는 필드와 빠진 관련도를 거부한다.
+- `domain/shelf.ts`: `DrawerStockEntry`(서랍 코드, 책 id, 수량 0 이상), `parseDrawerStock`,
+  `shelfKinds`, `checkShelfGate(stock, drawers)` → `{ passed, lacking: [{ drawer, name,
+  kinds }] }`, `MissingBookError`. 서랍 이름은 질문 세트에서 인자로 받는다.
+- `domain/owner-view.ts`: `ownerView(curation, stock, books)` → 추천·2순위(상태 문장 포함),
+  비슷함, 모든 서랍의 책·수량·종류 수·3종 미만 경고, 게이트. `drawerBooksView(drawer,
+  stock, books)` → 건넨 서랍의 책만(제목, 저자, 이유, 질문, 수량).
+- `domain/shelf.fixture.ts`: B6 3종(게이트 통과), B1·B2 부족, 수량 0 책 예시.
+  `domain/shelf.arbitrary.ts`: 무작위 서가 + 큐레이션 가능한 답.
+- `application/shelf-ports.ts`: `BookStore`(`list`/`get`/`save`), `DrawerStockStore`
+  (`list`/`setQuantity`/`remove`). 구현은 `persistence/memory-shelf-store.ts`와
+  `persistence/drizzle-*.ts`, `persistence/database.ts`(PGlite + migrate). 계약은
+  `persistence/shelf-store.contract.ts` 하나를 메모리·PGlite 테스트가 함께 쓴다.
 - `domain/answer.ts`: `AnswerValueSchema`(1~5 정수 또는 선택지 id), `answerValueFor`,
   `InvalidAnswerError`.
 - `domain/turn.ts`: `startTurn(nickname)`, `answer(set, turn, value)`, `back(turn)`,
