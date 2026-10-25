@@ -18,7 +18,7 @@ describe("NicknameStart", () => {
         />,
       ),
       actions.fill(query.textbox("별명"), "  토끼  "),
-      actions.click(query.button("시작")),
+      actions.click(query.button("시작하기")),
     );
 
     expect(started).toBe("토끼");
@@ -36,8 +36,8 @@ describe("NicknameStart", () => {
           }}
         />,
       ),
-      actions.click(query.button("시작")),
-      assertions.errormessage(query.textbox("별명"), "별명을 입력해 주세요"),
+      actions.click(query.button("시작하기")),
+      assertions.errormessage(query.textbox("별명"), "별명을 적어 주세요"),
     );
 
     expect(started).toBeUndefined();
@@ -56,7 +56,7 @@ describe("NicknameStart", () => {
         />,
       ),
       actions.fill(query.textbox("별명"), "가".repeat(11)),
-      actions.click(query.button("시작")),
+      actions.click(query.button("시작하기")),
       assertions.errormessage(query.textbox("별명"), "별명은 10자까지 쓸 수 있어요"),
     );
 
@@ -66,10 +66,10 @@ describe("NicknameStart", () => {
   it("오류가 난 뒤 다시 입력하면 오류를 지운다", async () => {
     await runSiheom(
       given.render(<NicknameStart {...Stories.nicknameStartArgs} />),
-      actions.click(query.button("시작")),
-      assertions.errormessage(query.textbox("별명"), "별명을 입력해 주세요"),
+      actions.click(query.button("시작하기")),
+      assertions.errormessage(query.textbox("별명"), "별명을 적어 주세요"),
       actions.type(query.textbox("별명"), "토끼"),
-      assertions.not.visible(query.alert("별명을 입력해 주세요")),
+      assertions.not.visible(query.alert("별명을 적어 주세요")),
     );
   });
 });

@@ -23,7 +23,7 @@ describe("ownerView", () => {
     expect(view.recommended.name).toBe("삶의 방식을 바꾸는 책");
     expect(view.recommended.mark).toBeNull();
     expect(view.recommended.statement).toBe(
-      "토끼 님에게는 지금 삶의 방식을 바꾸는 책이 필요한 상태입니다",
+      "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
     );
     expect(view.recommended.books).toStrictEqual([
       { bookId: "book-b6-1", title: "삶을 바꾸는 연습", author: "김연습", quantity: 2 },
@@ -34,7 +34,7 @@ describe("ownerView", () => {
     expect(view.recommended.belowMinimum).toBe(false);
 
     expect(view.second.drawer).toBe("B1");
-    expect(view.second.statement).toBe("토끼 님에게는 지금 나를 들여다보는 책이 필요한 상태입니다");
+    expect(view.second.statement).toBe("나를 들여다보는 책이 함께 보이면 좋겠어요");
     expect(view.similar).toBe(false);
   });
 

@@ -5,6 +5,7 @@ import {
   assertCitationTemplate,
   assertStatementTemplate,
   DEFAULT_CITATION_TEMPLATES,
+  DEFAULT_SECOND_STATEMENT_TEMPLATE,
   DEFAULT_STATEMENT_TEMPLATE,
 } from "./statement.ts";
 
@@ -142,6 +143,7 @@ export const QuestionSetSchema = v.pipe(
     questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
     scoring: ScoringSchema,
     statementTemplate: v.optional(TextSchema, DEFAULT_STATEMENT_TEMPLATE),
+    secondStatementTemplate: v.optional(TextSchema, DEFAULT_SECOND_STATEMENT_TEMPLATE),
     citationTemplates: v.optional(CitationTemplatesSchema, DEFAULT_CITATION_TEMPLATES),
     baselines: v.optional(v.array(BaselineAnswersSchema), []),
   }),
@@ -188,6 +190,7 @@ export type QuestionSet = v.InferOutput<typeof QuestionSetSchema>;
 
 function assertTemplates(set: QuestionSet): void {
   assertStatementTemplate(set.statementTemplate);
+  assertStatementTemplate(set.secondStatementTemplate);
   for (const drawer of set.drawers) {
     if (drawer.statement !== null) assertStatementTemplate(drawer.statement);
   }
@@ -244,6 +247,7 @@ export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
     ),
     scoring: { type: set.scoring.type },
     statementTemplate: set.statementTemplate,
+    secondStatementTemplate: set.secondStatementTemplate,
     citationTemplates: {
       item: set.citationTemplates.item,
       choice: set.citationTemplates.choice,

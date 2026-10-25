@@ -16,7 +16,7 @@ describe("cite", () => {
       drawer: "B6",
       answer: 5,
       quote: "요즘 생활에서 무언가를 바꾸고 싶다",
-      text: "‘요즘 생활에서 무언가를 바꾸고 싶다’에 그렇다고 답하신",
+      text: "‘요즘 생활에서 무언가를 바꾸고 싶다’라고 하셨죠",
     });
   });
 
@@ -88,7 +88,7 @@ describe("cite", () => {
       drawer: "B6",
       answer: "change",
       quote: "바꾸기",
-      text: "‘바꾸기’를 고르신",
+      text: "‘바꾸기’를 고르셨어요",
     });
   });
 

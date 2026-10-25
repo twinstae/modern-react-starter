@@ -14,7 +14,7 @@ describe("ResultScreen", () => {
     await runSiheom(
       given.render(<ResultScreen {...args} />),
       assertions.visible(query.heading(args.customer.firstStatement)),
-      assertions.visible(query.heading("함께 필요한")),
+      assertions.visible(query.heading("함께 보면 좋은 책")),
       assertions.visible(query.heading(args.customer.recommendedDrawerName)),
     );
 
@@ -28,7 +28,7 @@ describe("ResultScreen", () => {
     expect(text).toContain(args.customer.recommendedMark ?? "");
     expect(text).toContain(args.customer.citation);
     expect(text).toContain(args.customer.recommendedReason ?? "");
-    expect(text.match(/토끼 님/g)).toHaveLength(2);
+    expect(text.match(/토끼 님/g)).toHaveLength(1);
   });
 
   it("화면 어디에도 서랍 코드, 점수, 순위 숫자, 책 제목이 없다(I-9, C-2)", async () => {
@@ -91,7 +91,7 @@ describe("ResultScreen", () => {
     );
 
     expect(args.similar).toBe(true);
-    expect(bodyText()).toContain("두 서랍의 필요가 비슷하게 겹쳐 있어요");
+    expect(bodyText()).toContain("두 서랍이 비슷하게 보여요. 주인과 함께 골라도 좋아요.");
   });
 
   it("서랍마다 그 서랍이 1순위인 실제 결과를 보여 준다", async () => {

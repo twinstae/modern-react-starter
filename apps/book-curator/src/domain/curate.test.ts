@@ -14,13 +14,13 @@ describe("curate", () => {
 
     expect(curation.ranking).toStrictEqual({ first: "B6", second: "B1", similar: false });
     expect(curation.customer).toStrictEqual({
-      firstStatement: "토끼 님에게는 지금 삶의 방식을 바꾸는 책이 필요한 상태입니다",
-      secondStatement: "토끼 님에게는 지금 나를 들여다보는 책이 필요한 상태입니다",
+      firstStatement: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
+      secondStatement: "나를 들여다보는 책이 함께 보이면 좋겠어요",
       recommendedDrawerName: "삶의 방식을 바꾸는 책",
-      recommendedStatement: "토끼 님에게는 지금 삶의 방식을 바꾸는 책이 필요한 상태입니다",
+      recommendedStatement: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
       recommendedMark: null,
       recommendedReason: null,
-      citation: "‘요즘 생활에서 무언가를 바꾸고 싶다’에 그렇다고 답하신",
+      citation: "‘요즘 생활에서 무언가를 바꾸고 싶다’라고 하셨죠",
     });
   });
 
@@ -31,8 +31,8 @@ describe("curate", () => {
         drawer.code === "B6"
           ? {
               ...drawer,
-              mark: "[가정] 1번 · 열쇠 1",
-              reason: "[가정] 그 마음이 이 서랍으로 이어집니다",
+              mark: "1번 · 열쇠 1",
+              reason: "이 서랍으로 이어집니다",
             }
           : drawer,
       ),
@@ -40,8 +40,8 @@ describe("curate", () => {
 
     const { customer } = curate(set, SEOYUN_ANSWERS, "토끼");
 
-    expect(customer.recommendedMark).toBe("[가정] 1번 · 열쇠 1");
-    expect(customer.recommendedReason).toBe("[가정] 그 마음이 이 서랍으로 이어집니다");
+    expect(customer.recommendedMark).toBe("1번 · 열쇠 1");
+    expect(customer.recommendedReason).toBe("이 서랍으로 이어집니다");
   });
 
   it("서랍별 고유 문장이 있으면 공통 템플릿 대신 쓴다", () => {
@@ -60,7 +60,7 @@ describe("curate", () => {
     expect(curation.customer.firstStatement).toBe(
       "토끼 님의 삶을 바꿀 삶의 방식을 바꾸는 책이 여기 있습니다",
     );
-    expect(curation.customer.secondStatement).toBe("토끼 님에게는 나를 들여다보는 책이 필요합니다");
+    expect(curation.customer.secondStatement).toBe("나를 들여다보는 책이 함께 보이면 좋겠어요");
   });
 
   it("같은 입력은 같은 결과를 내고 별명만 바꾸면 문장만 바뀐다", () => {

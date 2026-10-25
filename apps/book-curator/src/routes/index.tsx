@@ -287,7 +287,7 @@ function Kiosk() {
   }
 
   if (turn === null || bundle === null) {
-    return <NicknameStart onStart={start} />;
+    return <NicknameStart questionCount={data.questionSet.questions.length} onStart={start} />;
   }
 
   const question = bundle.questionSet.questions[turn.answers.length];
@@ -299,10 +299,10 @@ function Kiosk() {
     content =
       curation === null ? (
         <Screen>
-          <Title>결과를 준비하지 못했어요</Title>
-          <Body>질문에 다시 답하면 큐레이터의 문장을 만들 수 있어요.</Body>
+          <Title>결과를 만들지 못했어요</Title>
+          <Body>다시 답하면 결과를 만들 수 있어요.</Body>
           <QuietButton type="button" onClick={() => resetToStart("manual")}>
-            다시 해 보기
+            다시 하기
           </QuietButton>
         </Screen>
       ) : (
@@ -310,14 +310,14 @@ function Kiosk() {
           customer={curation.customer}
           similar={curation.ranking.similar}
           ownerCheckNotice={ownerCheckNotice}
-          onOwnerCheck={() => setOwnerCheckNotice("주인 확인은 다음 단계에서 연결됩니다")}
+          onOwnerCheck={() => setOwnerCheckNotice("주인 확인은 다음 단계에서 열려요.")}
           onRetake={() => resetToStart("manual")}
         />
       );
   } else if (question.type === "choice") {
     content = (
       <Screen>
-        <Title>이 질문은 아직 화면에 없어요</Title>
+        <Title>이 질문은 아직 준비 중이에요</Title>
         <Body>문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요.</Body>
         <QuietButton type="button" onClick={() => resetToStart("manual")}>
           처음으로

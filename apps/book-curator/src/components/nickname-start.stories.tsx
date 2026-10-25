@@ -7,6 +7,7 @@ const noop = () => {};
 
 export const nicknameStartArgs = {
   onStart: noop,
+  questionCount: 14,
 } satisfies ComponentProps<typeof NicknameStart>;
 
 const meta = {

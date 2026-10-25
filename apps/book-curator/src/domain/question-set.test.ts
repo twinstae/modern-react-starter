@@ -9,6 +9,7 @@ import {
 import { SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
 import {
   DEFAULT_CITATION_TEMPLATES,
+  DEFAULT_SECOND_STATEMENT_TEMPLATE,
   DEFAULT_STATEMENT_TEMPLATE,
   UnknownJosaError,
   UnknownPlaceholderError,
@@ -23,6 +24,7 @@ const withDefaults = (input: typeof SEOYUN_SET_INPUT) => ({
     reason: null,
   })),
   statementTemplate: DEFAULT_STATEMENT_TEMPLATE,
+  secondStatementTemplate: DEFAULT_SECOND_STATEMENT_TEMPLATE,
   citationTemplates: DEFAULT_CITATION_TEMPLATES,
 });
 
@@ -99,17 +101,17 @@ describe("QuestionSetSchema", () => {
         index === 0
           ? {
               ...drawer,
-              mark: "[가정] 1번 · 열쇠 1",
-              reason: "[가정] 그 마음이 이 서랍으로 이어집니다",
+              mark: "1번 · 열쇠 1",
+              reason: "이 서랍으로 이어집니다",
             }
           : drawer,
       ),
     };
     const set = parseQuestionSet(input);
 
-    expect(set.drawers.map(({ mark }) => mark)).toStrictEqual(["[가정] 1번 · 열쇠 1", null, null]);
+    expect(set.drawers.map(({ mark }) => mark)).toStrictEqual(["1번 · 열쇠 1", null, null]);
     expect(set.drawers.map(({ reason }) => reason)).toStrictEqual([
-      "[가정] 그 마음이 이 서랍으로 이어집니다",
+      "이 서랍으로 이어집니다",
       null,
       null,
     ]);
@@ -199,10 +201,10 @@ describe("BaselineAnswersSchema", () => {
 describe("문장 템플릿", () => {
   const input = {
     ...SEOYUN_SET_INPUT,
-    statementTemplate: "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다",
+    statementTemplate: "{nickname} 님에겐 지금, {drawer:이/가} 필요해 보여요",
     citationTemplates: {
-      item: "‘{quote}’에 그렇다고 답하신",
-      choice: "‘{quote}’를 고르신",
+      item: "‘{quote}’라고 하셨죠",
+      choice: "‘{quote}’를 고르셨어요",
     },
     drawers: [
       {
@@ -220,6 +222,7 @@ describe("문장 템플릿", () => {
     const set = parseQuestionSet(SEOYUN_SET_INPUT);
 
     expect(set.statementTemplate).toBe(DEFAULT_STATEMENT_TEMPLATE);
+    expect(set.secondStatementTemplate).toBe(DEFAULT_SECOND_STATEMENT_TEMPLATE);
     expect(set.citationTemplates).toStrictEqual(DEFAULT_CITATION_TEMPLATES);
     expect(set.drawers.map(({ statement }) => statement)).toStrictEqual([null, null, null]);
   });

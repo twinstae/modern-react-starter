@@ -3,100 +3,141 @@ import { styled } from "styled-system/jsx";
 export type ItemScaleValue = 1 | 2 | 3 | 4 | 5;
 
 const SCALE_OPTIONS = [
-  { value: 1, label: "전혀 아니다", visible: "전혀 아니다" },
-  { value: 2, label: "아니다", visible: "2" },
-  { value: 3, label: "보통이다", visible: "3" },
-  { value: 4, label: "그렇다", visible: "4" },
-  { value: 5, label: "매우 그렇다", visible: "매우 그렇다" },
-] as const satisfies readonly {
-  value: ItemScaleValue;
-  label: string;
-  visible: string;
-}[];
+  { value: 1, label: "전혀 아니다" },
+  { value: 2, label: "아니다" },
+  { value: 3, label: "보통" },
+  { value: 4, label: "그렇다" },
+  { value: 5, label: "매우 그렇다" },
+] as const satisfies readonly { value: ItemScaleValue; label: string }[];
 
 const Screen = styled("main", {
   base: {
     minH: "100dvh",
-    display: "grid",
-    gridTemplateRows: "auto auto 1fr auto",
-    gap: "6",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4",
     px: "page",
-    py: "8",
+    py: "6",
     bg: "canvas",
     color: "fg.default",
+    borderTopWidth: "8px",
+    borderTopColor: "yellow.500",
   },
 });
 
 const Progress = styled("p", {
-  base: { color: "fg.muted", fontSize: "kiosk-caption", letterSpacing: "wide" },
+  base: {
+    alignSelf: "flex-start",
+    color: "pine.700",
+    fontFamily: "body",
+    fontSize: "kiosk-caption",
+    fontWeight: "700",
+    letterSpacing: "0.08em",
+  },
+});
+
+const Body = styled("div", {
+  base: {
+    flex: "1",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-evenly",
+    gap: "6",
+  },
 });
 
 const QuestionArea = styled("section", {
   base: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     maxW: "5xl",
     mx: "auto",
+    width: "full",
     textAlign: "center",
   },
 });
 
 const QuestionText = styled("h1", {
   base: {
-    fontFamily: "heading",
+    fontFamily: "body",
     fontSize: "kiosk-question",
-    fontWeight: "600",
-    lineHeight: "1.45",
+    fontWeight: "700",
+    lineHeight: "1.4",
     wordBreak: "keep-all",
   },
 });
 
 const HiddenLegend = styled("legend", { base: { srOnly: true } });
 
-const HiddenText = styled("span", { base: { srOnly: true } });
-
 const ScaleFieldset = styled("fieldset", {
   base: {
     display: "grid",
     gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    alignItems: "stretch",
-    gap: "3",
+    gap: "2.5",
     width: "full",
     maxW: "6xl",
     mx: "auto",
-    py: "4",
+    pt: "6",
+    pb: "2",
     borderWidth: "0",
+    borderTopWidth: "2px",
+    borderTopColor: "border",
   },
 });
 
 const ScaleLabel = styled("label", {
   base: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: "3",
+    gap: "1.5",
     minH: "28",
     px: "2",
-    py: "4",
-    borderWidth: "1px",
+    py: "3",
+    borderWidth: "2px",
     borderColor: "border",
     borderRadius: "l2",
-    bg: "paper.100",
+    bg: "surface",
     color: "fg.default",
+    cursor: "pointer",
+    transition: "background-color 120ms, translate 120ms",
+    _hover: { bg: "yellow.100", borderColor: "pine.500", translate: "-2px -2px" },
+    _focusWithin: { outline: "3px solid", outlineColor: "pine.600", outlineOffset: "3px" },
+  },
+});
+
+const ScaleNumber = styled("span", {
+  base: {
+    fontFamily: "body",
+    fontSize: "kiosk-scale-number",
+    fontWeight: "800",
+    lineHeight: "1",
+    letterSpacing: "-0.02em",
+  },
+});
+
+const ScaleText = styled("span", {
+  base: {
+    color: "fg.muted",
     fontFamily: "body",
     fontSize: "kiosk-scale",
-    textAlign: "center",
-    cursor: "pointer",
-    _hover: { borderColor: "seal.500", bg: "paper.200" },
+    fontWeight: "600",
+    lineHeight: "1.25",
+    wordBreak: "keep-all",
   },
 });
 
 const ScaleRadio = styled("input", {
   base: {
-    width: "6",
-    height: "6",
-    accentColor: "seal.500",
+    position: "absolute",
+    inset: "0",
+    width: "full",
+    height: "full",
+    m: "0",
+    opacity: "0",
     cursor: "pointer",
   },
 });
@@ -108,16 +149,16 @@ const Footer = styled("footer", {
 const BackButton = styled("button", {
   base: {
     borderWidth: "0",
-    borderRadius: "l2",
     bg: "transparent",
     color: "fg.muted",
     fontFamily: "body",
     fontSize: "kiosk-body",
+    fontWeight: "600",
     cursor: "pointer",
-    px: "4",
-    py: "3",
-    _hover: { color: "fg.default", bg: "paper.200" },
-    _focusVisible: { outline: "2px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+    px: "3",
+    py: "2",
+    _hover: { color: "fg.default" },
+    _focusVisible: { outline: "3px solid", outlineColor: "pine.600", outlineOffset: "3px" },
   },
 });
 
@@ -143,27 +184,30 @@ export function QuestionScreen({
       <Progress role="status" aria-label="진행">
         {index + 1} / {total}
       </Progress>
-      <QuestionArea>
-        <QuestionText>{questionText}</QuestionText>
-      </QuestionArea>
-      <ScaleFieldset>
-        <HiddenLegend>{questionText}</HiddenLegend>
-        {SCALE_OPTIONS.map((option) => (
-          <ScaleLabel key={option.value}>
-            <ScaleRadio
-              type="radio"
-              name="scale"
-              value={option.value}
-              onChange={() => onAnswer(option.value)}
-            />
-            <span aria-hidden="true">{option.visible}</span>
-            <HiddenText>{option.label}</HiddenText>
-          </ScaleLabel>
-        ))}
-      </ScaleFieldset>
+      <Body>
+        <QuestionArea>
+          <QuestionText>{questionText}</QuestionText>
+        </QuestionArea>
+        <ScaleFieldset>
+          <HiddenLegend>{questionText}</HiddenLegend>
+          {SCALE_OPTIONS.map((option) => (
+            <ScaleLabel key={option.value}>
+              <ScaleRadio
+                type="radio"
+                name="scale"
+                value={option.value}
+                aria-label={option.label}
+                onChange={() => onAnswer(option.value)}
+              />
+              <ScaleNumber aria-hidden="true">{option.value}</ScaleNumber>
+              <ScaleText aria-hidden="true">{option.label}</ScaleText>
+            </ScaleLabel>
+          ))}
+        </ScaleFieldset>
+      </Body>
       <Footer>
-        <BackButton type="button" onClick={onBack}>
-          되돌아가기
+        <BackButton type="button" aria-label="되돌아가기" onClick={onBack}>
+          ← 이전 질문
         </BackButton>
       </Footer>
     </Screen>

@@ -14,12 +14,13 @@ import { attachJosa, isJosaPair, type JosaPair } from "./josa.ts";
  * 모르는 자리표시나 조사는 조용히 넘기지 않고 이름 있는 오류로 거부한다.
  */
 
-export const DEFAULT_STATEMENT_TEMPLATE =
-  "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다";
+export const DEFAULT_STATEMENT_TEMPLATE = "{nickname} 님에겐 지금, {drawer:이/가} 필요해 보여요";
+
+export const DEFAULT_SECOND_STATEMENT_TEMPLATE = "{drawer:이/가} 함께 보이면 좋겠어요";
 
 export const DEFAULT_CITATION_TEMPLATES = {
-  item: "‘{quote}’에 그렇다고 답하신",
-  choice: "‘{quote}’를 고르신",
+  item: "‘{quote}’라고 하셨죠",
+  choice: "‘{quote}’를 고르셨어요",
 } as const;
 
 export const NICKNAME_MAX_LENGTH = 10;

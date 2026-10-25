@@ -7,23 +7,65 @@ const Screen = styled("main", {
   base: {
     minH: "100dvh",
     display: "grid",
-    gridTemplateRows: "1fr auto",
-    gap: "10",
-    px: "page",
-    py: "12",
+    gridTemplateRows: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
     bg: "canvas",
     color: "fg.default",
+    lg: { gridTemplateColumns: "1.05fr 1fr", gridTemplateRows: "1fr" },
   },
 });
 
-const Intro = styled("section", {
+const BrandPanel = styled("section", {
   base: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
     alignItems: "center",
-    gap: "4",
+    justifyContent: "center",
+    gap: "3",
+    px: "page",
+    py: "10",
+    bg: "yellow.500",
+    borderBottomWidth: "2px",
+    borderColor: "ink.900",
     textAlign: "center",
+    lg: {
+      alignItems: "flex-start",
+      borderBottomWidth: "0",
+      borderRightWidth: "2px",
+      textAlign: "left",
+    },
+  },
+});
+
+const FormPanel = styled("section", {
+  base: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    px: "page",
+    py: "8",
+    bg: "paper.50",
+  },
+});
+
+const Intro = styled("div", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "3",
+    maxW: "44rem",
+    textAlign: "center",
+    lg: { alignItems: "flex-start", textAlign: "left" },
+  },
+});
+
+const Eyebrow = styled("p", {
+  base: {
+    color: "pine.700",
+    fontFamily: "body",
+    fontSize: "kiosk-caption",
+    fontWeight: "700",
+    letterSpacing: "0.12em",
   },
 });
 
@@ -32,12 +74,17 @@ const Title = styled("h1", {
     fontFamily: "heading",
     fontSize: "kiosk-title",
     fontWeight: "600",
-    lineHeight: "1.3",
+    lineHeight: "1.25",
+    wordBreak: "keep-all",
   },
 });
 
 const PromiseText = styled("p", {
-  base: { color: "fg.muted", fontSize: "kiosk-body" },
+  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-body", lineHeight: "1.5" },
+});
+
+const Meta = styled("p", {
+  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
 });
 
 const Form = styled("form", {
@@ -46,14 +93,27 @@ const Form = styled("form", {
     flexDirection: "column",
     gap: "4",
     width: "full",
-    maxW: "xl",
-    mx: "auto",
-    pb: "6",
+    maxW: "32rem",
+    p: "6",
+    borderWidth: "2px",
+    borderColor: "border",
+    borderRadius: "l2",
+    bg: "surface",
+    boxShadow: "zineLg",
+    md: { p: "8" },
   },
 });
 
+const LabelRow = styled("div", {
+  base: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "3" },
+});
+
 const Label = styled("label", {
-  base: { fontSize: "kiosk-body", fontWeight: "600" },
+  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
+});
+
+const Hint = styled("p", {
+  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
 });
 
 const NicknameInput = styled("input", {
@@ -61,56 +121,63 @@ const NicknameInput = styled("input", {
     width: "full",
     height: "16",
     px: "4",
-    borderWidth: "1px",
+    borderWidth: "2px",
     borderColor: "border",
     borderRadius: "l2",
-    bg: "paper.100",
+    bg: "paper.50",
     color: "fg.default",
     fontFamily: "body",
     fontSize: "kiosk-body",
     outline: "none",
-    _focusVisible: { borderColor: "seal.500", outline: "2px solid", outlineColor: "seal.500" },
+    _placeholder: { color: "fg.muted" },
+    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
   },
 });
 
 const ErrorText = styled("p", {
-  base: { color: "red.9", fontSize: "kiosk-body" },
+  base: { color: "red.9", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
 });
 
 const StartButton = styled("button", {
   base: {
     width: "full",
     height: "16",
-    borderWidth: "0",
+    borderWidth: "2px",
+    borderColor: "pine.700",
     borderRadius: "l2",
-    bg: "seal.500",
-    color: "white",
+    bg: "pine.600",
+    color: "paper.50",
     fontFamily: "body",
     fontSize: "kiosk-body",
-    fontWeight: "600",
+    fontWeight: "700",
     cursor: "pointer",
-    _hover: { bg: "seal.600" },
-    _focusVisible: { outline: "2px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+    boxShadow: "zine",
+    transition: "background-color 120ms, translate 120ms, box-shadow 120ms",
+    _hover: { bg: "pine.700", borderColor: "pine.700" },
+    _active: { translate: "2px 2px", boxShadow: "none" },
+    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
   },
 });
 
 const errorMessage = (nickname: string): string | null => {
   const length = Array.from(nickname.trim()).length;
-  if (length === 0) return "별명을 입력해 주세요";
+  if (length === 0) return "별명을 적어 주세요";
   if (length > NICKNAME_MAX_LENGTH) return `별명은 ${NICKNAME_MAX_LENGTH}자까지 쓸 수 있어요`;
   return null;
 };
 
 /**
  * 손님의 첫 화면. 별명만 받고 시작을 알린다. 별명은 이 화면 밖으로 서버에 가지 않는다.
- * `initialError`는 스토리에서 오류 모습을 보여 주기 위한 초기값이다.
+ * 노란 벽면과 종이 폼을 나누어, 가게에 들어선 느낌을 낸다.
  */
 export function NicknameStart({
   onStart,
+  questionCount,
   initialNickname = "",
   initialError = null,
 }: {
   onStart: (nickname: string) => void;
+  questionCount: number;
   initialNickname?: string;
   initialError?: string | null;
 }) {
@@ -119,38 +186,49 @@ export function NicknameStart({
 
   return (
     <Screen>
-      <Intro>
-        <Title>지금, 어떤 책이 필요한가</Title>
-        <PromiseText>책방79-1 · 실명 대신 별명으로 · 기록은 남지 않아요</PromiseText>
-      </Intro>
-      <Form
-        onSubmit={(event) => {
-          event.preventDefault();
-          const problem = errorMessage(nickname);
-          setError(problem);
-          if (problem === null) onStart(parseNickname(nickname));
-        }}
-      >
-        <Label htmlFor="nickname">별명</Label>
-        <NicknameInput
-          id="nickname"
-          name="nickname"
-          value={nickname}
-          autoComplete="off"
-          aria-invalid={error === null ? undefined : true}
-          aria-errormessage={error === null ? undefined : "nickname-error"}
-          onChange={(event) => {
-            setNickname(event.target.value);
-            if (error !== null) setError(null);
+      <BrandPanel>
+        <Intro>
+          <Eyebrow>BOOK SHOP 79-1 · 서촌</Eyebrow>
+          <Title>지금, 어떤 책이 필요한가</Title>
+          <PromiseText>별명으로 시작해요. 별명은 저장하지 않아요.</PromiseText>
+          <Meta>질문 {questionCount}개 · 3분쯤 걸려요</Meta>
+        </Intro>
+      </BrandPanel>
+      <FormPanel>
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const problem = errorMessage(nickname);
+            setError(problem);
+            if (problem === null) onStart(parseNickname(nickname));
           }}
-        />
-        {error === null ? null : (
-          <ErrorText id="nickname-error" role="alert">
-            {error}
-          </ErrorText>
-        )}
-        <StartButton type="submit">시작</StartButton>
-      </Form>
+        >
+          <LabelRow>
+            <Label htmlFor="nickname">별명</Label>
+            <Hint id="nickname-hint">실명이 아니어도 괜찮아요</Hint>
+          </LabelRow>
+          <NicknameInput
+            id="nickname"
+            name="nickname"
+            value={nickname}
+            placeholder="예: 토끼"
+            autoComplete="off"
+            aria-describedby="nickname-hint"
+            aria-invalid={error === null ? undefined : true}
+            aria-errormessage={error === null ? undefined : "nickname-error"}
+            onChange={(event) => {
+              setNickname(event.target.value);
+              if (error !== null) setError(null);
+            }}
+          />
+          {error === null ? null : (
+            <ErrorText id="nickname-error" role="alert">
+              {error}
+            </ErrorText>
+          )}
+          <StartButton type="submit">시작하기</StartButton>
+        </Form>
+      </FormPanel>
     </Screen>
   );
 }

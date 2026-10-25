@@ -4,15 +4,18 @@ import type { CustomerCuration } from "../domain/curate.ts";
 
 const Screen = styled("main", {
   base: {
-    height: "100dvh",
-    overflow: "hidden",
-    display: "grid",
-    gridTemplateRows: "minmax(0, 3fr) minmax(0, 2fr)",
-    gap: "4",
+    minH: "100dvh",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6",
     px: "page",
     py: "8",
     bg: "canvas",
     color: "fg.default",
+    borderTopWidth: "8px",
+    borderTopColor: "yellow.500",
+    justifyContent: "center",
+    md: { py: "10" },
   },
 });
 
@@ -20,36 +23,34 @@ const Statements = styled("section", {
   base: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    gap: "6",
-    minH: "0",
-    maxW: "5xl",
-    mx: "auto",
+    alignItems: "center",
+    gap: "4",
     textAlign: "center",
   },
 });
 
 const FirstStatement = styled("h1", {
   base: {
+    maxW: "22ch",
     fontFamily: "heading",
     fontSize: "kiosk-result",
     fontWeight: "600",
-    lineHeight: "1.35",
+    lineHeight: "1.28",
     wordBreak: "keep-all",
   },
 });
 
 const SecondGroup = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "2" },
+  base: { display: "flex", flexDirection: "column", gap: "1", maxW: "44rem" },
 });
 
 const SecondLabel = styled("h2", {
   base: {
-    color: "seal.500",
+    color: "pine.600",
     fontFamily: "body",
     fontSize: "kiosk-caption",
-    fontWeight: "600",
-    letterSpacing: "wide",
+    fontWeight: "700",
+    letterSpacing: "0.08em",
   },
 });
 
@@ -58,7 +59,7 @@ const SecondStatement = styled("p", {
     fontFamily: "heading",
     fontSize: "kiosk-question",
     lineHeight: "1.4",
-    color: "fg.muted",
+    color: "fg.default",
     wordBreak: "keep-all",
   },
 });
@@ -70,14 +71,15 @@ const SimilarLine = styled("p", {
 const Lower = styled("section", {
   base: {
     display: "grid",
-    gridTemplateColumns: "1fr",
-    gridTemplateRows: "1fr auto",
-    gap: "4",
-    minH: "0",
+    gap: "6",
     width: "full",
-    maxW: "6xl",
+    maxW: "64rem",
     mx: "auto",
-    lg: { gridTemplateColumns: "1.4fr 1fr", gridTemplateRows: "1fr" },
+    alignItems: "stretch",
+    lg: {
+      gridTemplateColumns: "minmax(0, 1.35fr) minmax(18rem, 0.65fr)",
+      alignItems: "center",
+    },
   },
 });
 
@@ -85,26 +87,26 @@ const DrawerCard = styled("article", {
   base: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
     gap: "3",
-    minH: "0",
-    px: "6",
-    py: "5",
-    borderWidth: "1px",
+    minW: "0",
+    p: "6",
+    borderWidth: "2px",
     borderColor: "border",
     borderRadius: "l2",
-    bg: "paper.100",
+    bg: "surface",
+    boxShadow: "zine",
     textAlign: "left",
+    md: { p: "8" },
   },
 });
 
-const Eyebrow = styled("p", {
+const CardEyebrow = styled("p", {
   base: {
-    color: "seal.500",
+    color: "pine.600",
     fontFamily: "body",
     fontSize: "kiosk-caption",
-    fontWeight: "600",
-    letterSpacing: "wide",
+    fontWeight: "700",
+    letterSpacing: "0.08em",
   },
 });
 
@@ -114,7 +116,7 @@ const CardHeader = styled("div", {
     flexWrap: "wrap",
     alignItems: "baseline",
     justifyContent: "space-between",
-    gap: "4",
+    gap: "2",
   },
 });
 
@@ -127,8 +129,22 @@ const DrawerMark = styled("p", {
     color: "seal.600",
     fontFamily: "body",
     fontSize: "kiosk-mark",
-    fontWeight: "700",
-    letterSpacing: "wide",
+    fontWeight: "800",
+    letterSpacing: "0.02em",
+    lineHeight: "1",
+  },
+});
+
+const Citation = styled("blockquote", {
+  base: {
+    m: "0",
+    pl: "3",
+    borderLeftWidth: "4px",
+    borderColor: "yellow.500",
+    fontFamily: "body",
+    fontSize: "kiosk-body",
+    lineHeight: "1.55",
+    color: "fg.muted",
   },
 });
 
@@ -136,7 +152,7 @@ const Reason = styled("p", {
   base: {
     fontFamily: "heading",
     fontSize: "kiosk-body",
-    lineHeight: "1.55",
+    lineHeight: "1.6",
     wordBreak: "keep-all",
   },
 });
@@ -147,29 +163,33 @@ const Actions = styled("div", {
     flexDirection: "column",
     justifyContent: "center",
     gap: "3",
-    minH: "0",
+    minW: "0",
     textAlign: "center",
   },
 });
 
 const OwnerPrompt = styled("p", {
-  base: { fontFamily: "heading", fontSize: "kiosk-body", fontWeight: "600" },
+  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "600" },
 });
 
 const OwnerButton = styled("button", {
   base: {
     minH: "14",
     px: "6",
-    borderWidth: "0",
+    borderWidth: "2px",
+    borderColor: "pine.700",
     borderRadius: "l2",
-    bg: "seal.500",
-    color: "white",
+    bg: "pine.600",
+    color: "paper.50",
     fontFamily: "body",
     fontSize: "kiosk-body",
-    fontWeight: "600",
+    fontWeight: "700",
     cursor: "pointer",
-    _hover: { bg: "seal.600" },
-    _focusVisible: { outline: "2px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+    boxShadow: "zine",
+    transition: "background-color 120ms, color 120ms, translate 120ms, box-shadow 120ms",
+    _hover: { bg: "pine.700", borderColor: "pine.700" },
+    _active: { translate: "2px 2px", boxShadow: "none" },
+    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
   },
 });
 
@@ -179,17 +199,19 @@ const Notice = styled("p", {
 
 const RetakeButton = styled("button", {
   base: {
+    alignSelf: "center",
     borderWidth: "0",
+    borderBottomWidth: "1px",
+    borderColor: "currentColor",
     bg: "transparent",
     color: "fg.muted",
     fontFamily: "body",
     fontSize: "kiosk-caption",
-    textDecoration: "underline",
     cursor: "pointer",
-    px: "4",
-    py: "2",
+    px: "2",
+    py: "1",
     _hover: { color: "fg.default" },
-    _focusVisible: { outline: "2px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
   },
 });
 
@@ -216,27 +238,29 @@ export function ResultScreen({
       <Statements aria-label="지금 필요한 서랍">
         <FirstStatement>{customer.firstStatement}</FirstStatement>
         <SecondGroup>
-          <SecondLabel>함께 필요한</SecondLabel>
+          <SecondLabel>함께 보면 좋은 책</SecondLabel>
           <SecondStatement>{customer.secondStatement}</SecondStatement>
         </SecondGroup>
-        {similar ? <SimilarLine>두 서랍의 필요가 비슷하게 겹쳐 있어요</SimilarLine> : null}
+        {similar ? (
+          <SimilarLine>두 서랍이 비슷하게 보여요. 주인과 함께 골라도 좋아요.</SimilarLine>
+        ) : null}
       </Statements>
       <Lower>
         <DrawerCard aria-labelledby="recommended-drawer-name">
-          <Eyebrow>큐레이터가 권하는 서랍</Eyebrow>
+          <CardEyebrow>큐레이터가 고른 서랍</CardEyebrow>
           <CardHeader>
             <DrawerName id="recommended-drawer-name">{customer.recommendedDrawerName}</DrawerName>
             {customer.recommendedMark === null ? null : (
               <DrawerMark>{customer.recommendedMark}</DrawerMark>
             )}
           </CardHeader>
-          <Reason>
-            {customer.citation}
-            {customer.recommendedReason === null ? null : ` ${customer.recommendedReason}`}
-          </Reason>
+          <Citation>{customer.citation}</Citation>
+          {customer.recommendedReason === null ? null : (
+            <Reason>{customer.recommendedReason}</Reason>
+          )}
         </DrawerCard>
         <Actions>
-          <OwnerPrompt>책방 주인에게 이 화면을 보여 주세요</OwnerPrompt>
+          <OwnerPrompt>책방 주인에게 보여 주세요</OwnerPrompt>
           <OwnerButton type="button" onClick={onOwnerCheck}>
             주인 확인
           </OwnerButton>

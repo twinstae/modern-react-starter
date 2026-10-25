@@ -20,6 +20,7 @@ export const PublicQuestionSetSchema = v.strictObject({
   questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
   scoring: ScoringSchema,
   statementTemplate: TextSchema,
+  secondStatementTemplate: TextSchema,
   citationTemplates: CitationTemplatesSchema,
 });
 
@@ -62,6 +63,7 @@ export function toPublicQuestionSetDto(set: QuestionSet): PublicQuestionSetDto {
     questions,
     scoring: { type: set.scoring.type },
     statementTemplate: set.statementTemplate,
+    secondStatementTemplate: set.secondStatementTemplate,
     citationTemplates: {
       item: set.citationTemplates.item,
       choice: set.citationTemplates.choice,

@@ -33,13 +33,13 @@ describe("MVP 시드 질문 세트", () => {
       "7번 · 열쇠 7",
     ]);
     expect(SEED_QUESTION_SET.drawers.map(({ reason }) => reason)).toStrictEqual([
-      "그 마음이 생활의 작은 습관부터 하나씩 바꾸는 책으로 이어집니다",
-      "그 마음이 나를 천천히 들여다보는 책으로 이어집니다",
-      "그 마음이 세상이 돌아가는 방식을 더 깊이 이해하는 책으로 이어집니다",
-      "그 마음이 가까운 사람과의 거리를 다시 보는 책으로 이어집니다",
-      "그 마음이 잠시 멈추어 곱씹는 책으로 이어집니다",
-      "그 마음이 나와 다른 삶을 만나는 책으로 이어집니다",
-      "그 마음이 내가 사는 세계를 넓혀 보는 책으로 이어집니다",
+      "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요.",
+      "나를 들여다보고 싶은 날에는 천천히 자신에게 말을 거는 책을 권해요.",
+      "세상이 답답할 때는 그 구조를 함께 들여다보는 책이 좋아요.",
+      "가까운 사람과의 거리가 고민될 때 관계를 다시 그려 보는 책이 도움이 돼요.",
+      "잠시 멈추고 싶을 때는 곁에 오래 두고 읽는 책이 잘 어울려요.",
+      "다른 삶이 궁금할 때는 내가 모르던 사람의 하루를 만나는 책을 권해요.",
+      "세계를 넓히고 싶을 때는 역사와 과학을 건너오는 책이 좋아요.",
     ]);
     expect(SEED_QUESTION_SET.baselines).toStrictEqual([
       {
@@ -68,11 +68,12 @@ describe("MVP 시드 질문 세트", () => {
 
   it("상태 문장과 인용 문형을 질문 세트 데이터로 가진다", () => {
     expect(SEED_QUESTION_SET.statementTemplate).toBe(
-      "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다",
+      "{nickname} 님에겐 지금, {drawer:이/가} 필요해 보여요",
     );
+    expect(SEED_QUESTION_SET.secondStatementTemplate).toBe("{drawer:이/가} 함께 보이면 좋겠어요");
     expect(SEED_QUESTION_SET.citationTemplates).toStrictEqual({
-      item: "‘{quote}’에 그렇다고 답하신",
-      choice: "‘{quote}’를 고르신",
+      item: "‘{quote}’라고 하셨죠",
+      choice: "‘{quote}’를 고르셨어요",
     });
   });
 

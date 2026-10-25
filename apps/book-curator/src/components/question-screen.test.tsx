@@ -21,7 +21,7 @@ describe("QuestionScreen", () => {
       assertions.visible(query.group(args.questionText)),
       actions.click(query.radio("전혀 아니다")),
       actions.click(query.radio("아니다")),
-      actions.click(query.radio("보통이다")),
+      actions.click(query.radio("보통")),
       actions.click(query.radio("그렇다")),
       actions.click(query.radio("매우 그렇다")),
     );
