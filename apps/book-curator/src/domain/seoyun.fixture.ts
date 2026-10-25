@@ -16,6 +16,7 @@ export const SEOYUN_SET_INPUT = {
     { type: "item", drawer: "B1", reversed: false, text: "내 마음이 무엇을 원하는지 알고 싶다" },
   ],
   scoring: { type: "item-mean" },
+  baselines: [],
 } as const;
 
 /** B6 평균 4.5, B1 평균 3.5, B2 평균 2. */

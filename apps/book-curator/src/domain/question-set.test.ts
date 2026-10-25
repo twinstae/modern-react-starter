@@ -90,3 +90,66 @@ describe("QuestionSetSchema", () => {
     expect(parseQuestionSetJson(toQuestionSetJson(set))).toStrictEqual(set);
   });
 });
+
+describe("BaselineAnswersSchema", () => {
+  const input = {
+    ...SEOYUN_SET_INPUT,
+    baselines: [
+      {
+        name: "서윤",
+        answers: [5, 4, 2, 4, 3],
+        expected: { first: "B6", second: "B1" },
+      },
+    ],
+  };
+
+  it("질문 세트와 함께 기준 응답을 파싱하고 왕복한다", () => {
+    const set = parseQuestionSet(input);
+
+    expect(set.baselines).toStrictEqual(input.baselines);
+    expect(parseQuestionSetJson(toQuestionSetJson(set))).toStrictEqual(set);
+  });
+
+  it("기준 응답이 모든 질문에 답하지 않으면 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        baselines: [{ ...input.baselines[0], answers: [5, 4, 2, 4] }],
+      }),
+    ).toThrow();
+  });
+
+  it("기준 응답이 질문 형식에 맞지 않으면 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        baselines: [{ ...input.baselines[0], answers: [6, 4, 2, 4, 3] }],
+      }),
+    ).toThrow();
+  });
+
+  it("기준 응답의 기대 순위가 정의 밖이거나 같은 서랍이면 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        baselines: [{ ...input.baselines[0], expected: { first: "B7", second: "B1" } }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        baselines: [{ ...input.baselines[0], expected: { first: "B6", second: "B6" } }],
+      }),
+    ).toThrow();
+  });
+
+  it("기준 응답의 모르는 필드를 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        baselines: [{ ...input.baselines[0], note: "가정" }],
+      }),
+    ).toThrow();
+  });
+});

@@ -1,5 +1,7 @@
 import * as v from "valibot";
 
+import { answerValueFor, AnswerValueSchema } from "./answer.ts";
+
 /** 서랍 코드. 질문 세트와 서가가 서로를 가리키는 유일한 값이고 이용자에게는 보이지 않는다. */
 export const DrawerCodeSchema = v.picklist(["B1", "B2", "B3", "B4", "B5", "B6", "B7"]);
 
@@ -69,6 +71,22 @@ export const QuestionSchema = v.variant("type", [ItemQuestionSchema, ChoiceQuest
 
 export type Question = v.InferOutput<typeof QuestionSchema>;
 
+/**
+ * 질문 세트와 함께 저장하는 기준 응답. "이렇게 답하면 이 순위"라는 기대값이다.
+ * `answers`는 모든 질문에 대한 답이고, `expected`는 그 답이 내야 하는 1·2순위다.
+ * 실제 순위가 기대와 같은지는 공개 점검(`analyze`)이 본다.
+ */
+export const BaselineAnswersSchema = v.strictObject({
+  name: TextSchema,
+  answers: v.array(AnswerValueSchema),
+  expected: v.strictObject({
+    first: DrawerCodeSchema,
+    second: DrawerCodeSchema,
+  }),
+});
+
+export type BaselineAnswers = v.InferOutput<typeof BaselineAnswersSchema>;
+
 /** 답을 서랍 점수로 바꾸는 방법. `learned`는 TICKET-00013에서 더한다. */
 export const ScoringSchema = v.variant("type", [
   v.strictObject({ type: v.literal("item-mean") }),
@@ -103,6 +121,7 @@ export const QuestionSetSchema = v.pipe(
     ),
     questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
     scoring: ScoringSchema,
+    baselines: v.optional(v.array(BaselineAnswersSchema), []),
   }),
   v.check((set) => {
     const codes = drawerCodes(set.drawers);
@@ -112,6 +131,35 @@ export const QuestionSetSchema = v.pipe(
         : question.options.every(({ weights }) => weights.every(({ drawer }) => codes.has(drawer))),
     );
   }, "질문이 정의에 없는 서랍을 가리킵니다"),
+  v.check(
+    (set) => set.baselines.every(({ answers }) => answers.length === set.questions.length),
+    "기준 응답은 모든 질문에 답해야 합니다",
+  ),
+  v.check(
+    (set) =>
+      set.baselines.every(({ answers }) =>
+        answers.every((answer, index) => {
+          const question = set.questions[index];
+          if (question === undefined) return false;
+          try {
+            answerValueFor(question, answer);
+            return true;
+          } catch {
+            return false;
+          }
+        }),
+      ),
+    "기준 응답이 질문 형식에 맞지 않습니다",
+  ),
+  v.check((set) => {
+    const codes = drawerCodes(set.drawers);
+    return set.baselines.every(
+      ({ expected }) =>
+        expected.first !== expected.second &&
+        codes.has(expected.first) &&
+        codes.has(expected.second),
+    );
+  }, "기준 응답의 기대 순위는 서로 다른 두 서랍이어야 합니다"),
 );
 
 export type QuestionSet = v.InferOutput<typeof QuestionSetSchema>;
@@ -151,6 +199,11 @@ export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
           },
     ),
     scoring: { type: set.scoring.type },
+    baselines: set.baselines.map(({ name, answers, expected }) => ({
+      name,
+      answers: [...answers],
+      expected: { first: expected.first, second: expected.second },
+    })),
   };
 }
 
