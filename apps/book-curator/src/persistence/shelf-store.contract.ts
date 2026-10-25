@@ -85,5 +85,35 @@ export function shelfStoreContract(name: string, setup: ShelfStoreSetup): void {
       await expect(stores.stock.setQuantity("B6", book.id, 1.5)).rejects.toThrow();
       expect(await stores.stock.list()).toStrictEqual([]);
     });
+
+    it("수량을 원자적으로 줄이고 0 아래로 내려가지 않는다(R-9)", async () => {
+      const book = fixtureBook("book-b6-1");
+      await stores.stock.setQuantity("B6", book.id, 2);
+
+      expect(await stores.stock.decrease("B6", book.id, 1)).toBe(1);
+      expect(await stores.stock.decrease("B6", book.id, 5)).toBe(0);
+      expect(await stores.stock.list()).toStrictEqual([
+        { drawer: "B6", bookId: book.id, quantity: 0 },
+      ]);
+
+      // 줄이 없으면 만들지 않고 0을 돌려준다.
+      expect(await stores.stock.decrease("B6", book.id, 1)).toBe(0);
+      expect(await stores.stock.decrease("B1", "book-none", 1)).toBe(0);
+      expect(await stores.stock.list()).toStrictEqual([
+        { drawer: "B6", bookId: book.id, quantity: 0 },
+      ]);
+    });
+
+    it("줄일 수량은 1 이상의 정수만 받는다", async () => {
+      const book = fixtureBook("book-b6-1");
+      await stores.stock.setQuantity("B6", book.id, 3);
+
+      await expect(stores.stock.decrease("B6", book.id, 0)).rejects.toThrow();
+      await expect(stores.stock.decrease("B6", book.id, -1)).rejects.toThrow();
+      await expect(stores.stock.decrease("B6", book.id, 1.5)).rejects.toThrow();
+      expect(await stores.stock.list()).toStrictEqual([
+        { drawer: "B6", bookId: book.id, quantity: 3 },
+      ]);
+    });
   });
 }

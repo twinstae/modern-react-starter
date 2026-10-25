@@ -19,5 +19,11 @@ export interface BookStore {
 export interface DrawerStockStore {
   list(): Promise<DrawerStockEntry[]>;
   setQuantity(drawer: DrawerCode, bookId: string, quantity: number): Promise<void>;
+  /**
+   * 수량을 원자적으로 줄이고 남은 수량을 돌려준다. 0 아래로 내려가지 않는다(R-9).
+   * 읽고-고치는 두 단계를 거치지 않아 동시에 팔아도 수량이 어긋나지 않는다.
+   * 줄이 없으면 아무것도 만들지 않고 0을 돌려준다.
+   */
+  decrease(drawer: DrawerCode, bookId: string, by: number): Promise<number>;
   remove(drawer: DrawerCode, bookId: string): Promise<void>;
 }

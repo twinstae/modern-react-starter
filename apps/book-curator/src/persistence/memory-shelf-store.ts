@@ -48,6 +48,18 @@ export function createMemoryDrawerStockStore(
       const entry = parseDrawerStockEntry({ drawer, bookId, quantity });
       entries.set(stockKey(drawer, bookId), entry);
     },
+    async decrease(drawer, bookId, by) {
+      if (!Number.isInteger(by) || by < 1) {
+        throw new Error("줄일 수량은 1 이상의 정수여야 합니다");
+      }
+      const key = stockKey(drawer, bookId);
+      const current = entries.get(key);
+      if (current === undefined) return 0;
+
+      const quantity = Math.max(0, current.quantity - by);
+      entries.set(key, parseDrawerStockEntry({ drawer, bookId, quantity }));
+      return quantity;
+    },
     async remove(drawer, bookId) {
       entries.delete(stockKey(drawer, bookId));
     },

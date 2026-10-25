@@ -36,6 +36,13 @@
       "when": 1792923459625,
       "tag": "0004_harsh_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792928826581,
+      "tag": "0005_tense_black_bolt",
+      "breakpoints": true
     }
   ]
 }

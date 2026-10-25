@@ -112,3 +112,32 @@ export const ownerTokens = pgTable("owner_tokens", {
   tokenHash: text("token_hash").primaryKey(),
   expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
 });
+
+/**
+ * 주인이 실제로 건넨 서랍의 기록. 추가 전용이고, 추천 서랍과 건넨 서랍을 함께 남긴다(R-7).
+ * 별명·이름 열은 없다(I-12). 버전은 필수다(I-16).
+ */
+export const handovers = pgTable(
+  "handovers",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: text("session_id").notNull(),
+    version: integer("version").notNull(),
+    recommended: text("recommended").$type<DrawerCode>().notNull(),
+    handed: text("handed").$type<DrawerCode>().notNull(),
+  },
+  (table) => [check("handovers_version_positive", sql`${table.version} > 0`)],
+);
+
+/** 주인이 기록한 산 책. 추가 전용이고 서랍 속 수량과 별개로 정답을 남긴다. */
+export const purchases = pgTable(
+  "purchases",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: text("session_id").notNull(),
+    version: integer("version").notNull(),
+    drawer: text("drawer").$type<DrawerCode>().notNull(),
+    bookId: text("book_id").notNull(),
+  },
+  (table) => [check("purchases_version_positive", sql`${table.version} > 0`)],
+);
