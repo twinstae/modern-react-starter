@@ -239,7 +239,7 @@ export function DrawerBooksScreen({
   drawer,
   books,
   canRecordPurchase,
-  recordedBookId = null,
+  recordedBookIds = [],
   notice = null,
   onPurchase,
   onFinish,
@@ -247,7 +247,7 @@ export function DrawerBooksScreen({
   drawer: { readonly name: string; readonly mark: string | null };
   books: readonly DrawerBooksScreenBook[];
   canRecordPurchase: boolean;
-  recordedBookId?: string | null;
+  recordedBookIds?: readonly string[];
   notice?: string | null;
   onPurchase: (bookId: string) => void;
   onFinish: () => void;
@@ -295,7 +295,7 @@ export function DrawerBooksScreen({
         )}
         <OwnerList>
           {books.map((book) => {
-            const recorded = recordedBookId === book.bookId;
+            const recorded = recordedBookIds.includes(book.bookId);
             return (
               <OwnerRow key={book.bookId}>
                 <span>
