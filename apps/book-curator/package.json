@@ -10,7 +10,8 @@
     "storybook": "storybook dev -p 6008",
     "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit",
-    "test": "vp test"
+    "test": "vp test",
+    "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run"
   },
   "dependencies": {
     "@elysiajs/eden": "catalog:",
