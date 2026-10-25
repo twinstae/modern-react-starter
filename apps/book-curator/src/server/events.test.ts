@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { describe, expect, it } from "vite-plus/test";
 
 import { sampleFunnelEvents } from "../domain/funnel.fixture.ts";
@@ -113,6 +114,30 @@ describe("퍼널 이벤트 API", () => {
       (await postRaw(client, { events: sampleFunnelEvents(), nickname: "토끼" })).error?.status,
     ).toBe(422);
     expect(await eventStore.list()).toStrictEqual([]);
+  });
+
+  it("임의의 추가 필드를 붙여도 422로 거부하고 저장 행을 만들지 않는다(I-12)", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.dictionary(
+          fc.stringMatching(/^extra[A-Za-z0-9]{0,6}$/),
+          fc.oneof(fc.string(), fc.integer(), fc.boolean(), fc.constant(null)),
+          { minKeys: 1, maxKeys: 3 },
+        ),
+        async (extra) => {
+          const eventStore = createMemoryEventStore();
+          const client = createTestClient({ eventStore });
+          const [ready] = sampleFunnelEvents();
+          if (ready === undefined) throw new Error("픽스처가 필요합니다");
+
+          const response = await postRaw(client, { events: [{ ...ready, ...extra }] });
+
+          expect(response.error?.status).toBe(422);
+          expect(await eventStore.list()).toStrictEqual([]);
+        },
+      ),
+      { numRuns: 25 },
+    );
   });
 
   it("여러 번 보낸 이벤트도 순서대로 쌓인다", async () => {
