@@ -5,8 +5,11 @@ import { styled } from "styled-system/jsx";
 
 import { NicknameStart } from "../components/nickname-start.tsx";
 import { QuestionScreen, type ItemScaleValue } from "../components/question-screen.tsx";
+import { ResultScreen } from "../components/result-screen.tsx";
+import { curate, type Curation } from "../domain/curate.ts";
 import { idleState } from "../domain/idle.ts";
 import type { KioskBundle } from "../domain/kiosk.ts";
+import type { QuestionSet } from "../domain/question-set.ts";
 import { answer, back, endTurn, startTurn, type Turn } from "../domain/turn.ts";
 import { useWakeLock } from "../lib/use-wake-lock.ts";
 import { kioskQueries } from "../queries.ts";
@@ -90,6 +93,18 @@ const PromptTitle = styled("h2", {
   base: { fontFamily: "heading", fontSize: "kiosk-question", fontWeight: "600" },
 });
 
+/**
+ * 마지막 답을 결과로 바꾼다. 인용할 답이 없거나 질문 세트가 어긋나면 화면이 죽지 않도록
+ * `null`을 돌려주고, 라우트는 조용한 대체 화면을 보여 준다.
+ */
+function curateTurn(questionSet: QuestionSet, turn: Turn): Curation | null {
+  try {
+    return curate(questionSet, turn.answers, turn.nickname);
+  } catch {
+    return null;
+  }
+}
+
 function Kiosk() {
   const { data } = useSuspenseQuery(kioskQueries.current());
   const queryClient = useQueryClient();
@@ -98,6 +113,7 @@ function Kiosk() {
   const [lastActivityAt, setLastActivityAt] = useState<number | null>(null);
   const [promptShown, setPromptShown] = useState(false);
   const [promptVisible, setPromptVisible] = useState(false);
+  const [ownerCheckNotice, setOwnerCheckNotice] = useState<string | null>(null);
 
   const resetToStart = useCallback(() => {
     setTurn(endTurn() ?? null);
@@ -105,6 +121,7 @@ function Kiosk() {
     setLastActivityAt(null);
     setPromptShown(false);
     setPromptVisible(false);
+    setOwnerCheckNotice(null);
     void queryClient.refetchQueries({ queryKey: kioskQueries.current().queryKey, exact: true });
   }, [queryClient]);
 
@@ -140,6 +157,7 @@ function Kiosk() {
     if (data.status !== "ready") return;
     setBundle(data);
     setTurn(startTurn(nickname, crypto.randomUUID()));
+    setOwnerCheckNotice(null);
     touch();
   };
 
@@ -172,19 +190,28 @@ function Kiosk() {
 
   const question = bundle.questionSet.questions[turn.answers.length];
   const total = bundle.questionSet.questions.length;
+  const curation = question === undefined ? curateTurn(bundle.questionSet, turn) : null;
 
   let content: React.ReactNode;
   if (question === undefined) {
-    // TODO(TICKET-00007): 결과 화면이 들어올 자리. 지금은 차례를 끝내는 길만 둔다.
-    content = (
-      <Screen>
-        <Title>모든 질문에 답했어요</Title>
-        <Body>큐레이터의 문장을 준비하고 있어요.</Body>
-        <QuietButton type="button" onClick={resetToStart}>
-          처음으로
-        </QuietButton>
-      </Screen>
-    );
+    content =
+      curation === null ? (
+        <Screen>
+          <Title>결과를 준비하지 못했어요</Title>
+          <Body>질문에 다시 답하면 큐레이터의 문장을 만들 수 있어요.</Body>
+          <QuietButton type="button" onClick={resetToStart}>
+            다시 해 보기
+          </QuietButton>
+        </Screen>
+      ) : (
+        <ResultScreen
+          customer={curation.customer}
+          similar={curation.ranking.similar}
+          ownerCheckNotice={ownerCheckNotice}
+          onOwnerCheck={() => setOwnerCheckNotice("주인 확인은 다음 단계에서 연결됩니다")}
+          onRetake={resetToStart}
+        />
+      );
   } else if (question.type === "choice") {
     content = (
       <Screen>
