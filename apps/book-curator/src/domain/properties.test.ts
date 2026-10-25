@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vite-plus/test";
 
 import type { AnswerValue } from "./answer.ts";
+import { analyze } from "./analyze.ts";
 import {
   drawerOrder,
   parseQuestionSet,
@@ -15,6 +16,7 @@ import {
   interactionSequenceArbitrary,
   questionSetArbitrary,
 } from "./question-set.arbitrary.ts";
+import { seededRng } from "./random.ts";
 import { rank } from "./rank.ts";
 import { scoreChoiceWeight } from "./scoring/choice-weight.ts";
 import { scoreItemMean } from "./scoring/item-mean.ts";
@@ -173,6 +175,24 @@ describe("큐레이션 코어 속성", () => {
           expect(flipped.first).toBe(ranking.first);
         }
       }),
+    );
+  });
+
+  it("공개 점검을 통과한 질문 세트는 어떤 답 목록에서도 순위가 정해진다(I-1, I-5)", () => {
+    fc.assert(
+      fc.property(answeredQuestionSetArbitrary, ({ questionSet, answers }) => {
+        const report = analyze(questionSet, seededRng(79));
+
+        if (!report.gate.passed) return;
+
+        const ranking = rank(score(questionSet, answers), drawerOrder(questionSet));
+        const codes = questionSet.drawers.map(({ code }) => code);
+
+        expect(ranking.first).not.toBe(ranking.second);
+        expect(codes).toContain(ranking.first);
+        expect(codes).toContain(ranking.second);
+      }),
+      { numRuns: 30 },
     );
   });
 
