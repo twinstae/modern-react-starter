@@ -106,6 +106,11 @@ export const SEED_QUESTION_SET_INPUT = {
     },
   ],
   scoring: { type: "item-mean" },
+  statementTemplate: "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다",
+  citationTemplates: {
+    item: "‘{quote}’에 그렇다고 답하신",
+    choice: "‘{quote}’를 고르신",
+  },
   baselines: [
     {
       name: "서윤",

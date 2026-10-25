@@ -32,6 +32,16 @@ describe("MVP 시드 질문 세트", () => {
     ]);
   });
 
+  it("상태 문장과 인용 문형을 질문 세트 데이터로 가진다", () => {
+    expect(SEED_QUESTION_SET.statementTemplate).toBe(
+      "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다",
+    );
+    expect(SEED_QUESTION_SET.citationTemplates).toStrictEqual({
+      item: "‘{quote}’에 그렇다고 답하신",
+      choice: "‘{quote}’를 고르신",
+    });
+  });
+
   it("시드 점검은 매번 같은 보고를 낸다", () => {
     expect(analyze(SEED_QUESTION_SET, seededRng(SEED_RANDOM_SEED))).toStrictEqual(
       analyze(SEED_QUESTION_SET, seededRng(SEED_RANDOM_SEED)),
