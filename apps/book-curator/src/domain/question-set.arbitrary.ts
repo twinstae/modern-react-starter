@@ -160,6 +160,35 @@ export const answeredQuestionSetArbitrary = questionSetArbitrary.chain((question
   answersArbitrary(questionSet).map((answers) => ({ questionSet, answers })),
 );
 
+/**
+ * 모든 서랍에 문항형 질문을 하나 이상 둔 질문 세트. 어떤 답을 하든 각 서랍에
+ * 긍정 기여가 남으므로 인용(I-8) 속성을 항상 확인할 수 있다.
+ */
+export const curatableQuestionSetArbitrary: fc.Arbitrary<QuestionSet> = drawersArbitrary.chain(
+  (drawers) => {
+    const codes = drawers.map(({ code }) => code);
+    const anchors = drawers.map(({ code }) => ({
+      type: "item" as const,
+      drawer: code,
+      reversed: false,
+      text: "지금 이 서랍이 필요하다",
+    }));
+
+    return fc.array(questionArbitrary(codes), { maxLength: 5 }).map((questions) =>
+      parseQuestionSet({
+        drawers,
+        questions: [...anchors, ...questions],
+        scoring: { type: "item-mean" },
+      }),
+    );
+  },
+);
+
+/** 큐레이션 가능한 질문 세트와 그 안의 완전한 답 목록. */
+export const curatableAnsweredQuestionSetArbitrary = curatableQuestionSetArbitrary.chain(
+  (questionSet) => answersArbitrary(questionSet).map((answers) => ({ questionSet, answers })),
+);
+
 /** 질문 세트와 그 안에서 할 수 있는 상호작용열. */
 export const interactionSequenceArbitrary = questionSetArbitrary.chain((questionSet) =>
   interactionArbitrary(questionSet).map((interactions) => ({ questionSet, interactions })),

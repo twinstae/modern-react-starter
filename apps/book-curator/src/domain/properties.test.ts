@@ -3,6 +3,8 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { AnswerValue } from "./answer.ts";
 import { analyze } from "./analyze.ts";
+import { cite, NoCitationError } from "./citation.ts";
+import { curate } from "./curate.ts";
 import {
   drawerOrder,
   parseQuestionSet,
@@ -13,6 +15,7 @@ import {
 } from "./question-set.ts";
 import {
   answeredQuestionSetArbitrary,
+  curatableAnsweredQuestionSetArbitrary,
   interactionSequenceArbitrary,
   questionSetArbitrary,
 } from "./question-set.arbitrary.ts";
@@ -209,6 +212,69 @@ describe("큐레이션 코어 속성", () => {
     fc.assert(
       fc.property(questionSetArbitrary, (questionSet) => {
         expect(parseQuestionSetJson(toQuestionSetJson(questionSet))).toStrictEqual(questionSet);
+      }),
+    );
+  });
+
+  it("인용된 답은 손님이 실제로 한 답이고 추천 서랍에 가장 크게 기여한다(I-8)", () => {
+    fc.assert(
+      fc.property(curatableAnsweredQuestionSetArbitrary, ({ questionSet, answers }) => {
+        const curation = curate(questionSet, answers, "토끼");
+        const { citation, ranking, scores } = curation;
+        const drawerScore = scores.drawers.find(({ drawer }) => drawer === ranking.first);
+        if (drawerScore === undefined) throw new Error("추천 서랍 점수가 없습니다");
+
+        const contribution = drawerScore.contributions.find(
+          ({ question }) => question === citation.question,
+        );
+        if (contribution === undefined) throw new Error("인용한 답의 기여가 없습니다");
+
+        const bestPositive = drawerScore.contributions.reduce(
+          (best, { value }) => (value > 0 && value > best ? value : best),
+          0,
+        );
+
+        expect(citation.drawer).toBe(ranking.first);
+        expect(answers[citation.question]).toBe(citation.answer);
+        expect(contribution.answer).toBe(citation.answer);
+        expect(contribution.value).toBeGreaterThan(0);
+        expect(contribution.value).toBe(bestPositive);
+      }),
+    );
+  });
+
+  it("추천 서랍에 긍정 기여가 없으면 인용을 지어내지 않고 이름 있는 오류로 실패한다(I-8)", () => {
+    fc.assert(
+      fc.property(answeredQuestionSetArbitrary, ({ questionSet, answers }) => {
+        const scores = score(questionSet, answers);
+        const ranking = rank(scores, drawerOrder(questionSet));
+        const drawerScore = scores.drawers.find(({ drawer }) => drawer === ranking.first);
+        if (drawerScore === undefined) throw new Error("추천 서랍 점수가 없습니다");
+
+        const positive = drawerScore.contributions.filter(({ value }) => value > 0);
+        if (positive.length > 0) return;
+
+        expect(() => cite(questionSet, scores, ranking.first)).toThrow(NoCitationError);
+      }),
+    );
+  });
+
+  it("큐레이션 결과는 결정적이고 손님 view model에 점수와 서랍 코드가 없다(I-2, I-9)", () => {
+    fc.assert(
+      fc.property(curatableAnsweredQuestionSetArbitrary, ({ questionSet, answers }) => {
+        const first = curate(questionSet, answers, "토끼");
+        const second = curate(questionSet, answers, "토끼");
+
+        expect(first.customer).toStrictEqual(second.customer);
+        expect(first.customer.firstStatement).toContain("토끼 님");
+        expect(JSON.stringify(first.customer)).not.toMatch(/\bB[1-7]\b/);
+        expect(Object.keys(first.customer).sort()).toStrictEqual([
+          "citation",
+          "firstStatement",
+          "recommendedDrawerName",
+          "recommendedStatement",
+          "secondStatement",
+        ]);
       }),
     );
   });
