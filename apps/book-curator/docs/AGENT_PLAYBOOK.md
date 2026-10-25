@@ -157,6 +157,13 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `application/shelf-admin.ts` + `/api/admin/books`, `/api/admin/shelf`,
   `/api/admin/drawers/:drawer/books/:bookId`: 책·수량·게이트. 모두 `auth: true`다.
   UI는 `components/{book-list,book-form,drawer-board}.tsx`와 `/admin` 탭이 맡는다.
+- `application/question-set-admin.ts` + `question-set-draft-ports.ts` +
+  `/api/admin/question-sets/{drafts,versions}`: 초안 목록·만들기·복제·저장·점검 보고·공개.
+  공개는 화면 보고를 믿지 않고 서버가 `analyze`와 `checkShelfGate`를 다시 돈다. 실패는
+  422와 `PublishBlocker` 코드다. 초안 저장소는 메모리·PGlite가 같은 계약을 쓰고,
+  `Drawer.keywords`(부록 B 시드)는 초안·공개 버전·손님 묶음에 함께 실린다.
+  UI는 `components/question-set-{draft-bar,editor}.tsx`, `statement-preview.tsx`,
+  `question-preview.tsx`, `set-report-panel.tsx`와 `/admin` 질문 세트 탭이 맡는다.
 - 키오스크 묶음의 `shelf`는 질문 세트의 모든 서랍과 공개 책 필드를 담는다. 손님
   컴포넌트에는 **건넨 서랍만** 넘긴다. T12의 `ownerView`/`drawerBooksView`가 그 경계다.
 - 서랍 표시(`mark`)는 공개 질문 세트 소유다(I-11). `/admin` 서가 화면에서 직접 고치지
