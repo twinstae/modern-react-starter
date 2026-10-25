@@ -425,3 +425,54 @@
 
 - T12가 묶음의 모든 책을 손님에게 그리지 않고 건넨 서랍만 넘기는지.
 - `bun run build`가 새 서버 의존성 뒤에도 통과하는지.
+
+## 00011 — 질문 세트 편집·점검·공개
+
+**1. Navigation**
+
+- 문제: 초안 저장소·점검 보고·공개가 한꺼번에 생겼다. T12/T13이 “지금 공개된 버전”과
+  “초안”을 헷갈릴 수 있다.
+- 대책: playbook §5.1에 `question-set-admin`, draft ports, API 경로, `SetReportPanel`
+  등을 적고, 공개는 서버가 `analyze`+`checkShelfGate`를 다시 돈다는 규칙을 남겼다.
+
+**2. Automated checks**
+
+- 문제: 초안 복제·저장·점검·공개, 이전 버전 불변, 다른 문항 수, 쌓인 응답, 401까지
+  API 테스트가 있다. `bun run build`도 통과한다. 다만 편집 UI가 커서 수동 확인이
+  어려워졌다.
+- 대책: `bun run check` + `bun run build` + `check:layout`을 RUNBOOK 확인 순서에 넣었다.
+  점검 보고 컴포넌트 테스트는 “공개 버튼이 막힌다”만 본다.
+
+**3. Coding standards**
+
+- 문제: `QuestionSetEditor` 784줄, `admin.tsx` 704줄, `set-report-panel` 372줄이다.
+  대부분 styled 컴포넌트지만, 로직과 화면이 한 파일에 있어 읽기 부담이 커졌다.
+- 대책: 지금은 탭 단위 응집이라 유지한다. T12/T13이 운영 화면을 다시 건드리면
+  `AdminShell`·`ShelfPanel`·`QuestionSetPanel`로 나누는 것을 첫 작업으로 한다.
+
+**4. Global AGENTS.md**
+
+- 문제: 없음. 앱 `AGENTS.md` → playbook/RUNBOOK로 찾는다.
+
+**5. Tool economy**
+
+- 문제: PGlite 테스트가 30초 안팎으로 늘었다. 그래도 실제 인증·저장소를 쓰는 값이
+  있어 fake로 바꾸지 않는다. 테스트를 더 늘리기 전에 한 파일로 묶을지 본다.
+
+**6. No-ops**
+
+- 문제: 기준 응답 편집, 선택형 편집(C-1), 문항 수·문구 확정은 이번에 하지 않았다.
+  티켓 문구만 읽으면 다 되는 것처럼 보일 수 있다.
+- 대책: `OPEN-QUESTIONS.md`와 RUNBOOK에 “기준 응답은 지금 읽기만”, “선택형 편집은
+  다음”, “문구·문항 수는 주인 확인”을 명시했다.
+
+**7. Information access**
+
+- 문제: 질문 세트 운영 순서(복제 → 편집 → 점검 → 공개)와 공개 거부 이유를 화면에서
+  읽는 법이 문서에 없었다.
+- 대책: RUNBOOK에 순서와 `PUBLISH_BLOCKED` 이유, 서가 게이트를 적었다.
+
+**다음 회고에서 확인할 것**
+
+- T12가 공개 버전의 서랍 표시/이유와 묶음의 서가를 올바르게 쓴다.
+- 다음에 `/admin`을 건드릴 때 큰 파일을 실제로 나누는지.
