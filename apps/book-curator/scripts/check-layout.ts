@@ -36,6 +36,30 @@ const cases = [
     height: 834,
     viewport: "tabletLandscape",
   },
+  {
+    id: "components-owner-check-screen--normal",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+  },
+  {
+    id: "components-owner-check-screen--normal-landscape",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+  },
+  {
+    id: "components-drawer-books-screen--three-books",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+  },
+  {
+    id: "components-drawer-books-screen--three-books-landscape",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+  },
   { id: "components-admin-login--empty", width: 834, height: 1112, viewport: "tabletPortrait" },
   {
     id: "components-admin-login--empty",
