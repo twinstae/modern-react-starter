@@ -154,6 +154,13 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   localStorage에 두지 않는다. `POST /api/admin/owner-pin`은 로그인한 운영자만 부른다.
 - `scripts/seed-operator.ts`: `ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME`으로 계정 하나를
   만든다. `/admin`은 로그인 화면과 PIN 설정을 제공한다.
+- `application/shelf-admin.ts` + `/api/admin/books`, `/api/admin/shelf`,
+  `/api/admin/drawers/:drawer/books/:bookId`: 책·수량·게이트. 모두 `auth: true`다.
+  UI는 `components/{book-list,book-form,drawer-board}.tsx`와 `/admin` 탭이 맡는다.
+- 키오스크 묶음의 `shelf`는 질문 세트의 모든 서랍과 공개 책 필드를 담는다. 손님
+  컴포넌트에는 **건넨 서랍만** 넘긴다. T12의 `ownerView`/`drawerBooksView`가 그 경계다.
+- 서랍 표시(`mark`)는 공개 질문 세트 소유다(I-11). `/admin` 서가 화면에서 직접 고치지
+  않고, TICKET-00011의 새 버전 공개로 바꾼다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
   `curatableAnsweredQuestionSetArbitrary`는 모든 서랍에 긍정 기여가 남는 세트다.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.

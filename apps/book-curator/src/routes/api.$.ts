@@ -10,23 +10,33 @@ import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-p
 import { createApp } from "../server/app.ts";
 import { createAuth } from "../server/auth.ts";
 
-// PGlite는 한 디렉터리에 하나만 연다. 인증·저장소가 모두 같은 DB 약속을 함께 쓴다.
-const database = await openDatabase(".data/pglite");
+/**
+ * 앱과 DB는 첫 요청 때 한 번만 연다. 모듈을 불러오는 순간 DB를 열면 빌드의
+ * 프리렌더가 API를 부르지 않아도 PGlite·마이그레이션 파일을 찾다가 실패한다.
+ * PGlite는 한 디렉터리에 하나만 열므로 모든 저장소와 인증이 같은 약속을 쓴다.
+ */
+let appPromise: Promise<ReturnType<typeof createApp>> | undefined;
 
-const app = createApp({
-  now: () => new Date().toISOString(),
-  publishedQuestionSetStore: createDrizzlePublishedQuestionSetStore(database),
-  eventStore: createDrizzleEventStore(database),
-  auth: createAuth(drizzleAdapter(database, { provider: "pg" }), {
-    secret: process.env.BETTER_AUTH_SECRET,
-  }),
-  ownerAccessStore: createDrizzleOwnerAccessStore(database),
-  bookStore: createDrizzleBookStore(database),
-  stockStore: createDrizzleDrawerStockStore(database),
-  newBookId: () => `book-${crypto.randomUUID()}`,
-});
+function getApp() {
+  appPromise ??= (async () => {
+    const database = await openDatabase(".data/pglite");
+    return createApp({
+      now: () => new Date().toISOString(),
+      publishedQuestionSetStore: createDrizzlePublishedQuestionSetStore(database),
+      eventStore: createDrizzleEventStore(database),
+      auth: createAuth(drizzleAdapter(database, { provider: "pg" }), {
+        secret: process.env.BETTER_AUTH_SECRET,
+      }),
+      ownerAccessStore: createDrizzleOwnerAccessStore(database),
+      bookStore: createDrizzleBookStore(database),
+      stockStore: createDrizzleDrawerStockStore(database),
+      newBookId: () => `book-${crypto.randomUUID()}`,
+    });
+  })();
+  return appPromise;
+}
 
-const handle = ({ request }: { request: Request }) => app.fetch(request);
+const handle = async ({ request }: { request: Request }) => (await getApp()).fetch(request);
 
 export const Route = createFileRoute("/api/$")({
   server: {

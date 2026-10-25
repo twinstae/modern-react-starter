@@ -96,6 +96,7 @@ bun run storybook           # http://localhost:6008
 ```bash
 cd apps/book-curator
 bun run check               # lint + format + typecheck + test
+bun run build               # 프리렌더까지 확인. API·DB는 첫 요청 때 열린다
 bun run check:layout        # Storybook이 6008에 떠 있을 때 화면 겹침·넘침 검사
 bun run test run src/domain/turn.test.ts   # 좁은 테스트
 ```
