@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import {
+  clonePublishedQuestionSetDraft,
   createAdminBook,
+  createQuestionSetDraft,
+  publishQuestionSetDraft,
   removeDrawerBook,
   saveOwnerPin,
+  saveQuestionSetDraft,
   setDrawerQuantity,
   signInAdmin,
   signOutAdmin,
@@ -18,10 +22,13 @@ import { BookDialog, BookForm } from "../components/book-form.tsx";
 import { BookList } from "../components/book-list.tsx";
 import { DrawerBoard, type DrawerBoardDrawer } from "../components/drawer-board.tsx";
 import { PinEntry } from "../components/pin-entry.tsx";
+import { QuestionSetDraftBar } from "../components/question-set-draft-bar.tsx";
+import { QuestionSetEditor } from "../components/question-set-editor.tsx";
+import { SetReportPanel } from "../components/set-report-panel.tsx";
 import type { Book, BookInput } from "../domain/book.ts";
-import type { DrawerCode } from "../domain/question-set.ts";
+import type { DrawerCode, QuestionSet } from "../domain/question-set.ts";
 import { shelfKinds } from "../domain/shelf.ts";
-import { adminQueries } from "../queries.ts";
+import { adminQueries, kioskQueries } from "../queries.ts";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -216,7 +223,7 @@ const PinPanel = styled("section", {
   base: { display: "flex", flexDirection: "column", gap: "3", maxW: "28rem" },
 });
 
-type TabName = "shelf" | "drawers" | "pin";
+type TabName = "shelf" | "drawers" | "questions" | "pin";
 
 const messageOf = (error: unknown): string =>
   error instanceof Error ? error.message : "잠시 뒤 다시 시도해 주세요";
@@ -258,11 +265,48 @@ function AdminPage() {
   const [pinSaved, setPinSaved] = useState(false);
   const [tab, setTab] = useState<TabName>("shelf");
   const [editing, setEditing] = useState<Book | "new" | null>(null);
+  const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
+  const [draftMessage, setDraftMessage] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [publishMessage, setPublishMessage] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const shelf = useQuery({
     ...adminQueries.shelf(),
     enabled: me.data !== null && me.data !== undefined,
   });
+
+  const drafts = useQuery({
+    ...adminQueries.questionSetDrafts(),
+    enabled: me.data !== null && me.data !== undefined,
+  });
+
+  const versions = useQuery({
+    ...adminQueries.publishedVersions(),
+    enabled: me.data !== null && me.data !== undefined,
+  });
+
+  const draft = useQuery({
+    ...adminQueries.questionSetDraft(selectedDraftId ?? ""),
+    enabled: selectedDraftId !== null,
+  });
+
+  const report = useQuery({
+    ...adminQueries.questionSetReport(selectedDraftId ?? ""),
+    enabled: selectedDraftId !== null,
+  });
+
+  useEffect(() => {
+    if (drafts.data === undefined) return;
+    if (selectedDraftId === null) {
+      const first = drafts.data[0];
+      if (first !== undefined) setSelectedDraftId(first.id);
+      return;
+    }
+    if (!drafts.data.some(({ id }) => id === selectedDraftId)) {
+      setSelectedDraftId(drafts.data[0]?.id ?? null);
+    }
+  }, [drafts.data, selectedDraftId]);
 
   const refreshShelf = async () => {
     await queryClient.invalidateQueries({ queryKey: adminQueries.shelf().queryKey });
@@ -294,6 +338,101 @@ function AdminPage() {
     mutationFn: ({ drawer, bookId }: { drawer: DrawerCode; bookId: string }) =>
       removeDrawerBook(drawer, bookId),
     onSuccess: refreshShelf,
+  });
+
+  const refreshDraftList = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: adminQueries.questionSetDrafts().queryKey,
+    });
+  };
+
+  const selectDraft = (id: string | null) => {
+    setSelectedDraftId(id);
+    setPublishMessage(null);
+    setPublishError(null);
+    setDraftError(null);
+  };
+
+  const createDraft = useMutation({
+    mutationFn: (name: string) => createQuestionSetDraft(name),
+    onSuccess: async (created) => {
+      setDraftMessage(`“${created.name}” 초안을 만들었어요.`);
+      setDraftError(null);
+      setPublishMessage(null);
+      setPublishError(null);
+      setSelectedDraftId(created.id);
+      await refreshDraftList();
+    },
+    onError: (error) => {
+      setDraftMessage(null);
+      setDraftError(messageOf(error));
+    },
+  });
+
+  const cloneDraft = useMutation({
+    mutationFn: clonePublishedQuestionSetDraft,
+    onSuccess: async (created) => {
+      setDraftMessage(`“${created.name}” 초안을 만들었어요.`);
+      setDraftError(null);
+      setPublishMessage(null);
+      setPublishError(null);
+      setSelectedDraftId(created.id);
+      await refreshDraftList();
+    },
+    onError: (error) => {
+      setDraftMessage(null);
+      setDraftError(messageOf(error));
+    },
+  });
+
+  const saveDraft = useMutation({
+    mutationFn: ({
+      id,
+      name,
+      questionSet,
+    }: {
+      id: string;
+      name: string;
+      questionSet: QuestionSet;
+    }) => saveQuestionSetDraft(id, name, questionSet),
+    onSuccess: async (saved) => {
+      setDraftError(null);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: adminQueries.questionSetDraft(saved.id).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: adminQueries.questionSetReport(saved.id).queryKey,
+        }),
+        refreshDraftList(),
+      ]);
+    },
+  });
+
+  const publishDraft = useMutation({
+    mutationFn: (id: string) => publishQuestionSetDraft(id),
+    onSuccess: async (published) => {
+      setPublishError(null);
+      setPublishMessage(`공개 버전 ${published.version}을 만들었어요.`);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: adminQueries.publishedVersions().queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: adminQueries.questionSetReport(selectedDraftId ?? "").queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: adminQueries.questionSetDraft(selectedDraftId ?? "").queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: adminQueries.shelf().queryKey }),
+        queryClient.invalidateQueries({ queryKey: kioskQueries.current().queryKey }),
+        refreshDraftList(),
+      ]);
+    },
+    onError: (error) => {
+      setPublishMessage(null);
+      setPublishError(messageOf(error));
+    },
   });
 
   const reloadSession = () => queryClient.invalidateQueries({ queryKey: ["admin", "me"] });
@@ -358,6 +497,7 @@ function AdminPage() {
             [
               ["shelf", "서가"],
               ["drawers", "서랍"],
+              ["questions", "질문 세트"],
               ["pin", "주인 PIN"],
             ] as const
           ).map(([name, label]) => (
@@ -428,6 +568,88 @@ function AdminPage() {
                 }
                 onRemove={(drawer, bookId) => removeBook.mutate({ drawer, bookId })}
               />
+            )}
+          </Panel>
+        ) : null}
+
+        {tab === "questions" ? (
+          <Panel role="tabpanel" id="admin-panel-questions" aria-labelledby="admin-tab-questions">
+            <PanelHeader>
+              <SectionTitle>질문 세트</SectionTitle>
+              <Note>
+                문장을 쓰는 자리예요. 저장은 초안에만 하고, 점검을 통과해야 새 버전으로 공개할 수
+                있어요.
+              </Note>
+            </PanelHeader>
+
+            {drafts.isError ? <Failure role="alert">{messageOf(drafts.error)}</Failure> : null}
+            <QuestionSetDraftBar
+              drafts={drafts.data ?? []}
+              selectedId={selectedDraftId}
+              onSelect={selectDraft}
+              onCreate={(name) => createDraft.mutate(name)}
+              onClone={() => cloneDraft.mutate()}
+              busy={createDraft.isPending || cloneDraft.isPending}
+              message={draftMessage}
+              error={draftError}
+            />
+
+            {selectedDraftId === null ? (
+              <Note>초안을 고르거나, 공개 버전을 복제해 새 초안을 만드세요.</Note>
+            ) : null}
+            {selectedDraftId !== null && draft.isPending ? (
+              <Note role="status">초안을 읽고 있어요.</Note>
+            ) : null}
+            {selectedDraftId !== null && draft.isError ? (
+              <Failure role="alert">{messageOf(draft.error)}</Failure>
+            ) : null}
+            {draft.data === undefined ? null : (
+              <QuestionSetEditor
+                key={`${draft.data.id}:${draft.data.updatedAt}`}
+                draft={draft.data}
+                onSave={async ({ name, questionSet }) => {
+                  try {
+                    await saveDraft.mutateAsync({
+                      id: draft.data.id,
+                      name,
+                      questionSet,
+                    });
+                    return undefined;
+                  } catch (error) {
+                    return messageOf(error);
+                  }
+                }}
+              />
+            )}
+
+            {selectedDraftId !== null && report.isPending ? (
+              <Note role="status">점검을 돌리고 있어요.</Note>
+            ) : null}
+            {selectedDraftId !== null && report.isError ? (
+              <Failure role="alert">{messageOf(report.error)}</Failure>
+            ) : null}
+            {report.data === undefined || draft.data === undefined ? null : (
+              <SetReportPanel
+                report={report.data}
+                drawers={draft.data.questionSet.drawers.map(({ code, name }) => ({ code, name }))}
+                onPublish={() => {
+                  if (selectedDraftId !== null) publishDraft.mutate(selectedDraftId);
+                }}
+                publishing={publishDraft.isPending}
+                publishMessage={publishMessage}
+                publishError={publishError}
+              />
+            )}
+
+            {versions.data === undefined ? null : (
+              <Note>
+                공개 버전:{" "}
+                {versions.data.length === 0
+                  ? "아직 없음"
+                  : versions.data
+                      .map(({ version, questionCount }) => `${version}번(${questionCount}문항)`)
+                      .join(" · ")}
+              </Note>
             )}
           </Panel>
         ) : null}

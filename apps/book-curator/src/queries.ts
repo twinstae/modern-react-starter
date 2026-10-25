@@ -1,6 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getAdminMe, getAdminShelf } from "./admin-api.ts";
+import {
+  getAdminMe,
+  getAdminShelf,
+  getQuestionSetDraft,
+  getQuestionSetDraftReport,
+  listPublishedQuestionSetVersions,
+  listQuestionSetDrafts,
+} from "./admin-api.ts";
 import { api } from "./api-client.ts";
 import { parseKioskCurrent } from "./domain/kiosk.ts";
 import { unwrap } from "./unwrap.ts";
@@ -40,6 +47,38 @@ export const adminQueries = {
     queryOptions({
       queryKey: ["admin", "shelf"],
       queryFn: getAdminShelf,
+      retry: false,
+      staleTime: 0,
+    }),
+  /**
+   * 질문 세트 초안 목록. 고른 초안의 본문과 점검은 아래 query가 따로 읽는다.
+   * 고친 뒤 같은 query key를 무효화해 목록의 이름·문항 수를 맞춘다.
+   */
+  questionSetDrafts: () =>
+    queryOptions({
+      queryKey: ["admin", "question-set-drafts"],
+      queryFn: listQuestionSetDrafts,
+      retry: false,
+      staleTime: 0,
+    }),
+  questionSetDraft: (id: string) =>
+    queryOptions({
+      queryKey: ["admin", "question-set-draft", id],
+      queryFn: () => getQuestionSetDraft(id),
+      retry: false,
+      staleTime: 0,
+    }),
+  questionSetReport: (id: string) =>
+    queryOptions({
+      queryKey: ["admin", "question-set-report", id],
+      queryFn: () => getQuestionSetDraftReport(id),
+      retry: false,
+      staleTime: 0,
+    }),
+  publishedVersions: () =>
+    queryOptions({
+      queryKey: ["admin", "published-versions"],
+      queryFn: listPublishedQuestionSetVersions,
       retry: false,
       staleTime: 0,
     }),

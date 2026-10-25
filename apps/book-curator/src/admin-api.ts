@@ -1,12 +1,22 @@
 import {
   parseAdminMe,
   parseAdminShelf,
+  parsePublishedQuestionSetVersions,
+  parsePublishQuestionSetResult,
+  parseQuestionSetDraft,
+  parseQuestionSetDraftList,
+  parseQuestionSetDraftReport,
   type AdminCredentials,
   type AdminMe,
   type AdminShelf,
+  type PublishedQuestionSetVersionDto,
+  type PublishQuestionSetResultDto,
+  type QuestionSetDraftDto,
+  type QuestionSetDraftReportDto,
+  type QuestionSetDraftSummaryDto,
 } from "./admin-dto.ts";
 import { parseBook, type Book, type BookInput } from "./domain/book.ts";
-import type { DrawerCode } from "./domain/question-set.ts";
+import { toQuestionSetDto, type DrawerCode, type QuestionSet } from "./domain/question-set.ts";
 
 const JSON_HEADERS = { "content-type": "application/json" };
 
@@ -36,6 +46,11 @@ const failure = async (response: Response, fallback: string): Promise<Error> => 
   }
   if (code === "BOOK_NOT_FOUND") return new Error("서가에 없는 책이에요");
   if (code === "UNKNOWN_DRAWER") return new Error("없는 서랍이에요");
+  if (code === "DRAFT_NOT_FOUND") return new Error("없는 질문 세트 초안이에요");
+  if (code === "INVALID_QUESTION_SET") {
+    return new Error("질문 세트를 저장할 수 없어요. 빈 문장과 겹친 핵심 단어를 확인해 주세요");
+  }
+  if (code === "PUBLISH_BLOCKED") return new Error("점검을 통과하지 못해 공개하지 않았어요");
   if (response.status === 422) return new Error("입력 값을 다시 확인해 주세요");
   return new Error(fallback);
 };
@@ -147,4 +162,89 @@ export async function removeDrawerBook(drawer: DrawerCode, bookId: string): Prom
     credentials: "include",
   });
   if (response.status !== 204) throw await failure(response, "책을 빼지 못했어요");
+}
+
+const questionSetBody = (name: string | undefined, questionSet: QuestionSet) => ({
+  ...(name === undefined ? {} : { name }),
+  questionSet: toQuestionSetDto(questionSet),
+});
+
+/** 초안 목록. 고치는 중인 질문 세트 전체는 담지 않고 고르는 데 필요한 값만 읽는다. */
+export async function listQuestionSetDrafts(): Promise<QuestionSetDraftSummaryDto[]> {
+  const response = await fetch("/api/admin/question-sets/drafts", { credentials: "include" });
+  if (!response.ok) throw await failure(response, "질문 세트 초안 목록을 읽지 못했어요");
+  return parseQuestionSetDraftList(await response.json());
+}
+
+export async function createQuestionSetDraft(
+  name: string,
+  questionSet?: QuestionSet,
+): Promise<QuestionSetDraftDto> {
+  const response = await fetch("/api/admin/question-sets/drafts", {
+    method: "POST",
+    credentials: "include",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(
+      questionSet === undefined ? { name } : { name, questionSet: toQuestionSetDto(questionSet) },
+    ),
+  });
+  if (!response.ok) throw await failure(response, "질문 세트 초안을 만들지 못했어요");
+  return parseQuestionSetDraft(await response.json());
+}
+
+export async function clonePublishedQuestionSetDraft(): Promise<QuestionSetDraftDto> {
+  const response = await fetch("/api/admin/question-sets/drafts/from-published", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) throw await failure(response, "공개 버전을 복제하지 못했어요");
+  return parseQuestionSetDraft(await response.json());
+}
+
+export async function getQuestionSetDraft(id: string): Promise<QuestionSetDraftDto> {
+  const response = await fetch(`/api/admin/question-sets/drafts/${encodeURIComponent(id)}`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await failure(response, "질문 세트 초안을 읽지 못했어요");
+  return parseQuestionSetDraft(await response.json());
+}
+
+export async function saveQuestionSetDraft(
+  id: string,
+  name: string,
+  questionSet: QuestionSet,
+): Promise<QuestionSetDraftDto> {
+  const response = await fetch(`/api/admin/question-sets/drafts/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(questionSetBody(name, questionSet)),
+  });
+  if (!response.ok) throw await failure(response, "질문 세트 초안을 저장하지 못했어요");
+  return parseQuestionSetDraft(await response.json());
+}
+
+export async function getQuestionSetDraftReport(id: string): Promise<QuestionSetDraftReportDto> {
+  const response = await fetch(`/api/admin/question-sets/drafts/${encodeURIComponent(id)}/report`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await failure(response, "질문 세트 점검을 읽지 못했어요");
+  return parseQuestionSetDraftReport(await response.json());
+}
+
+export async function publishQuestionSetDraft(id: string): Promise<PublishQuestionSetResultDto> {
+  const response = await fetch(
+    `/api/admin/question-sets/drafts/${encodeURIComponent(id)}/publish`,
+    { method: "POST", credentials: "include" },
+  );
+  if (!response.ok) throw await failure(response, "질문 세트를 공개하지 못했어요");
+  return parsePublishQuestionSetResult(await response.json());
+}
+
+export async function listPublishedQuestionSetVersions(): Promise<
+  PublishedQuestionSetVersionDto[]
+> {
+  const response = await fetch("/api/admin/question-sets/versions", { credentials: "include" });
+  if (!response.ok) throw await failure(response, "공개 버전 목록을 읽지 못했어요");
+  return parsePublishedQuestionSetVersions(await response.json());
 }
