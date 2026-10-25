@@ -5,7 +5,6 @@ import type { AnswerValue } from "../domain/answer.ts";
 import { curate, type CustomerCuration } from "../domain/curate.ts";
 import type { DrawerCode, Question } from "../domain/question-set.ts";
 import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
-import { SEOYUN_ANSWERS } from "../domain/seoyun.fixture.ts";
 import { ResultScreen } from "./result-screen.tsx";
 
 const noop = () => {};
@@ -49,6 +48,11 @@ const argsOf = (customer: CustomerCuration, similar = false) =>
     onRetake: noop,
   }) satisfies ComponentProps<typeof ResultScreen>;
 
+const seoyunBaseline = SEED_QUESTION_SET.baselines.find(({ name }) => name === "서윤");
+if (seoyunBaseline === undefined) {
+  throw new Error("시드 질문 세트에 서윤 기준 응답이 없습니다");
+}
+
 const longest = DRAWER_CURATIONS.reduce((long, entry) =>
   Array.from(entry.customer.firstStatement).length +
     Array.from(entry.customer.recommendedReason ?? "").length >
@@ -59,7 +63,7 @@ const longest = DRAWER_CURATIONS.reduce((long, entry) =>
 );
 
 export const resultScreenArgs = {
-  seoyun: argsOf(curate(SEED_QUESTION_SET, SEOYUN_ANSWERS, "토끼").customer),
+  seoyun: argsOf(curate(SEED_QUESTION_SET, seoyunBaseline.answers, "토끼").customer),
   similar: argsOf(curate(SEED_QUESTION_SET, SIMILAR_ANSWERS, "토끼").customer, true),
   longest: argsOf(longest.customer),
   drawerB6: argsOf(customerOf("B6")),

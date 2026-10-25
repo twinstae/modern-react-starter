@@ -19,6 +19,9 @@ describe("ResultScreen", () => {
     );
 
     const text = bodyText();
+    expect(args.customer.recommendedDrawerName).toBe("삶의 방식을 바꾸는 책");
+    expect(args.customer.secondStatement).toContain("나를 들여다보는 책");
+    expect(args.similar).toBe(false);
     expect(args.customer.recommendedMark).not.toBeNull();
     expect(args.customer.recommendedReason).not.toBeNull();
     expect(text).toContain(args.customer.secondStatement);
