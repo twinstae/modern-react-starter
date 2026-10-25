@@ -1,4 +1,5 @@
 import { createApiClient } from "../api-client.ts";
+import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
 import { createApp, type AppDeps } from "./app.ts";
 
 export const TEST_NOW = "2026-10-25T00:00:00.000Z";
@@ -10,6 +11,7 @@ export const TEST_NOW = "2026-10-25T00:00:00.000Z";
 export function createTestClient(deps: Partial<AppDeps> = {}) {
   const app = createApp({
     now: () => TEST_NOW,
+    publishedQuestionSetStore: createMemoryPublishedQuestionSetStore(),
     ...deps,
   });
   return createApiClient(app);

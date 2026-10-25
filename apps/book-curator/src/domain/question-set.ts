@@ -15,7 +15,7 @@ export type DrawerCode = v.InferOutput<typeof DrawerCodeSchema>;
 
 const unique = <T>(values: readonly T[]): boolean => new Set(values).size === values.length;
 
-const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
+export const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
 
 /**
  * 서랍 정의. `order`는 관리자가 정한 순서이고, 동점이 끝까지 갈 때만 쓰인다.
