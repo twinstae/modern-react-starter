@@ -145,6 +145,15 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   `payload` jsonb에는 이벤트별 필드만, 공통 필드는 열로. 메모리·PGlite가 같은 계약을 쓴다.
 - `POST /api/events`는 `{ events }`만 받고 204. 헤더를 읽지 않는다. `kioskName`은
   `VITE_KIOSK_NAME`(기본 "계산대 옆")이고 사람과 연결하지 않는다.
+- `server/auth.ts` + `server/auth-guard.ts`: better-auth 이메일 로그인과 `auth: true`
+  매크로. `/api/admin/*`은 반드시 이 매크로를 단다. 테스트는 메모리 어댑터가 아니라
+  PGlite 위 실제 better-auth로 로그인한다.
+- `application/owner-access.ts` + `server/owner-guard.ts`: PIN은 scrypt 해시, 주인
+  토큰은 sha256 해시만 저장한다. `POST /api/owner/unlock`이 10분 토큰을 주고,
+  `ownerToken: true` 매크로가 `Authorization: Bearer`를 확인한다. 토큰은 URL·쿠키·
+  localStorage에 두지 않는다. `POST /api/admin/owner-pin`은 로그인한 운영자만 부른다.
+- `scripts/seed-operator.ts`: `ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME`으로 계정 하나를
+  만든다. `/admin`은 로그인 화면과 PIN 설정을 제공한다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
   `curatableAnsweredQuestionSetArbitrary`는 모든 서랍에 긍정 기여가 남는 세트다.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.

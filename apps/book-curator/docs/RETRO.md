@@ -325,3 +325,53 @@
 - T12가 handover/book_view/purchase를 큐에 잇고, `reset` 이유가 완료/시간 초과/처음으로로
   정확히 남는지.
 - 라우트가 더 커지면 application 오케스트레이션을 꺼내는지.
+
+## 00009 — 운영자 인증과 주인 PIN
+
+**1. Navigation**
+
+- 문제: 인증·PIN 파일이 늘었는데 playbook에 없었다. T10/T11이 운영 API를 더할 때
+  `auth: true`를 빠뜨리거나, T12가 주인 토큰을 URL에 넣을 위험이 있다.
+- 대책: playbook §5.1에 auth/owner guard, PIN 해시·토큰, seed:operator, `/admin`을
+  한 줄씩 적고, “`/api/admin/*`은 반드시 auth 매크로, `/api/owner/*`은 ownerToken
+  매크로”를 규칙으로 남겼다.
+
+**2. Automated checks**
+
+- 문제: 인증은 PGlite 실제 better-auth 로그인, PIN 잠금, 토큰 만료, 원문 미저장까지
+  테스트가 있다. 다만 **앞으로 추가될 admin 라우트가 가드를 빠뜨리는 것**은 자동으로
+  잡지 못한다.
+- 대책: 지금은 playbook 규칙과 T10/T11의 API 테스트(401)가 맡는다. 라우트가 더 늘면
+  Elysia 라우트 목록을 훑어 `/api/admin/*`에 auth가 있는지 검사하는 테스트를 검토한다.
+
+**3. Coding standards**
+
+- 문제: PIN·토큰을 다루는 경계 규칙이 코드에만 있었다.
+- 대책: PIN 원문·토큰 원문을 저장하지 않고, 토큰은 메모리에만 두며, 로그에 남기지
+  않는다는 규칙을 playbook에 명시했다. `seed:operator` 비밀번호도 로그에 남기지 않는다.
+
+**4. Global AGENTS.md**
+
+- 문제: 없음. 앱 `AGENTS.md` → `RUNBOOK.md`로 운영자 계정/PIN 절차를 찾을 수 있다.
+
+**5. Tool economy**
+
+- 문제: 없음. qr-quest의 better-auth·가드·시드 패턴을 그대로 가져오되, 이 앱의
+  `createApp(deps)`와 PGlite 한 promise에 맞게 줄였다.
+
+**6. No-ops**
+
+- 문제: `OPEN-QUESTIONS.md`에 C-4(주인 확인 방식)가 T9 절과 “운영·인증” 절에 두 번
+  있었다. 같은 결정을 두 곳에서 관리하면 하나가 낡는다.
+- 대책: T9 절 하나만 남기고 중복을 지웠다.
+
+**7. Information access**
+
+- 문제: 운영자 계정과 PIN을 처음 세팅하는 절차가 없었다.
+- 대책: `RUNBOOK.md`에 `seed:operator`, `/admin` PIN 설정, `BETTER_AUTH_SECRET/URL`,
+  토큰 만료를 적었다.
+
+**다음 회고에서 확인할 것**
+
+- T10/T11의 `/api/admin/*`이 모두 auth 매크로를 다는지.
+- T12의 주인 토큰이 메모리에만 있고, 만료 뒤 401로 돌아가는지.
