@@ -41,6 +41,7 @@ describe("ResultScreen", () => {
       expect(text).not.toContain(title);
     }
     expect(text).not.toContain("모든 질문에 답했어요");
+    expect(text).not.toContain("[가정]");
   });
 
   it("주인 확인과 다시 해 보기는 각각의 콜백을 부른다", async () => {

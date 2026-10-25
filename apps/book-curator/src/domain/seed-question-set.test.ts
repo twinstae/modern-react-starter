@@ -24,22 +24,22 @@ describe("MVP 시드 질문 세트", () => {
       })),
     ).toStrictEqual(SEED_QUESTION_SET.drawers.map(({ code }) => ({ drawer: code, items: 2 })));
     expect(SEED_QUESTION_SET.drawers.map(({ mark }) => mark)).toStrictEqual([
-      "[가정] 1번 · 열쇠 1",
-      "[가정] 2번 · 열쇠 2",
-      "[가정] 3번 · 열쇠 3",
-      "[가정] 4번 · 열쇠 4",
-      "[가정] 5번 · 열쇠 5",
-      "[가정] 6번 · 열쇠 6",
-      "[가정] 7번 · 열쇠 7",
+      "1번 · 열쇠 1",
+      "2번 · 열쇠 2",
+      "3번 · 열쇠 3",
+      "4번 · 열쇠 4",
+      "5번 · 열쇠 5",
+      "6번 · 열쇠 6",
+      "7번 · 열쇠 7",
     ]);
     expect(SEED_QUESTION_SET.drawers.map(({ reason }) => reason)).toStrictEqual([
-      "[가정] 그 마음이 생활의 작은 습관부터 하나씩 바꾸는 책으로 이어집니다",
-      "[가정] 그 마음이 나를 천천히 들여다보는 책으로 이어집니다",
-      "[가정] 그 마음이 세상이 돌아가는 방식을 더 깊이 이해하는 책으로 이어집니다",
-      "[가정] 그 마음이 가까운 사람과의 거리를 다시 보는 책으로 이어집니다",
-      "[가정] 그 마음이 잠시 멈추어 곱씹는 책으로 이어집니다",
-      "[가정] 그 마음이 나와 다른 삶을 만나는 책으로 이어집니다",
-      "[가정] 그 마음이 내가 사는 세계를 넓혀 보는 책으로 이어집니다",
+      "그 마음이 생활의 작은 습관부터 하나씩 바꾸는 책으로 이어집니다",
+      "그 마음이 나를 천천히 들여다보는 책으로 이어집니다",
+      "그 마음이 세상이 돌아가는 방식을 더 깊이 이해하는 책으로 이어집니다",
+      "그 마음이 가까운 사람과의 거리를 다시 보는 책으로 이어집니다",
+      "그 마음이 잠시 멈추어 곱씹는 책으로 이어집니다",
+      "그 마음이 나와 다른 삶을 만나는 책으로 이어집니다",
+      "그 마음이 내가 사는 세계를 넓혀 보는 책으로 이어집니다",
     ]);
     expect(SEED_QUESTION_SET.baselines).toStrictEqual([
       {
@@ -48,6 +48,22 @@ describe("MVP 시드 질문 세트", () => {
         expected: { first: "B6", second: "B1" },
       },
     ]);
+  });
+
+  it("손님에게 보이는 시드 문구에 편집용 표시가 없다", () => {
+    const publicTexts = [
+      ...SEED_QUESTION_SET.questions.map(({ text }) => text),
+      ...SEED_QUESTION_SET.drawers.flatMap(({ name, mark, reason, statement }) => [
+        name,
+        mark,
+        reason,
+        statement,
+      ]),
+    ].filter((text): text is string => text !== null);
+
+    for (const text of publicTexts) {
+      expect(text).not.toMatch(/\[가정\]|TODO|TBD/);
+    }
   });
 
   it("상태 문장과 인용 문형을 질문 세트 데이터로 가진다", () => {
