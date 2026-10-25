@@ -10,13 +10,15 @@ import { parseNickname, renderStatement } from "./statement.ts";
 
 /**
  * 손님에게 보이는 큐레이션 결과. 점수·서랍 코드·다른 서랍의 책이 없다(I-9).
- * 책을 권하는 이유는 서가를 아는 TICKET-00005/00007이 더한다.
+ * 서랍 표시와 권하는 이유는 서랍 정의에서 오고, 결과 화면은 이 값만으로 그린다.
  */
 export interface CustomerCuration {
   readonly firstStatement: string;
   readonly secondStatement: string;
   readonly recommendedDrawerName: string;
   readonly recommendedStatement: string;
+  readonly recommendedMark: string | null;
+  readonly recommendedReason: string | null;
   readonly citation: string;
 }
 
@@ -86,6 +88,8 @@ export function curate(
       secondStatement: second,
       recommendedDrawerName: firstDrawer.name,
       recommendedStatement: first,
+      recommendedMark: firstDrawer.mark,
+      recommendedReason: firstDrawer.reason,
       citation: citation.text,
     },
   };

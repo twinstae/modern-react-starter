@@ -18,8 +18,30 @@ describe("curate", () => {
       secondStatement: "토끼 님에게는 지금 나를 들여다보는 책이 필요한 상태입니다",
       recommendedDrawerName: "삶의 방식을 바꾸는 책",
       recommendedStatement: "토끼 님에게는 지금 삶의 방식을 바꾸는 책이 필요한 상태입니다",
+      recommendedMark: null,
+      recommendedReason: null,
       citation: "‘요즘 생활에서 무언가를 바꾸고 싶다’에 그렇다고 답하신",
     });
+  });
+
+  it("추천 서랍의 표시와 권하는 이유를 손님 view model에 옮긴다", () => {
+    const set = parseQuestionSet({
+      ...SEOYUN_SET_INPUT,
+      drawers: SEOYUN_SET_INPUT.drawers.map((drawer) =>
+        drawer.code === "B6"
+          ? {
+              ...drawer,
+              mark: "[가정] 1번 · 열쇠 1",
+              reason: "[가정] 그 마음이 이 서랍으로 이어집니다",
+            }
+          : drawer,
+      ),
+    });
+
+    const { customer } = curate(set, SEOYUN_ANSWERS, "토끼");
+
+    expect(customer.recommendedMark).toBe("[가정] 1번 · 열쇠 1");
+    expect(customer.recommendedReason).toBe("[가정] 그 마음이 이 서랍으로 이어집니다");
   });
 
   it("서랍별 고유 문장이 있으면 공통 템플릿 대신 쓴다", () => {
@@ -63,6 +85,8 @@ describe("curate", () => {
       "citation",
       "firstStatement",
       "recommendedDrawerName",
+      "recommendedMark",
+      "recommendedReason",
       "recommendedStatement",
       "secondStatement",
     ]);
@@ -74,6 +98,8 @@ describe("curate", () => {
       | "secondStatement"
       | "recommendedDrawerName"
       | "recommendedStatement"
+      | "recommendedMark"
+      | "recommendedReason"
       | "citation"
     >();
     expectTypeOf<

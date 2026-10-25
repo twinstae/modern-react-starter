@@ -274,6 +274,8 @@ describe("큐레이션 코어 속성", () => {
           "citation",
           "firstStatement",
           "recommendedDrawerName",
+          "recommendedMark",
+          "recommendedReason",
           "recommendedStatement",
           "secondStatement",
         ]);
