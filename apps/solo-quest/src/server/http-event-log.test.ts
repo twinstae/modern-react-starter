@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createEventLogAdapter } from "../domain/event-log-adapter.ts";
 import { createSessionRepository, DEFAULT_CHARACTERS, Session } from "../domain/session.ts";

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createSessionRepository, DEFAULT_CHARACTERS, Session } from "./session.ts";
 

@@ -55,7 +55,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vp test"
   },
   "dependencies": {
     "@ark-ui/react": "^5.39.2",
@@ -93,6 +93,7 @@
     "typescript": "catalog:",
     "valibot": "catalog:",
     "vite": "catalog:",
+    "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
   "peerDependencies": {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { runSiheom, query, given, assertions, actions } from "@siheom/react";
 import type { ValidData } from "./schema.ts";

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { SYSTEM_MACROS } from "./macro.fixture.ts";
 import { createMemoryEventLogStore, type EventLogStore } from "./event-log-store.ts";

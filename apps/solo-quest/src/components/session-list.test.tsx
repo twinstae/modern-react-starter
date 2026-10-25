@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, it } from "vite-plus/test";
 import { assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SessionList } from "./session-list.tsx";

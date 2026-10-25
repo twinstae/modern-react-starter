@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { ORACLE_ACTION, ORACLE_TROUBLE } from "../domain/oracle.fixture.ts";
 import { createMemoryOracleStore } from "../domain/oracle-store.ts";

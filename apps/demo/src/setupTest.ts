@@ -1,4 +1,4 @@
-import { afterEach } from "vitest";
+import { afterEach } from "vite-plus/test";
 // siheom 0.4.0은 jest-dom을 스스로 등록하지 않는다. 브라우저 모드의 toHaveTextContent는
 // 전체 일치라, 부분 일치는 jest-dom의 matcher로 맞춘다.
 import "@testing-library/jest-dom/vitest";

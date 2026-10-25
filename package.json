@@ -11,19 +11,19 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --concurrency=1 -- run",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "format": "oxfmt",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt",
     "deps:check": "bun scripts/catalog.mjs check",
     "deps:fix": "bun scripts/catalog.mjs fix",
     "ci": "bun run lint:fix && bun run format && bun run deps:check && bun run typecheck && bun run test"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
     "turbo": "^2.11.8",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "packageManager": "bun@1.4.3",
   "catalog": {
@@ -50,8 +50,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "@vitest/browser-playwright": "^5.0.5",
-    "@vitest/coverage-v8": "^5.0.3",
+    "@vitest/browser-playwright": "5.0.5",
+    "@vitest/coverage-v8": "5.0.5",
     "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.4",
     "elysia": "^1.4.30",
@@ -64,7 +64,12 @@
     "temporal-polyfill": "^1.0.6",
     "typescript": "^7.0.2",
     "valibot": "^1.5.0",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+    "vite-plus": "1.3.0",
+    "vitest": "5.0.5"
+  },
+  "overrides": {
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

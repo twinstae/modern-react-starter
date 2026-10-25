@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import type { Judgement } from "./dice.ts";
 import { fillMacro, nameResult, parseMacro, type ParsedMacro } from "./macro.ts";

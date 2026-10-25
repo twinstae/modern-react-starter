@@ -4,12 +4,12 @@
   "type": "module",
   "scripts": {
     "codegen": "panda codegen",
-    "dev": "vite dev --port 3000",
+    "dev": "vp dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "vp build",
+    "preview": "vp preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vp test",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
@@ -69,6 +69,7 @@
     "playwright": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plus": "catalog:",
     "vitest": "catalog:"
   }
 }

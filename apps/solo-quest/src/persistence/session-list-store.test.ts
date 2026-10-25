@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createDrizzleSessionListStore, openDatabase } from "./database.ts";
 import { sessions } from "./schema.ts";

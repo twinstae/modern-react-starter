@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
 import { SIDE_LABEL } from "./side-label.ts";

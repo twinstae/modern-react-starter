@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vite-plus/test";
 import { parseAsyncStandardSchemaV1, StandardSchemaV1Error, getPath } from "./standard-schema";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as v from "valibot";

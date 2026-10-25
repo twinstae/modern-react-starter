@@ -1,14 +1,14 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+/// <reference types="vite-plus" />
+import { defineConfig, lazyPlugins } from "vite-plus";
 import viteReact from "@vitejs/plugin-react";
 import { pandacss } from "@pandacss/vite";
-import { playwright } from "@vitest/browser-playwright";
+import { playwright } from "vite-plus/test/browser-playwright";
 
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
-  plugins: [pandacss(), viteReact()],
+  plugins: lazyPlugins(() => [pandacss(), viteReact()]),
   test: {
     setupFiles: ["src/setupTest.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

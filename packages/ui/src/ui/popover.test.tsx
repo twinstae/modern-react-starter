@@ -1,5 +1,5 @@
-import { describe, it } from "vitest";
-import { userEvent } from "vitest/browser";
+import { describe, it } from "vite-plus/test";
+import { userEvent } from "vite-plus/test/browser";
 import { actions, assertions, createReactSiheom, given, query } from "@siheom/react";
 
 import * as Stories from "./popover.stories.tsx";

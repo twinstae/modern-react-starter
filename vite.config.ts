@@ -1,0 +1,72 @@
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  fmt: {
+    ignorePatterns: ["**/routeTree.gen.ts"],
+  },
+  lint: {
+    plugins: ["typescript", "unicorn", "oxc", "vitest"],
+    categories: {
+      correctness: "error",
+    },
+    rules: {
+      "vitest/no-restricted-vi-methods": [
+        "error",
+        {
+          mock: "모듈을 바꿔치기하지 마세요. 의존성을 props로 받거나, fake-aliases.ts로 가짜 구현체(*.fake.ts)를 연결하세요.",
+          doMock:
+            "모듈을 바꿔치기하지 마세요. 의존성을 props로 받거나, fake-aliases.ts로 가짜 구현체(*.fake.ts)를 연결하세요.",
+          unmock:
+            "모듈을 바꿔치기하지 마세요. 의존성을 props로 받거나, fake-aliases.ts로 가짜 구현체(*.fake.ts)를 연결하세요.",
+          hoisted: "vi.mock과 함께 쓰는 도구입니다. 가짜 구현체를 alias로 연결하세요.",
+          spyOn: "스파이 대신 의존성을 주입하고 결과(화면·반환값)를 확인하세요.",
+          stubGlobal: "전역을 바꾸지 말고 의존성을 주입하세요.",
+          unstubAllGlobals: "전역을 바꾸지 말고 의존성을 주입하세요.",
+          stubEnv: "환경 변수를 바꾸지 말고 설정을 주입하세요.",
+          fn: "vi.fn 대신 호출을 변수에 기록하는 평범한 함수를 넘기세요.",
+        },
+      ],
+      "vitest/expect-expect": [
+        "error",
+        {
+          assertFunctionNames: ["expect", "runSiheom"],
+        },
+      ],
+      "vitest/no-conditional-expect": "off",
+      "vitest/require-to-throw-message": "off",
+      "vite-plus/prefer-vite-plus-imports": "error",
+    },
+    env: {
+      builtin: true,
+    },
+    overrides: [
+      {
+        files: ["packages/ui/src/**/*.tsx"],
+        rules: {
+          "no-restricted-imports": [
+            "error",
+            {
+              patterns: [
+                {
+                  group: ["@ark-ui/react/*"],
+                  message:
+                    'Ark UI는 루트 "@ark-ui/react"에서 가져오세요. 하위 경로는 새 컴포넌트마다 Vite가 의존성을 다시 최적화하게 해서, vitest browser의 첫 실행이 테스트를 다시 불러오며 실패합니다.',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+    options: {
+      typeAware: true,
+      typeCheck: true,
+    },
+    jsPlugins: [
+      {
+        name: "vite-plus",
+        specifier: "vite-plus/oxlint-plugin",
+      },
+    ],
+  },
+});

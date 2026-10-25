@@ -1,10 +1,10 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+/// <reference types="vite-plus" />
+import { defineConfig, lazyPlugins } from "vite-plus";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { pandacss } from "@pandacss/vite";
-import { playwright } from "@vitest/browser-playwright";
+import { playwright } from "vite-plus/test/browser-playwright";
 
 import { fakeAliases } from "./fake-aliases.ts";
 
@@ -12,14 +12,14 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
-  plugins: [
+  plugins: lazyPlugins(() => [
     // 테스트에는 서버 번들러가 필요 없다. vitest 안에서 nitro는 TanStack Start의 서버 진입점을
     // 미리 불러오다가 CommonJS인 react를 ESM으로 평가해 "module is not defined"를 낸다.
     process.env.VITEST ? [] : nitro(),
     pandacss(),
     tanstackStart({ spa: { enabled: true } }),
     viteReact(),
-  ],
+  ]),
   test: {
     projects: [
       {

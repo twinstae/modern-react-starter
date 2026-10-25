@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createFakeEventLog } from "./event-log-store.fake.ts";
 import { createSaveQueue, SaveQueueMisuseError } from "./save-queue.ts";

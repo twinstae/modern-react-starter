@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { unwrap } from "../unwrap.ts";
 import { createTestClient } from "./test-client.ts";
