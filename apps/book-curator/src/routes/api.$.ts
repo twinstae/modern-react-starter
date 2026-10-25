@@ -6,6 +6,10 @@ import { createDrizzleBookStore } from "../persistence/drizzle-book-store.ts";
 import { createDrizzleDrawerStockStore } from "../persistence/drizzle-drawer-stock-store.ts";
 import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
 import { createDrizzleOwnerAccessStore } from "../persistence/drizzle-owner-access-store.ts";
+import {
+  createDrizzleHandoverStore,
+  createDrizzlePurchaseStore,
+} from "../persistence/drizzle-owner-record-store.ts";
 import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
 import { createDrizzleQuestionSetDraftStore } from "../persistence/drizzle-question-set-draft-store.ts";
 import { createApp } from "../server/app.ts";
@@ -29,6 +33,8 @@ function getApp() {
         secret: process.env.BETTER_AUTH_SECRET,
       }),
       ownerAccessStore: createDrizzleOwnerAccessStore(database),
+      handoverStore: createDrizzleHandoverStore(database),
+      purchaseStore: createDrizzlePurchaseStore(database),
       bookStore: createDrizzleBookStore(database),
       stockStore: createDrizzleDrawerStockStore(database),
       questionSetDraftStore: createDrizzleQuestionSetDraftStore(database),

@@ -15,10 +15,12 @@ import {
 } from "../admin-dto.ts";
 import type { EventStore } from "../application/event-store-ports.ts";
 import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
+import type { HandoverStore, PurchaseStore } from "../application/owner-record-ports.ts";
 import type { PublishedQuestionSetStore } from "../application/published-question-set-ports.ts";
 import type { QuestionSetDraftStore } from "../application/question-set-draft-ports.ts";
 import { checkHealth } from "../application/check-health.ts";
 import { setOwnerPin, unlockOwner } from "../application/owner-access.ts";
+import { recordHandover, recordPurchase } from "../application/owner-records.ts";
 import {
   clonePublishedDraft,
   createDraft,
@@ -47,6 +49,12 @@ import { HealthSchema } from "../domain/health.ts";
 import { KioskCurrentSchema, toKioskCurrentDto } from "../domain/kiosk.ts";
 import { OwnerPinSchema } from "../domain/owner-pin.ts";
 import {
+  HandoverInputSchema,
+  HandoverRecordSchema,
+  PurchaseInputSchema,
+  toHandoverRecordDto,
+} from "../domain/owner-record.ts";
+import {
   DrawerCodeSchema,
   parseQuestionSet,
   TextSchema,
@@ -69,6 +77,10 @@ export interface AppDeps {
   auth: AppAuth;
   /** 주인 PIN과 짧은 토큰의 저장소. */
   ownerAccessStore: OwnerAccessStore;
+  /** 주인이 실제로 건넨 서랍의 추가 전용 기록. */
+  handoverStore: HandoverStore;
+  /** 주인이 기록한 산 책의 추가 전용 기록. */
+  purchaseStore: PurchaseStore;
   /** 서가의 책 저장소. */
   bookStore: BookStore;
   /** 서랍 속 책과 수량 저장소. */
@@ -104,6 +116,8 @@ const OwnerUnlockSchema = v.strictObject({
 
 const OwnerCheckSchema = v.strictObject({ ok: v.literal(true) });
 
+const PurchaseResultSchema = v.strictObject({ quantity: DrawerQuantitySchema });
+
 const OwnerErrorSchema = v.strictObject({ code: v.string() });
 
 /**
@@ -117,6 +131,8 @@ export function createApp({
   eventStore,
   auth,
   ownerAccessStore,
+  handoverStore,
+  purchaseStore,
   bookStore,
   stockStore,
   questionSetDraftStore,
@@ -478,7 +494,31 @@ export function createApp({
     .get("/owner/check", () => ({ ok: true as const }), {
       ownerToken: true,
       response: OwnerCheckSchema,
-    });
+    })
+    .post(
+      "/owner/handover",
+      async ({ body, status }) => {
+        const record = await recordHandover(handoverStore, body);
+        return status(201, toHandoverRecordDto(record));
+      },
+      {
+        ownerToken: true,
+        body: HandoverInputSchema,
+        response: { 201: HandoverRecordSchema },
+      },
+    )
+    .post(
+      "/owner/purchases",
+      async ({ body }) => {
+        const { quantity } = await recordPurchase(purchaseStore, stockStore, body);
+        return { quantity };
+      },
+      {
+        ownerToken: true,
+        body: PurchaseInputSchema,
+        response: PurchaseResultSchema,
+      },
+    );
 }
 
 export type App = ReturnType<typeof createApp>;

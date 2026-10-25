@@ -1,6 +1,10 @@
 import { createApiClient } from "../api-client.ts";
 import { createMemoryEventStore } from "../persistence/memory-event-store.ts";
 import { createMemoryOwnerAccessStore } from "../persistence/memory-owner-access-store.ts";
+import {
+  createMemoryHandoverStore,
+  createMemoryPurchaseStore,
+} from "../persistence/memory-owner-record-store.ts";
 import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
 import { createMemoryQuestionSetDraftStore } from "../persistence/memory-question-set-draft-store.ts";
 import {
@@ -25,6 +29,8 @@ const TEST_OPERATOR = {
 export function createTestServer(deps: Partial<AppDeps> = {}) {
   const auth = deps.auth ?? createMemoryAuth();
   const ownerAccessStore = deps.ownerAccessStore ?? createMemoryOwnerAccessStore();
+  const handoverStore = deps.handoverStore ?? createMemoryHandoverStore();
+  const purchaseStore = deps.purchaseStore ?? createMemoryPurchaseStore();
   const bookStore = deps.bookStore ?? createMemoryBookStore();
   const stockStore = deps.stockStore ?? createMemoryDrawerStockStore();
   const questionSetDraftStore = deps.questionSetDraftStore ?? createMemoryQuestionSetDraftStore();
@@ -39,6 +45,8 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
     ...deps,
     auth,
     ownerAccessStore,
+    handoverStore,
+    purchaseStore,
     bookStore,
     stockStore,
     questionSetDraftStore,
@@ -49,6 +57,8 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
     api: createApiClient(app),
     auth,
     ownerAccessStore,
+    handoverStore,
+    purchaseStore,
     bookStore,
     stockStore,
     questionSetDraftStore,
