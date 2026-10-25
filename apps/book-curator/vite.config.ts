@@ -27,8 +27,9 @@ export default defineConfig({
           // 순수 코어, 유스케이스, 저장소 계약 테스트
           name: "domain",
           environment: "node",
-          // PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸린다.
+          // PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸린다. beforeAll도 여유를 둔다.
           testTimeout: 15_000,
+          hookTimeout: 30_000,
           include: [
             "src/domain/**/*.test.ts",
             "src/application/**/*.test.ts",
@@ -39,9 +40,10 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          // elysia 앱을 메모리 의존성으로 HTTP 요청 테스트한다. 파일과 DB를 모른다.
+          // elysia 앱을 메모리 의존성으로 HTTP 요청 테스트한다. 인증 테스트만 PGlite를 쓴다.
           name: "api",
           environment: "node",
+          hookTimeout: 30_000,
           include: ["src/server/**/*.test.ts"],
         },
       },
