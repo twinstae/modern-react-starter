@@ -36,6 +36,13 @@ const cases = [
     height: 834,
     viewport: "tabletLandscape",
   },
+  { id: "components-admin-login--empty", width: 834, height: 1112, viewport: "tabletPortrait" },
+  {
+    id: "components-admin-login--empty",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+  },
 ] as const;
 
 type Index = { entries: Record<string, unknown> };
