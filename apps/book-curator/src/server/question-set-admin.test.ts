@@ -350,6 +350,26 @@ describe("운영자 질문 세트 API", () => {
     });
   });
 
+  it("문항 수가 줄어든 초안에는 다른 버전의 긴 답을 섞지 않는다", async () => {
+    const { admin, eventStore } = await signedInServer({ shelf: "full" });
+    const cloned = await unwrap(admin.admin["question-sets"].drafts["from-published"].post());
+    const answers = SEED_QUESTION_SET.baselines[0]?.answers ?? [];
+    await eventStore.append([
+      parseFunnelEvent({
+        sessionId: "session-old-version",
+        kioskName: "계산대 옆",
+        version: 1,
+        type: "result_view",
+        answers: [...answers, 4],
+        ranking: { first: "B6", second: "B1", similar: false },
+        scores: SEED_QUESTION_SET.drawers.map(({ code }) => ({ drawer: code, score: 0, fives: 0 })),
+      }),
+    ]);
+
+    const data = await unwrap(admin.admin["question-sets"].drafts({ id: cloned.id }).report.get());
+    expect(data.report.recorded).toBeUndefined();
+  });
+
   it("없는 초안은 404다", async () => {
     const { admin } = await signedInServer();
 

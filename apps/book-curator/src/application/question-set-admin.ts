@@ -1,4 +1,5 @@
 import type { AnswerValue } from "../domain/answer.ts";
+import { answerValueFor } from "../domain/answer.ts";
 import { analyze, type GateIssue, type GateIssueCode, type SetReport } from "../domain/analyze.ts";
 import type { FunnelEvent } from "../domain/funnel.ts";
 import { parseQuestionSet, type DrawerCode, type QuestionSet } from "../domain/question-set.ts";
@@ -82,9 +83,26 @@ export function publishBlockers(report: SetReport, shelfGate: ShelfGateResult): 
   return blockers;
 }
 
-/** 쌓인 응답 중 결과 화면 이벤트의 답만 꺼낸다. 별명 자리는 이벤트에 없다(I-12). */
-export function recordedAnswers(events: readonly FunnelEvent[]): AnswerValue[][] {
-  return events.flatMap((event) => (event.type === "result_view" ? [[...event.answers]] : []));
+/**
+ * 쌓인 응답 중 결과 화면 이벤트의 답만 꺼낸다. 별명 자리는 이벤트에 없다(I-12).
+ * 다른 버전에서 남은 답은 지금 초안의 질문과 형식·길이가 맞을 때만 쓴다. 맞지 않는
+ * 답을 그대로 채점하면 보고가 500으로 죽거나 다른 질문의 답으로 섞인다.
+ */
+export function recordedAnswers(events: readonly FunnelEvent[], set: QuestionSet): AnswerValue[][] {
+  return events.flatMap((event) => {
+    if (event.type !== "result_view") return [];
+    const fits = event.answers.every((answer, index) => {
+      const question = set.questions[index];
+      if (question === undefined) return false;
+      try {
+        answerValueFor(question, answer);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    return fits ? [[...event.answers]] : [];
+  });
 }
 
 export function draftQuestionCount(set: QuestionSet): number {
@@ -177,7 +195,7 @@ export async function readDraftReport(
 ): Promise<DraftReport> {
   const draft = await getDraft(store, id);
   const [events, stock] = await Promise.all([eventStore.list(), stockStore.list()]);
-  const recorded = recordedAnswers(events);
+  const recorded = recordedAnswers(events, draft.questionSet);
   const report = analyze(
     draft.questionSet,
     seededRng(SEED_RANDOM_SEED),

@@ -162,7 +162,7 @@ export function QuestionSetDraftBar({
         </Primary>
       </Row>
 
-      <Note>새 초안은 시드 질문 세트에서 시작해요. 공개 중인 초안을 고치려면 복제하세요.</Note>
+      <Note>새 초안은 시드 질문 세트에서 시작해요. 공개 중인 질문 세트를 고치려면 복제하세요.</Note>
       {message === null ? null : <Status role="status">{message}</Status>}
       {error === null ? null : <ErrorText role="alert">{error}</ErrorText>}
     </Bar>
