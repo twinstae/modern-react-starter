@@ -10,7 +10,9 @@ import {
 } from "./statement.ts";
 
 /** 서랍 코드. 질문 세트와 서가가 서로를 가리키는 유일한 값이고 이용자에게는 보이지 않는다. */
-export const DrawerCodeSchema = v.picklist(["B1", "B2", "B3", "B4", "B5", "B6", "B7"]);
+export const DRAWER_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const;
+
+export const DrawerCodeSchema = v.picklist(DRAWER_CODES);
 
 export type DrawerCode = v.InferOutput<typeof DrawerCodeSchema>;
 

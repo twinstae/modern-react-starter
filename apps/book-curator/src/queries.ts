@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getAdminMe } from "./admin-api.ts";
+import { getAdminMe, getAdminShelf } from "./admin-api.ts";
 import { api } from "./api-client.ts";
 import { parseKioskCurrent } from "./domain/kiosk.ts";
 import { unwrap } from "./unwrap.ts";
@@ -29,6 +29,17 @@ export const adminQueries = {
     queryOptions({
       queryKey: ["admin", "me"],
       queryFn: getAdminMe,
+      retry: false,
+      staleTime: 0,
+    }),
+  /**
+   * 서가의 책·서랍 속 책·서랍 이름·게이트를 한 번에 읽는 단일 query.
+   * 책이나 수량을 고친 뒤 이 query를 무효화해 두 탭이 같은 값을 본다.
+   */
+  shelf: () =>
+    queryOptions({
+      queryKey: ["admin", "shelf"],
+      queryFn: getAdminShelf,
       retry: false,
       staleTime: 0,
     }),
