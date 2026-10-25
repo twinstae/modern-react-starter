@@ -50,6 +50,7 @@ const drawersArbitrary: fc.Arbitrary<Drawer[]> = fc
           name: NAMES[code],
           order: orders[index],
           statement: null,
+          mark: null,
         })),
       ),
   );
