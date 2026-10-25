@@ -161,6 +161,9 @@ cd apps/book-curator && bun run check
 - `solo-quest`의 `message-input` 매크로 라벨 테스트는 간헐 실패한다. 만나면 이름과
   재실행 결과만 보고한다.
 - `storybook-static/`은 `.gitignore`에 있으므로 커밋하지 않는다.
+- PGlite 테스트는 **파일당 DB 하나**를 `beforeAll`에서 열고, `beforeEach`에서 테이블을
+  비운다. 테스트마다 새 PGlite를 띄우면 느리고 메모리가 남는다. 저장소 계약은
+  `persistence/*.contract.ts` 하나를 메모리·PGlite 테스트가 함께 부른다.
 - 앱 포트는 3002, Storybook은 6008을 쓴다.
 - 패키지를 더하면 루트 `package.json`의 `catalog`에 넣고 `bun install` 한다.
 
