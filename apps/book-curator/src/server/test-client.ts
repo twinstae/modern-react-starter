@@ -1,4 +1,5 @@
 import { createApiClient } from "../api-client.ts";
+import { createMemoryEventStore } from "../persistence/memory-event-store.ts";
 import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
 import { createApp, type AppDeps } from "./app.ts";
 
@@ -12,6 +13,7 @@ export function createTestClient(deps: Partial<AppDeps> = {}) {
   const app = createApp({
     now: () => TEST_NOW,
     publishedQuestionSetStore: createMemoryPublishedQuestionSetStore(),
+    eventStore: createMemoryEventStore(),
     ...deps,
   });
   return createApiClient(app);
