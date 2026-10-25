@@ -15,6 +15,13 @@
       "when": 1792914739758,
       "tag": "0001_published_question_sets",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792917109155,
+      "tag": "0002_funnel_events",
+      "breakpoints": true
     }
   ]
 }

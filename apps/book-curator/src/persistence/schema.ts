@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
-import { check, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { check, integer, jsonb, pgTable, primaryKey, serial, text } from "drizzle-orm/pg-core";
 
 import type { BookRelevance } from "../domain/book.ts";
+import type { FunnelEventPayload, FunnelEventType } from "../domain/funnel.ts";
 import type { DrawerCode, QuestionSetDto } from "../domain/question-set.ts";
 
 /** 책. 서랍별 관련도와 핵심 단어는 모양이 고정된 JSON으로 저장한다. */
@@ -46,4 +47,21 @@ export const drawerStock = pgTable(
     primaryKey({ columns: [table.drawer, table.bookId] }),
     check("drawer_stock_quantity_non_negative", sql`${table.quantity} >= 0`),
   ],
+);
+
+/**
+ * 퍼널 이벤트. 추가 전용이고 id가 들어온 순서를 지킨다. 공통 필드는 열로, 이벤트별
+ * 필드는 payload jsonb로 나눈다. 별명·이름·연락처·IP·User-Agent 열은 없다(I-12).
+ */
+export const funnelEvents = pgTable(
+  "funnel_events",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: text("session_id").notNull(),
+    kioskName: text("kiosk_name").notNull(),
+    version: integer("version").notNull(),
+    type: text("type").$type<FunnelEventType>().notNull(),
+    payload: jsonb("payload").$type<FunnelEventPayload>().notNull(),
+  },
+  (table) => [check("funnel_events_version_positive", sql`${table.version} > 0`)],
 );
