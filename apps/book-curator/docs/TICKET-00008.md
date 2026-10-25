@@ -40,6 +40,6 @@
   다음에 상태를 비워, 새 `kiosk_ready`와 그 차례의 `test_start`·`result_view` 버전이
   어긋나지 않게 했다.
 - 이벤트 큐는 flush 시작 시 대기 배열을 복사한다. 보내는 동안 새 이벤트가 들어와도 같은
-  batch에 섞이지 않고 다음 flush로 간다.
+  batch에 섞이지 않고, 성공한 뒤 다음 바퀴가 이어서 보낸다.
 - PGlite는 `.data/pglite`에 하나만 열어야 해서 `openDatabase` 약속 하나를 공개 버전 저장소와
   이벤트 저장소가 함께 쓴다.
