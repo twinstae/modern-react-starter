@@ -2,7 +2,7 @@
 
 - 스펙: [TECH_SPEC](TECH_SPEC.md) §4.3, R-1, R-2, R-3, PRD 부록 A-3
 - Blocked by: TICKET-00002
-- Status: todo
+- Status: done
 
 ## 만들 것
 

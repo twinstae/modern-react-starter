@@ -2,7 +2,7 @@
 
 - 스펙: [TECH_SPEC](TECH_SPEC.md) §3.3, §3.4, §5.1~5.3, I-5, I-11, I-12, I-13, R-4, R-10, R-12
 - Blocked by: TICKET-00003, TICKET-00005
-- Status: todo
+- Status: done
 
 ## 만들 것
 

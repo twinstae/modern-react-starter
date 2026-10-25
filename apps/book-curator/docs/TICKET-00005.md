@@ -2,7 +2,7 @@
 
 - 스펙: [TECH_SPEC](TECH_SPEC.md) §2.1, I-7, I-9, R-9, §3.6
 - Blocked by: TICKET-00002
-- Status: todo
+- Status: done
 
 ## 만들 것
 

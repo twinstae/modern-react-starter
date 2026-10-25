@@ -2,7 +2,7 @@
 
 - 스펙: [TECH_SPEC](TECH_SPEC.md) §3, §4.1, §2.3, §3.7
 - Blocked by: 없음
-- Status: todo
+- Status: done
 
 ## 만들 것
 
