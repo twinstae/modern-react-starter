@@ -1,7 +1,7 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 
 import { parseOwnerPin } from "../domain/owner-pin.ts";
-import type { OwnerAccess, OwnerAccessStore } from "./owner-access-ports.ts";
+import type { OwnerAccessStore } from "./owner-access-ports.ts";
 
 /** 주인 토큰은 10분만 산다. 태블릿 메모리에만 두고 저장소·쿠키에 넣지 않는다. */
 export const OWNER_TOKEN_TTL_MS = 10 * 60 * 1_000;
@@ -31,7 +31,7 @@ function scryptKey(password: string, salt: string): Promise<Buffer> {
 }
 
 /** PIN은 salt를 붙여 scrypt로 해시한다. 저장 형식은 `scrypt$salt$hash`다. */
-export async function hashOwnerPin(pin: string): Promise<string> {
+async function hashOwnerPin(pin: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
   const key = await scryptKey(pin, salt);
   return `scrypt$${salt}$${key.toString("hex")}`;
@@ -49,7 +49,7 @@ async function matchesOwnerPin(pin: string, stored: string): Promise<boolean> {
 const hashOwnerToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
 /** 주인 토큰 원문. 32바이트 난수라 추측할 수 없고, 저장소에는 해시만 남는다. */
-export const createOwnerToken = (): string => randomBytes(32).toString("base64url");
+const createOwnerToken = (): string => randomBytes(32).toString("base64url");
 
 /** 운영자가 PIN을 정하거나 바꾼다. PIN을 바꾸면 실패 횟수와 잠금을 함께 푼다. */
 export async function setOwnerPin(store: OwnerAccessStore, pin: string): Promise<void> {
@@ -122,10 +122,3 @@ export async function verifyOwnerToken(
   if (token === "") return false;
   return store.hasValidToken(hashOwnerToken(token), now);
 }
-
-/** 잠금 상태를 저장하는 형태로 바꾼다. 테스트가 상태를 직접 만들 때 쓴다. */
-export const ownerAccess = (
-  pinHash: string,
-  failedAttempts = 0,
-  lockedUntil: string | null = null,
-): OwnerAccess => ({ pinHash, failedAttempts, lockedUntil });
