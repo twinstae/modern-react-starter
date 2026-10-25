@@ -7,6 +7,7 @@ import { createDrizzleDrawerStockStore } from "../persistence/drizzle-drawer-sto
 import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
 import { createDrizzleOwnerAccessStore } from "../persistence/drizzle-owner-access-store.ts";
 import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
+import { createDrizzleQuestionSetDraftStore } from "../persistence/drizzle-question-set-draft-store.ts";
 import { createApp } from "../server/app.ts";
 import { createAuth } from "../server/auth.ts";
 
@@ -30,7 +31,9 @@ function getApp() {
       ownerAccessStore: createDrizzleOwnerAccessStore(database),
       bookStore: createDrizzleBookStore(database),
       stockStore: createDrizzleDrawerStockStore(database),
+      questionSetDraftStore: createDrizzleQuestionSetDraftStore(database),
       newBookId: () => `book-${crypto.randomUUID()}`,
+      newDraftId: () => `draft-${crypto.randomUUID()}`,
     });
   })();
   return appPromise;

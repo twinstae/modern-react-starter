@@ -66,13 +66,16 @@ export interface StructureReport {
 }
 
 /** 점검에서 막는 이유와 경고의 종류. 화면은 코드로 문장을 고른다. */
-export type GateIssueCode =
-  | "sample-undecided"
-  | "sample-skew"
-  | "recorded-skew"
-  | "empty-drawer"
-  | "item-count-imbalance"
-  | "baseline-mismatch";
+export const GATE_ISSUE_CODES = [
+  "sample-undecided",
+  "sample-skew",
+  "recorded-skew",
+  "empty-drawer",
+  "item-count-imbalance",
+  "baseline-mismatch",
+] as const;
+
+export type GateIssueCode = (typeof GATE_ISSUE_CODES)[number];
 
 export interface GateIssue {
   readonly code: GateIssueCode;

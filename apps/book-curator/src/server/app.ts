@@ -1,12 +1,35 @@
 import { Elysia } from "elysia";
 import * as v from "valibot";
 
-import { AdminMeSchema, AdminShelfSchema } from "../admin-dto.ts";
+import {
+  AdminErrorSchema,
+  AdminMeSchema,
+  AdminShelfSchema,
+  PublishBlockedSchema,
+  PublishQuestionSetResultSchema,
+  QuestionSetDraftReportSchema,
+  QuestionSetDraftSchema,
+  QuestionSetDraftSummarySchema,
+  PublishedQuestionSetVersionSchema,
+  toSetReportDto,
+} from "../admin-dto.ts";
 import type { EventStore } from "../application/event-store-ports.ts";
 import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
 import type { PublishedQuestionSetStore } from "../application/published-question-set-ports.ts";
+import type { QuestionSetDraftStore } from "../application/question-set-draft-ports.ts";
 import { checkHealth } from "../application/check-health.ts";
 import { setOwnerPin, unlockOwner } from "../application/owner-access.ts";
+import {
+  clonePublishedDraft,
+  createDraft,
+  DraftNotFoundError,
+  getDraft,
+  listDrafts,
+  publishDraft,
+  PublishBlockedError,
+  readDraftReport,
+  saveDraft,
+} from "../application/question-set-admin.ts";
 import {
   BookNotFoundError,
   createBook,
@@ -23,7 +46,13 @@ import { FunnelEventBatchSchema } from "../domain/funnel.ts";
 import { HealthSchema } from "../domain/health.ts";
 import { KioskCurrentSchema, toKioskCurrentDto } from "../domain/kiosk.ts";
 import { OwnerPinSchema } from "../domain/owner-pin.ts";
-import { DrawerCodeSchema } from "../domain/question-set.ts";
+import {
+  DrawerCodeSchema,
+  parseQuestionSet,
+  TextSchema,
+  toQuestionSetDto,
+  type QuestionSet,
+} from "../domain/question-set.ts";
 import { DrawerQuantitySchema } from "../domain/shelf.ts";
 import { createAuthGuard } from "./auth-guard.ts";
 import type { AppAuth } from "./auth.ts";
@@ -44,11 +73,27 @@ export interface AppDeps {
   bookStore: BookStore;
   /** 서랍 속 책과 수량 저장소. */
   stockStore: DrawerStockStore;
+  /** 아직 공개하지 않은 질문 세트 초안 저장소. */
+  questionSetDraftStore: QuestionSetDraftStore;
   /** 새 책 id를 만든다. 테스트는 고정 id 생성기를 넣는다. */
   newBookId: () => string;
+  /** 새 질문 세트 초안 id를 만든다. */
+  newDraftId: () => string;
 }
 
 const OwnerPinBodySchema = v.strictObject({ pin: OwnerPinSchema });
+
+const CreateDraftBodySchema = v.strictObject({
+  name: TextSchema,
+  questionSet: v.optional(v.unknown()),
+});
+
+const SaveDraftBodySchema = v.strictObject({
+  name: v.optional(TextSchema),
+  questionSet: v.unknown(),
+});
+
+const InvalidQuestionSetSchema = v.strictObject({ code: v.literal("INVALID_QUESTION_SET") });
 
 const DrawerQuantityBodySchema = v.strictObject({ quantity: DrawerQuantitySchema });
 
@@ -74,12 +119,49 @@ export function createApp({
   ownerAccessStore,
   bookStore,
   stockStore,
+  questionSetDraftStore,
   newBookId,
+  newDraftId,
 }: AppDeps) {
   const shelfSource = async () => ({
     stock: await stockStore.list(),
     books: await bookStore.list(),
   });
+
+  const draftDto = (draft: {
+    readonly id: string;
+    readonly name: string;
+    readonly questionSet: QuestionSet;
+    readonly createdAt: string;
+    readonly updatedAt: string;
+  }) => ({
+    id: draft.id,
+    name: draft.name,
+    questionSet: toQuestionSetDto(draft.questionSet),
+    createdAt: draft.createdAt,
+    updatedAt: draft.updatedAt,
+  });
+
+  const draftSummary = (draft: {
+    readonly id: string;
+    readonly name: string;
+    readonly questionSet: QuestionSet;
+    readonly updatedAt: string;
+  }) => ({
+    id: draft.id,
+    name: draft.name,
+    questionCount: draft.questionSet.questions.length,
+    updatedAt: draft.updatedAt,
+  });
+
+  /** 요청 본문의 질문 세트를 경계에서 엄격하게 파싱한다. 실패는 422로 돌려준다. */
+  const parseBodyQuestionSet = (value: unknown): { readonly set: QuestionSet } | null => {
+    try {
+      return { set: parseQuestionSet(value) };
+    } catch {
+      return null;
+    }
+  };
 
   return new Elysia({ prefix: "/api" })
     .mount(auth.handler)
@@ -198,6 +280,181 @@ export function createApp({
         return new Response(null, { status: 204 });
       },
       { auth: true, response: { 404: OwnerErrorSchema } },
+    )
+    .post(
+      "/admin/question-sets/drafts",
+      async ({ body, status }) => {
+        let questionSet: unknown = body.questionSet;
+        if (questionSet !== undefined) {
+          const parsed = parseBodyQuestionSet(questionSet);
+          if (parsed === null) return status(422, { code: "INVALID_QUESTION_SET" as const });
+          questionSet = parsed.set;
+        }
+
+        const draft = await createDraft(
+          questionSetDraftStore,
+          { name: body.name, questionSet },
+          newDraftId(),
+          now(),
+        );
+        return status(201, draftDto(draft));
+      },
+      {
+        auth: true,
+        body: CreateDraftBodySchema,
+        response: {
+          201: QuestionSetDraftSchema,
+          422: InvalidQuestionSetSchema,
+        },
+      },
+    )
+    .post(
+      "/admin/question-sets/drafts/from-published",
+      async ({ status }) => {
+        try {
+          const draft = await clonePublishedDraft(
+            questionSetDraftStore,
+            publishedQuestionSetStore,
+            newDraftId(),
+            now(),
+          );
+          return status(201, draftDto(draft));
+        } catch (error) {
+          if (error instanceof NoPublishedQuestionSetError) {
+            return status(409, { code: "NO_PUBLISHED_QUESTION_SET" });
+          }
+          throw error;
+        }
+      },
+      {
+        auth: true,
+        response: { 201: QuestionSetDraftSchema, 409: AdminErrorSchema },
+      },
+    )
+    .get(
+      "/admin/question-sets/drafts",
+      async () => (await listDrafts(questionSetDraftStore)).map(draftSummary),
+      { auth: true, response: v.array(QuestionSetDraftSummarySchema) },
+    )
+    .get(
+      "/admin/question-sets/drafts/:id",
+      async ({ params, status }) => {
+        try {
+          return draftDto(await getDraft(questionSetDraftStore, params.id));
+        } catch (error) {
+          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
+          throw error;
+        }
+      },
+      { auth: true, response: { 200: QuestionSetDraftSchema, 404: AdminErrorSchema } },
+    )
+    .put(
+      "/admin/question-sets/drafts/:id",
+      async ({ params, body, status }) => {
+        const parsed = parseBodyQuestionSet(body.questionSet);
+        if (parsed === null) return status(422, { code: "INVALID_QUESTION_SET" as const });
+
+        try {
+          const draft = await saveDraft(
+            questionSetDraftStore,
+            params.id,
+            { name: body.name, questionSet: parsed.set },
+            now(),
+          );
+          return draftDto(draft);
+        } catch (error) {
+          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
+          throw error;
+        }
+      },
+      {
+        auth: true,
+        body: SaveDraftBodySchema,
+        response: {
+          200: QuestionSetDraftSchema,
+          404: AdminErrorSchema,
+          422: InvalidQuestionSetSchema,
+        },
+      },
+    )
+    .get(
+      "/admin/question-sets/drafts/:id/report",
+      async ({ params, status }) => {
+        try {
+          const checked = await readDraftReport(
+            questionSetDraftStore,
+            eventStore,
+            stockStore,
+            params.id,
+          );
+          return {
+            report: toSetReportDto(checked.report),
+            shelfGate: checked.shelfGate,
+            canPublish: checked.canPublish,
+            blockers: checked.blockers.map(({ code, drawers, baselines }) => ({
+              code,
+              drawers: [...drawers],
+              baselines: [...baselines],
+            })),
+          };
+        } catch (error) {
+          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
+          throw error;
+        }
+      },
+      {
+        auth: true,
+        response: {
+          200: QuestionSetDraftReportSchema,
+          404: AdminErrorSchema,
+        },
+      },
+    )
+    .post(
+      "/admin/question-sets/drafts/:id/publish",
+      async ({ params, status }) => {
+        try {
+          return await publishDraft(
+            questionSetDraftStore,
+            publishedQuestionSetStore,
+            eventStore,
+            stockStore,
+            params.id,
+          );
+        } catch (error) {
+          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
+          if (error instanceof PublishBlockedError) {
+            return status(422, {
+              code: "PUBLISH_BLOCKED" as const,
+              blockers: error.blockers.map(({ code, drawers, baselines }) => ({
+                code,
+                drawers: [...drawers],
+                baselines: [...baselines],
+              })),
+              shelfGate: error.shelfGate,
+            });
+          }
+          throw error;
+        }
+      },
+      {
+        auth: true,
+        response: {
+          200: PublishQuestionSetResultSchema,
+          404: AdminErrorSchema,
+          422: PublishBlockedSchema,
+        },
+      },
+    )
+    .get(
+      "/admin/question-sets/versions",
+      async () =>
+        (await publishedQuestionSetStore.list()).map(({ version, questionSet }) => ({
+          version,
+          drawerCount: questionSet.drawers.length,
+          questionCount: questionSet.questions.length,
+        })),
+      { auth: true, response: v.array(PublishedQuestionSetVersionSchema) },
     )
     .post(
       "/owner/unlock",

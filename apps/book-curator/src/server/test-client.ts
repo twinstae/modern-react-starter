@@ -2,6 +2,7 @@ import { createApiClient } from "../api-client.ts";
 import { createMemoryEventStore } from "../persistence/memory-event-store.ts";
 import { createMemoryOwnerAccessStore } from "../persistence/memory-owner-access-store.ts";
 import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
+import { createMemoryQuestionSetDraftStore } from "../persistence/memory-question-set-draft-store.ts";
 import {
   createMemoryBookStore,
   createMemoryDrawerStockStore,
@@ -26,20 +27,32 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
   const ownerAccessStore = deps.ownerAccessStore ?? createMemoryOwnerAccessStore();
   const bookStore = deps.bookStore ?? createMemoryBookStore();
   const stockStore = deps.stockStore ?? createMemoryDrawerStockStore();
+  const questionSetDraftStore = deps.questionSetDraftStore ?? createMemoryQuestionSetDraftStore();
   let nextBookId = 1;
+  let nextDraftId = 1;
   const app = createApp({
     now: () => TEST_NOW,
     publishedQuestionSetStore: createMemoryPublishedQuestionSetStore(),
     eventStore: createMemoryEventStore(),
     newBookId: () => `book-test-${nextBookId++}`,
+    newDraftId: () => `draft-test-${nextDraftId++}`,
     ...deps,
     auth,
     ownerAccessStore,
     bookStore,
     stockStore,
+    questionSetDraftStore,
   });
 
-  return { app, api: createApiClient(app), auth, ownerAccessStore, bookStore, stockStore };
+  return {
+    app,
+    api: createApiClient(app),
+    auth,
+    ownerAccessStore,
+    bookStore,
+    stockStore,
+    questionSetDraftStore,
+  };
 }
 
 /**
