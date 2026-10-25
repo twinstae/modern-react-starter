@@ -93,6 +93,7 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   `renderStatement(template, { drawerName, nickname })`, `renderCitation(template, { quote })`.
   자리표시는 `{nickname}`, `{drawer}`, `{drawer:이/가}`, `{quote}`(인용만). 모르는
   자리표시·조사는 `UnknownPlaceholderError`/`UnknownJosaError`로 거부한다.
+  별명 뒤에는 "님"을 한 번만 붙인다(별명에 이미 "님"이 있어도).
 - `domain/citation.ts`: `cite(set, scores, drawer)` → `{ question, drawer, answer, quote, text }`.
   긍정 기여가 가장 큰 답, 같으면 문항 순서가 빠른 답. 없으면 `NoCitationError`.
 - `domain/curate.ts`: `curate(set, answers, nickname)` → `{ drawers, scores, ranking,
