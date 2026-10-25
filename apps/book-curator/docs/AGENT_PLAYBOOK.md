@@ -136,6 +136,15 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `domain/random.ts`: `seededRng(seed)` 시드 고정 난수. 도메인에서 `Math.random` 대신 쓴다.
 - `domain/seed-question-set.ts`: MVP 시드 7서랍×2문항과 서윤 기준 응답. 상태 문장과
   인용 문형도 데이터로 들어 있다. `SEED_RANDOM_SEED`(79)로 점검한다.
+- `domain/funnel.ts`: 퍼널 이벤트 9종의 엄격 스키마, `openFunnel`, `funnel(state, action)`.
+  별명 자리는 없다(I-12). `questionId`는 버전 안의 순서(`q1`…)이고, 단계에 맞지 않는
+  동작은 이벤트 없이 상태를 그대로 둔다. `result_view`는 답·순위·서랍별 점수를 남긴다.
+- `application/event-queue.ts`: 메모리 큐. `enqueue` 뒤 라우트가 `void flush()`를 부르고,
+  실패하면 pending을 유지해 다음 flush가 순서대로 다시 보낸다. 저장소를 쓰지 않는다.
+- `application/event-store-ports.ts` + `persistence/*event-store*`: 추가 전용 저장소.
+  `payload` jsonb에는 이벤트별 필드만, 공통 필드는 열로. 메모리·PGlite가 같은 계약을 쓴다.
+- `POST /api/events`는 `{ events }`만 받고 204. 헤더를 읽지 않는다. `kioskName`은
+  `VITE_KIOSK_NAME`(기본 "계산대 옆")이고 사람과 연결하지 않는다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
   `curatableAnsweredQuestionSetArbitrary`는 모든 서랍에 긍정 기여가 남는 세트다.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.

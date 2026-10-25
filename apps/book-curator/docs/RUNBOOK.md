@@ -8,12 +8,13 @@
 ```bash
 cd apps/book-curator
 bun install                 # 루트에서 이미 했으면 생략
-bun run seed:published      # 공개 버전 1을 시드 질문 세트로 만든다(멱등)
+bun run seed:published      # 시드 내용이 바뀌었을 때만 새 공개 버전을 만든다
 ```
 
 시드에는 공개 질문 세트만 들어간다. 서가(책·수량)는 TICKET-00010의 운영 화면이나
 별도 시드로 채운다. 아직 공개 버전이 없으면 키오스크는 "질문을 준비하고 있어요"를
-보여 준다.
+보여 준다. 시드 문구나 서랍 데이터가 바뀌면 `seed:published`가 새 버전을 만든다.
+공개 버전은 고치지 않는다(I-11).
 
 ## 개발
 
@@ -37,12 +38,16 @@ bun run storybook           # http://localhost:6008
 ```bash
 cd apps/book-curator
 bun run check               # lint + format + typecheck + test
+bun run check:layout        # Storybook이 6008에 떠 있을 때 화면 겹침·넘침 검사
 bun run test run src/domain/turn.test.ts   # 좁은 테스트
 ```
 
 - API만: `curl http://localhost:3002/api/health`,
   `curl http://localhost:3002/api/kiosk/current`.
 - `bun run check`가 PGlite 테스트 때문에 몇 초 걸린다. 정상이다.
+- `check:layout`은 `bun run storybook`을 먼저 띄운 뒤 다른 터미널에서 돌린다.
+  세로 834×1112, 가로 1112×834에서 결과·질문·별명 화면의 직접 자식이 겹치거나
+  화면을 넘지 않는지 본다.
 - 루트 `bun run ci`는 `apps/simple-event`와 `solo-quest`의 기존 오류로 실패한다.
   book-curator 게이트로 쓰지 않는다.
 

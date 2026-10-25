@@ -311,7 +311,7 @@ function Kiosk() {
           similar={curation.ranking.similar}
           ownerCheckNotice={ownerCheckNotice}
           onOwnerCheck={() => setOwnerCheckNotice("주인 확인은 다음 단계에서 열려요.")}
-          onRetake={() => resetToStart("manual")}
+          onRetake={() => resetToStart("completed")}
         />
       );
   } else if (question.type === "choice") {

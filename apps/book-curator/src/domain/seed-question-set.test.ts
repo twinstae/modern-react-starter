@@ -62,7 +62,7 @@ describe("MVP 시드 질문 세트", () => {
     ].filter((text): text is string => text !== null);
 
     for (const text of publicTexts) {
-      expect(text).not.toMatch(/\[가정\]|TODO|TBD/);
+      expect(text).not.toMatch(/\[가정\]|TODO|TBD|상태입니다|이어집니다|그 마음이/);
     }
   });
 

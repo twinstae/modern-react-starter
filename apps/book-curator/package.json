@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vp test",
     "seed:published": "bun scripts/seed-published.ts",
-    "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run"
+    "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run",
+    "check:layout": "bun scripts/check-layout.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "catalog:",
