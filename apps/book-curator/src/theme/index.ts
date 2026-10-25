@@ -41,6 +41,8 @@ export const bookCuratorTheme = {
         "kiosk-body": { value: "1.25rem" },
         "kiosk-question": { value: "2rem" },
         "kiosk-title": { value: "2.5rem" },
+        "kiosk-result": { value: "3.25rem" },
+        "kiosk-mark": { value: "2.5rem" },
         "kiosk-scale": { value: "1.375rem" },
       },
       spacing: {
