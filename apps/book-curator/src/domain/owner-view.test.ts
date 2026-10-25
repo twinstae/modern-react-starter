@@ -34,9 +34,7 @@ describe("ownerView", () => {
     expect(view.recommended.belowMinimum).toBe(false);
 
     expect(view.second.drawer).toBe("B1");
-    expect(view.second.statement).toBe(
-      "토끼 님에게는 지금 나를 들여다보는 책이 필요한 상태입니다",
-    );
+    expect(view.second.statement).toBe("토끼 님에게는 지금 나를 들여다보는 책이 필요한 상태입니다");
     expect(view.similar).toBe(false);
   });
 
@@ -76,9 +74,7 @@ describe("ownerView", () => {
     expectTypeOf<keyof OwnerView>().toEqualTypeOf<
       "recommended" | "second" | "similar" | "drawers" | "gate"
     >();
-    expectTypeOf<keyof OwnerBookView>().toEqualTypeOf<
-      "bookId" | "title" | "author" | "quantity"
-    >();
+    expectTypeOf<keyof OwnerBookView>().toEqualTypeOf<"bookId" | "title" | "author" | "quantity">();
   });
 
   it("서랍 속 책이 서가에 없으면 이름 있는 오류로 멈춘다", () => {

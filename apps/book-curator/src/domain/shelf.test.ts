@@ -37,22 +37,20 @@ describe("checkShelfGate", () => {
   });
 
   it("서랍 속 책이 하나도 없는 서랍도 부족한 서랍이다", () => {
-    expect(checkShelfGate([], drawers).lacking.map(({ drawer, kinds }) => ({ drawer, kinds }))).toStrictEqual(
-      [
-        { drawer: "B6", kinds: 0 },
-        { drawer: "B1", kinds: 0 },
-        { drawer: "B2", kinds: 0 },
-      ],
-    );
+    expect(
+      checkShelfGate([], drawers).lacking.map(({ drawer, kinds }) => ({ drawer, kinds })),
+    ).toStrictEqual([
+      { drawer: "B6", kinds: 0 },
+      { drawer: "B1", kinds: 0 },
+      { drawer: "B2", kinds: 0 },
+    ]);
   });
 });
 
 describe("DrawerStockEntry", () => {
   it("수량은 0 이상의 정수만 받고, 같은 서랍에 같은 책을 두 번 두지 않는다", () => {
     expect(() => parseDrawerStock([{ drawer: "B6", bookId: "book-a", quantity: -1 }])).toThrow();
-    expect(() =>
-      parseDrawerStock([{ drawer: "B6", bookId: "book-a", quantity: 1.5 }]),
-    ).toThrow();
+    expect(() => parseDrawerStock([{ drawer: "B6", bookId: "book-a", quantity: 1.5 }])).toThrow();
     expect(() =>
       parseDrawerStock([
         { drawer: "B6", bookId: "book-a", quantity: 1 },

@@ -96,11 +96,7 @@ describe("QuestionSetSchema", () => {
     };
     const set = parseQuestionSet(input);
 
-    expect(set.drawers.map(({ mark }) => mark)).toStrictEqual([
-      "[가정] 1번 · 열쇠 1",
-      null,
-      null,
-    ]);
+    expect(set.drawers.map(({ mark }) => mark)).toStrictEqual(["[가정] 1번 · 열쇠 1", null, null]);
     expect(parseQuestionSetJson(toQuestionSetJson(set))).toStrictEqual(set);
   });
 

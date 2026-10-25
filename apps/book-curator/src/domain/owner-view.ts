@@ -54,11 +54,7 @@ export interface DrawerBookView {
 const indexBooks = (books: readonly Book[]): ReadonlyMap<string, Book> =>
   new Map(books.map((book) => [book.id, book]));
 
-function requireBook(
-  books: ReadonlyMap<string, Book>,
-  bookId: string,
-  drawer: DrawerCode,
-): Book {
+function requireBook(books: ReadonlyMap<string, Book>, bookId: string, drawer: DrawerCode): Book {
   const book = books.get(bookId);
   if (book === undefined) throw new MissingBookError(bookId, drawer);
   return book;
