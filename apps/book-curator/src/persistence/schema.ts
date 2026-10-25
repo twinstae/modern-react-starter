@@ -1,9 +1,21 @@
 import { sql } from "drizzle-orm";
-import { check, integer, jsonb, pgTable, primaryKey, serial, text } from "drizzle-orm/pg-core";
+import {
+  check,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 import type { BookRelevance } from "../domain/book.ts";
 import type { FunnelEventPayload, FunnelEventType } from "../domain/funnel.ts";
 import type { DrawerCode, QuestionSetDto } from "../domain/question-set.ts";
+
+// better-auth 표도 같은 마이그레이션에 들어가도록 여기서 다시 내보낸다.
+export * from "./auth-schema.ts";
 
 /** 책. 서랍별 관련도와 핵심 단어는 모양이 고정된 JSON으로 저장한다. */
 export const books = pgTable("books", {
@@ -65,3 +77,26 @@ export const funnelEvents = pgTable(
   },
   (table) => [check("funnel_events_version_positive", sql`${table.version} > 0`)],
 );
+
+/**
+ * 주인 PIN과 연속 실패 상태를 담는 한 줄. PIN은 해시만 둔다.
+ * 시각은 애플리케이션이 주입한 ISO 문자열 그대로 비교할 수 있게 문자열로 읽는다.
+ */
+export const ownerAccess = pgTable(
+  "owner_access",
+  {
+    id: text("id").primaryKey(),
+    pinHash: text("pin_hash").notNull(),
+    failedAttempts: integer("failed_attempts").default(0).notNull(),
+    lockedUntil: timestamp("locked_until", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    check("owner_access_failed_attempts_non_negative", sql`${table.failedAttempts} >= 0`),
+  ],
+);
+
+/** 주인 토큰의 해시와 만료 시각. 원문 토큰은 저장하지 않는다. */
+export const ownerTokens = pgTable("owner_tokens", {
+  tokenHash: text("token_hash").primaryKey(),
+  expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+});

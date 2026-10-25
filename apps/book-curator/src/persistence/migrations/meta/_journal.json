@@ -22,6 +22,13 @@
       "when": 1792917109155,
       "tag": "0002_funnel_events",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792919875213,
+      "tag": "0003_auth_owner_access",
+      "breakpoints": true
     }
   ]
 }

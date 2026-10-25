@@ -1,17 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
-import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
 import { openDatabase } from "../persistence/database.ts";
+import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
+import { createDrizzleOwnerAccessStore } from "../persistence/drizzle-owner-access-store.ts";
+import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
 import { createApp } from "../server/app.ts";
+import { createAuth } from "../server/auth.ts";
 
-// PGlite는 한 디렉터리에 하나만 연다. 공개 버전과 이벤트 저장소가 같은 약속을 함께 쓴다.
-const database = openDatabase(".data/pglite");
+// PGlite는 한 디렉터리에 하나만 연다. 인증·저장소가 모두 같은 DB 약속을 함께 쓴다.
+const database = await openDatabase(".data/pglite");
 
 const app = createApp({
   now: () => new Date().toISOString(),
   publishedQuestionSetStore: createDrizzlePublishedQuestionSetStore(database),
   eventStore: createDrizzleEventStore(database),
+  auth: createAuth(drizzleAdapter(database, { provider: "pg" }), {
+    secret: process.env.BETTER_AUTH_SECRET,
+  }),
+  ownerAccessStore: createDrizzleOwnerAccessStore(database),
 });
 
 const handle = ({ request }: { request: Request }) => app.fetch(request);

@@ -3,10 +3,8 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { sampleFunnelEvents } from "../domain/funnel.fixture.ts";
 import { createMemoryEventStore } from "../persistence/memory-event-store.ts";
-import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
 import { unwrap } from "../unwrap.ts";
-import { createApp } from "./app.ts";
-import { createTestClient, TEST_NOW } from "./test-client.ts";
+import { createTestClient, createTestServer, TEST_NOW } from "./test-client.ts";
 
 /** 일부러 스키마를 어긴 요청을 보내기 위한 좁은 통로. 실제 호출은 타입이 맞는다. */
 function postRaw(client: ReturnType<typeof createTestClient>, body: unknown) {
@@ -76,11 +74,7 @@ describe("퍼널 이벤트 API", () => {
 
   it("요청 헤더의 IP·User-Agent는 저장된 이벤트에 들어가지 않는다", async () => {
     const eventStore = createMemoryEventStore();
-    const app = createApp({
-      now: () => TEST_NOW,
-      publishedQuestionSetStore: createMemoryPublishedQuestionSetStore(),
-      eventStore,
-    });
+    const { app } = createTestServer({ now: () => TEST_NOW, eventStore });
     const events = sampleFunnelEvents();
 
     const response = await app.fetch(

@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vp test",
     "seed:published": "bun scripts/seed-published.ts",
+    "seed:operator": "bun scripts/seed-operator.ts",
     "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run",
     "check:layout": "bun scripts/check-layout.ts"
   },
@@ -24,6 +25,7 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
     "elysia": "catalog:",
     "nitro": "catalog:",
