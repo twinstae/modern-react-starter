@@ -27,7 +27,7 @@ describe("운영자 인증", () => {
     expect(typeof response.data?.user.id).toBe("string");
   });
 
-  it("손님 API는 로그인 없이된다", async () => {
+  it("손님 API는 로그인 없이 된다", async () => {
     const { api } = createTestServer();
 
     expect((await api.kiosk.current.get()).status).toBe(200);

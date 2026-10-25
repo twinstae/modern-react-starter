@@ -1,5 +1,4 @@
-import { parseAdminMe, type AdminMe } from "./admin-dto.ts";
-import type { AdminCredentials } from "./components/admin-login.tsx";
+import { parseAdminMe, type AdminCredentials, type AdminMe } from "./admin-dto.ts";
 
 const JSON_HEADERS = { "content-type": "application/json" };
 

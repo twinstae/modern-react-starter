@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
-import { AdminLogin, type AdminCredentials } from "./admin-login.tsx";
+import type { AdminCredentials } from "../admin-dto.ts";
+import { AdminLogin } from "./admin-login.tsx";
 import * as Stories from "./admin-login.stories.tsx";
 
 describe("AdminLogin", () => {

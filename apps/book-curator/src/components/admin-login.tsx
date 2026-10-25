@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { styled } from "styled-system/jsx";
 
-export interface AdminCredentials {
-  email: string;
-  password: string;
-}
+import type { AdminCredentials } from "../admin-dto.ts";
 
 const Screen = styled("main", {
   base: {

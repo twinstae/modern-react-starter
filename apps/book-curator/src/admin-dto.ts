@@ -11,6 +11,12 @@ export const AdminMeSchema = v.strictObject({
 
 export type AdminMe = v.InferOutput<typeof AdminMeSchema>;
 
+/** 로그인 폼이 운영 API로 넘기는 값. 비밀번호는 화면 밖으로 저장하지 않는다. */
+export interface AdminCredentials {
+  email: string;
+  password: string;
+}
+
 export function parseAdminMe(value: unknown): AdminMe {
   return v.parse(AdminMeSchema, value);
 }
