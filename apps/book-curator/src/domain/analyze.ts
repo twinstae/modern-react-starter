@@ -234,7 +234,7 @@ const gateOf = (
     failures.push({ code: "sample-skew", drawers: sampleSkew, baselines: [] });
   }
 
-  if (recorded !== undefined) {
+  if (recorded !== undefined && recorded.samples > 0) {
     const recordedSkew = skewedDrawers(recorded);
     if (recordedSkew.length > 0) {
       warnings.push({ code: "recorded-skew", drawers: recordedSkew, baselines: [] });

@@ -233,4 +233,13 @@ describe("analyze 쌓인 응답", () => {
   it("쌓인 응답을 넘기지 않으면 보고에 그 자리가 없다", () => {
     expect(analyze(parseQuestionSet(SEOYUN_SET_INPUT), seededRng(79)).recorded).toBeUndefined();
   });
+
+  it("쌓인 응답이 비어 있으면 분포만 0이고 쏠림 경고는 없다", () => {
+    const report = analyze(parseQuestionSet(SEOYUN_SET_INPUT), seededRng(79), []);
+
+    expect(report.recorded?.samples).toBe(0);
+    expect(report.gate.warnings).not.toContainEqual(
+      expect.objectContaining({ code: "recorded-skew" }),
+    );
+  });
 });
