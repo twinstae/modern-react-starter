@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import { api } from "../api-client.ts";
@@ -135,6 +135,9 @@ function Kiosk() {
   const [turn, setTurn] = useState<Turn | null>(null);
   const [bundle, setBundle] = useState<ReadyBundle | null>(null);
   const [funnelState, setFunnelState] = useState<FunnelState | null>(null);
+  // StrictMode가 effect를 두 번 불러도 세션과 kiosk_ready는 한 번만 연다.
+  const sessionOpened = useRef(false);
+  const resetting = useRef(false);
   const [lastActivityAt, setLastActivityAt] = useState<number | null>(null);
   const [promptShown, setPromptShown] = useState(false);
   const [promptVisible, setPromptVisible] = useState(false);
@@ -153,8 +156,9 @@ function Kiosk() {
 
   // 묶음이 준비된 순간 세션을 열고 kiosk_ready를 한 번 남긴다. 버전도 이때 고정한다.
   useEffect(() => {
-    if (data.status !== "ready" || funnelState !== null) return;
+    if (data.status !== "ready" || funnelState !== null || sessionOpened.current) return;
 
+    sessionOpened.current = true;
     setBundle(data);
     emit(
       openFunnel({
@@ -167,6 +171,9 @@ function Kiosk() {
 
   const resetToStart = useCallback(
     (reason: ResetReason) => {
+      if (resetting.current) return;
+      resetting.current = true;
+
       if (funnelState !== null) {
         emit(funnel(funnelState, { type: "reset", reason }));
       }
@@ -180,6 +187,8 @@ function Kiosk() {
         .refetchQueries({ queryKey: kioskQueries.current().queryKey, exact: true })
         .finally(() => {
           // 새 묶음이 온 뒤에 다음 세션을 연다. 그래야 kiosk_ready와 차례의 버전이 같다.
+          sessionOpened.current = false;
+          resetting.current = false;
           setFunnelState(null);
         });
     },
