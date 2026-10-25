@@ -16,6 +16,34 @@ bun run seed:published      # 시드 내용이 바뀌었을 때만 새 공개 �
 보여 준다. 시드 문구나 서랍 데이터가 바뀌면 `seed:published`가 새 버전을 만든다.
 공개 버전은 고치지 않는다(I-11).
 
+## 운영자 계정과 주인 PIN
+
+가입 화면은 없다. 환경 변수로 운영자 한 명을 만든다. 같은 이메일이 이미 있으면
+아무것도 바꾸지 않으므로 다시 돌려도 안전하다. 비밀번호는 로그에 남기지 않는다.
+
+```bash
+cd apps/book-curator
+ADMIN_EMAIL=owner@example.com \
+ADMIN_PASSWORD='bookshop-79-1' \
+ADMIN_NAME='책방 주인' \
+bun run seed:operator
+```
+
+- 운영자 화면은 `http://localhost:3002/admin`이다. 로그인한 뒤 주인 PIN(숫자 4~6자리)을
+  정하거나 바꾼다. PIN은 해시로만 저장된다.
+- 주인 토큰은 태블릿 메모리에만 두고 10분 뒤 끝난다. 지금은 `/api/owner/check`가 그
+  토큰으로 열리는지 확인하는 자리이고, 실제 주인 확인 API는 TICKET-00012가 잇는다.
+- 개발에서는 `BETTER_AUTH_SECRET`이 없어도 요청 origin으로 동작한다. 배포에서는
+  `BETTER_AUTH_SECRET`(길고 무작위인 값)과 `BETTER_AUTH_URL`(실제 공개 주소)을 정한다.
+  `BETTER_AUTH_URL`을 넣지 않으면 better-auth가 경고를 남긴다.
+- 확인:
+
+  ```bash
+  curl -i http://localhost:3002/api/admin/me          # 401
+  curl -i -H 'content-type: application/json' \
+    -d '{"pin":"4821"}' http://localhost:3002/api/owner/unlock
+  ```
+
 ## 개발
 
 ```bash
