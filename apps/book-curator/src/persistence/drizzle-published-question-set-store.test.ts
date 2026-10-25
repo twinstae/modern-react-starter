@@ -8,7 +8,7 @@ import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
 import { openDatabase, type Database } from "./database.ts";
 import { createDrizzlePublishedQuestionSetStore } from "./drizzle-published-question-set-store.ts";
 import { publishedQuestionSetStoreContract } from "./published-question-set-store.contract.ts";
-import { publishedQuestionSets } from "./schema.ts";
+import { publishedQuestionSets, publishedQuestionSetPointer } from "./schema.ts";
 
 let db: Database;
 
@@ -21,6 +21,7 @@ afterAll(async () => {
 });
 
 publishedQuestionSetStoreContract("PGlite", async () => {
+  await db.delete(publishedQuestionSetPointer);
   await db.delete(publishedQuestionSets);
   return createDrizzlePublishedQuestionSetStore(db);
 });

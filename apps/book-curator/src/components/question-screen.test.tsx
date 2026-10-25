@@ -5,8 +5,8 @@ import { QuestionScreen, type ItemScaleValue } from "./question-screen.tsx";
 import * as Stories from "./question-screen.stories.tsx";
 
 describe("QuestionScreen", () => {
-  it("문항을 그룹 이름으로 보여 주고 척도를 누르면 그 값을 바로 넘긴다", async () => {
-    let answered: ItemScaleValue | undefined;
+  it("문항을 그룹 이름으로 보여 주고 척도 다섯 칸이 1~5를 바로 넘긴다", async () => {
+    const answered: ItemScaleValue[] = [];
     const args = Stories.questionScreenArgs.first;
 
     await runSiheom(
@@ -14,15 +14,19 @@ describe("QuestionScreen", () => {
         <QuestionScreen
           {...args}
           onAnswer={(value) => {
-            answered = value;
+            answered.push(value);
           }}
         />,
       ),
       assertions.visible(query.group(args.questionText)),
+      actions.click(query.radio("전혀 아니다")),
+      actions.click(query.radio("아니다")),
+      actions.click(query.radio("보통이다")),
+      actions.click(query.radio("그렇다")),
       actions.click(query.radio("매우 그렇다")),
     );
 
-    expect(answered).toBe(5);
+    expect(answered).toStrictEqual([1, 2, 3, 4, 5]);
   });
 
   it("되돌아가기를 누르면 onBack을 부른다", async () => {

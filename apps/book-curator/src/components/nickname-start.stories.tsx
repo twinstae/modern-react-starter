@@ -17,7 +17,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = { args: nicknameStartArgs };
+export const Empty: Story = {
+  args: nicknameStartArgs,
+  globals: { viewport: { value: "tabletPortrait" } },
+};
 
 export const EmptyLandscape: Story = {
   args: nicknameStartArgs,

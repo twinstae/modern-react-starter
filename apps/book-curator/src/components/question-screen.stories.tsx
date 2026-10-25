@@ -43,7 +43,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const First: Story = { args: questionScreenArgs.first };
+export const First: Story = {
+  args: questionScreenArgs.first,
+  globals: { viewport: { value: "tabletPortrait" } },
+};
 
 export const Longest: Story = { args: questionScreenArgs.longest };
 
