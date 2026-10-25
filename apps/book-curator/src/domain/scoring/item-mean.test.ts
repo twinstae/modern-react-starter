@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseQuestionSet } from "../question-set.ts";
+import { drawerOrder, parseQuestionSet } from "../question-set.ts";
+import { rank } from "../rank.ts";
 import { SEOYUN_ANSWERS, SEOYUN_SET_INPUT } from "../seoyun.fixture.ts";
 import { scoreItemMean } from "./item-mean.ts";
 
@@ -34,6 +35,16 @@ describe("item-mean", () => {
           contributions: [{ question: 2, drawer: "B2", answer: 2, value: 2 }],
         },
       ],
+    });
+  });
+
+  it("서윤의 답은 1순위 B6, 2순위 B1이다", () => {
+    const set = parseQuestionSet(SEOYUN_SET_INPUT);
+
+    expect(rank(scoreItemMean(set, SEOYUN_ANSWERS), drawerOrder(set))).toStrictEqual({
+      first: "B6",
+      second: "B1",
+      similar: false,
     });
   });
 

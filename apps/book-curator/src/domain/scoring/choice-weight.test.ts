@@ -14,8 +14,22 @@ const SET = parseQuestionSet({
       type: "choice",
       text: "지금 끌리는 것",
       options: [
-        { id: "change", text: "바꾸기", weights: [{ drawer: "B6", weight: 3 }, { drawer: "B1", weight: 1 }] },
-        { id: "look", text: "들여다보기", weights: [{ drawer: "B1", weight: 3 }, { drawer: "B2", weight: 1 }] },
+        {
+          id: "change",
+          text: "바꾸기",
+          weights: [
+            { drawer: "B6", weight: 3 },
+            { drawer: "B1", weight: 1 },
+          ],
+        },
+        {
+          id: "look",
+          text: "들여다보기",
+          weights: [
+            { drawer: "B1", weight: 3 },
+            { drawer: "B2", weight: 1 },
+          ],
+        },
         { id: "rest", text: "쉬기", weights: [] },
       ],
     },

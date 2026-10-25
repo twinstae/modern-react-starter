@@ -24,10 +24,8 @@ const SET = parseQuestionSet({
   scoring: { type: "item-mean" },
 });
 
-const turnOf = (...answers: Turn["answers"]): Turn => answers.reduce(
-  (turn, value) => answer(SET, turn, value),
-  startTurn("토끼"),
-);
+const turnOf = (...answers: Turn["answers"]): Turn =>
+  answers.reduce((turn, value) => answer(SET, turn, value), startTurn("토끼"));
 
 describe("Turn", () => {
   it("별명으로 열고 답이 아직 없다", () => {

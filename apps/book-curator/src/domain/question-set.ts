@@ -55,10 +55,7 @@ const ChoiceQuestionSchema = v.strictObject({
   options: v.pipe(
     v.array(ChoiceOptionSchema),
     v.minLength(2),
-    v.check(
-      (options) => unique(options.map(({ id }) => id)),
-      "선택지 id는 겹치지 않아야 합니다",
-    ),
+    v.check((options) => unique(options.map(({ id }) => id)), "선택지 id는 겹치지 않아야 합니다"),
     v.check(
       (options) => options.every(({ weights }) => unique(weights.map(({ drawer }) => drawer))),
       "한 선택지에 같은 서랍 가중치를 두 번 둘 수 없습니다",
@@ -80,8 +77,7 @@ export const ScoringSchema = v.variant("type", [
 
 export type Scoring = v.InferOutput<typeof ScoringSchema>;
 
-const drawerCodes = (drawers: readonly Drawer[]) =>
-  new Set(drawers.map(({ code }) => code));
+const drawerCodes = (drawers: readonly Drawer[]) => new Set(drawers.map(({ code }) => code));
 
 /**
  * 질문 세트. 파싱에 성공한 값만 도메인 안으로 들어온다.
@@ -110,13 +106,10 @@ export const QuestionSetSchema = v.pipe(
   }),
   v.check((set) => {
     const codes = drawerCodes(set.drawers);
-    return set.questions.every(
-      (question) =>
-        question.type === "item"
-          ? codes.has(question.drawer)
-          : question.options.every(({ weights }) =>
-              weights.every(({ drawer }) => codes.has(drawer)),
-            ),
+    return set.questions.every((question) =>
+      question.type === "item"
+        ? codes.has(question.drawer)
+        : question.options.every(({ weights }) => weights.every(({ drawer }) => codes.has(drawer))),
     );
   }, "질문이 정의에 없는 서랍을 가리킵니다"),
 );
