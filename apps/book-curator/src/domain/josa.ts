@@ -47,7 +47,7 @@ function finalConsonantOf(word: string): number | undefined {
   return final === 0 ? undefined : final;
 }
 
-function isJosaPair(pair: string): pair is JosaPair {
+export function isJosaPair(pair: string): pair is JosaPair {
   return (JOSA_PAIRS as readonly string[]).includes(pair);
 }
 
