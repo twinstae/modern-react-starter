@@ -99,12 +99,16 @@ bunx turbo run typecheck --filter=@repo/book-curator
 # 앱 테스트 전체
 bunx turbo run test --filter=@repo/book-curator -- run
 
-# 루트 전체 (마지막 확인)
-bun run ci
+# 이 앱의 커밋 전 게이트 (lint + format + typecheck + test)
+cd apps/book-curator && bun run check
 ```
 
-- `bun run ci`에는 `solo-quest`의 기존 간헐 실패가 있다. 이번 작업과 무관하면
-  고치지 말고, 실패 이름과 재실행 결과를 보고한다.
+- **루트 `bun run ci` 대신 앱의 `bun run check`를 게이트로 쓴다.** 루트 lint는
+  `apps/simple-event`(다른 작업 중)와 `solo-quest`의 기존 오류를 함께 검사해 실패한다.
+  이번 작업과 무관한 실패를 고치지 않는다. 루트 CI가 고쳐지면 그때 게이트를 바꾼다.
+- `solo-quest`의 `message-input` 매크로 라벨 테스트는 간헐 실패한다. 만나면 이름과
+  재실행 결과만 보고한다.
+- `storybook-static/`은 `.gitignore`에 있으므로 커밋하지 않는다.
 - 앱 포트는 3002, Storybook은 6008을 쓴다.
 - 패키지를 더하면 루트 `package.json`의 `catalog`에 넣고 `bun install` 한다.
 
