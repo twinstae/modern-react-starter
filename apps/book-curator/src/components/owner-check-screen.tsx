@@ -8,9 +8,9 @@ const Screen = styled("main", {
     minH: "100dvh",
     display: "flex",
     flexDirection: "column",
-    gap: "4",
+    gap: "3",
     px: "page",
-    py: "6",
+    py: "4",
     bg: "canvas",
     color: "fg.default",
     borderTopWidth: "8px",
@@ -51,7 +51,7 @@ const OwnerLabel = styled("p", {
 });
 
 const Title = styled("h1", {
-  base: { fontFamily: "heading", fontSize: "1.75rem", fontWeight: "600", lineHeight: "1.3" },
+  base: { fontFamily: "heading", fontSize: "1.6rem", fontWeight: "600", lineHeight: "1.25" },
 });
 
 const Notice = styled("p", {
@@ -70,7 +70,7 @@ const Notice = styled("p", {
 const Layout = styled("div", {
   base: {
     display: "grid",
-    gap: "4",
+    gap: "3",
     alignItems: "start",
     lg: { gridTemplateColumns: "minmax(0, 1.25fr) minmax(18rem, 0.75fr)" },
   },
@@ -80,8 +80,8 @@ const Recommended = styled("article", {
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "3",
-    p: "5",
+    gap: "2",
+    p: "4",
     borderWidth: "3px",
     borderColor: "seal.500",
     borderRadius: "l2",
@@ -99,7 +99,7 @@ const Card = styled("article", {
     display: "flex",
     flexDirection: "column",
     gap: "2",
-    p: "4",
+    p: "3",
     borderWidth: "2px",
     borderColor: "border",
     borderRadius: "l2",
@@ -206,7 +206,12 @@ const Warning = styled("p", {
 });
 
 const SimilarLine = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
+  base: {
+    color: "fg.muted",
+    fontFamily: "body",
+    fontSize: "kiosk-caption",
+    lineHeight: "1.3",
+  },
 });
 
 const Others = styled("section", {
@@ -226,7 +231,7 @@ const OtherCard = styled("div", {
     display: "flex",
     flexDirection: "column",
     gap: "2",
-    p: "3",
+    p: "2",
     borderWidth: "1px",
     borderColor: "border",
     borderRadius: "l2",

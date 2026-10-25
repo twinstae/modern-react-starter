@@ -49,6 +49,30 @@ const cases = [
     viewport: "tabletLandscape",
   },
   {
+    id: "components-owner-check-screen--similar",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+  },
+  {
+    id: "components-owner-check-screen--similar-landscape",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+  },
+  {
+    id: "components-owner-check-screen--below-minimum",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+  },
+  {
+    id: "components-owner-check-screen--below-minimum-landscape",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+  },
+  {
     id: "components-drawer-books-screen--three-books",
     width: 834,
     height: 1112,

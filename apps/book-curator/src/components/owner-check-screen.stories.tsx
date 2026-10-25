@@ -79,7 +79,17 @@ export const Similar: Story = {
   globals: { viewport: { value: "tabletPortrait" } },
 };
 
+export const SimilarLandscape: Story = {
+  args: ownerCheckArgs.similar,
+  globals: { viewport: { value: "tabletLandscape" } },
+};
+
 export const BelowMinimum: Story = {
   args: ownerCheckArgs.belowMinimum,
   globals: { viewport: { value: "tabletPortrait" } },
+};
+
+export const BelowMinimumLandscape: Story = {
+  args: ownerCheckArgs.belowMinimum,
+  globals: { viewport: { value: "tabletLandscape" } },
 };
