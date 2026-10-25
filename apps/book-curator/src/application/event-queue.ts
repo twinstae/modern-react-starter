@@ -17,17 +17,17 @@ export function createEventQueue(send: EventSender): EventQueue {
   let inFlight: Promise<boolean> | null = null;
 
   const flush = async (): Promise<boolean> => {
-    if (pending.length === 0) return true;
-
-    const batch = [...pending];
-    try {
-      await send(batch);
-      // 보내는 동안 새로 쌓인 이벤트는 남겨 다음 flush가 보낸다.
+    while (pending.length > 0) {
+      const batch = [...pending];
+      try {
+        await send(batch);
+      } catch {
+        return false;
+      }
+      // 보내는 동안 새로 쌓인 이벤트는 다음 바퀴가 이어서 보낸다.
       pending = pending.slice(batch.length);
-      return true;
-    } catch {
-      return false;
     }
+    return true;
   };
 
   return {

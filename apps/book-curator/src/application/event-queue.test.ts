@@ -56,7 +56,7 @@ describe("이벤트 큐", () => {
     release?.();
 
     expect(await first).toBe(true);
-    expect(sent).toStrictEqual([events.slice(0, 1)]);
+    expect(sent).toStrictEqual([events.slice(0, 1), events.slice(1)]);
 
     expect(await queue.flush()).toBe(true);
     expect(sent).toStrictEqual([events.slice(0, 1), events.slice(1)]);
