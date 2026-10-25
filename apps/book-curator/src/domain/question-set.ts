@@ -21,6 +21,7 @@ export const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
  * 서랍 정의. `order`는 관리자가 정한 순서이고, 동점이 끝까지 갈 때만 쓰인다.
  * `statement`가 있으면 공통 상태 문장 템플릿 대신 그 문장을 쓴다. 없으면 `null`이다.
  * `mark`는 주인이 서랍을 알아보는 번호·열쇠 표시다. 없으면 `null`이다.
+ * `reason`은 큐레이터가 이 서랍을 권하는 이유다. 없으면 `null`이다.
  * 서랍 수는 데이터다. 코드가 B1~B7이어도 질문 세트가 2개만 가질 수 있다.
  */
 export const DrawerSchema = v.strictObject({
@@ -29,6 +30,7 @@ export const DrawerSchema = v.strictObject({
   order: v.pipe(v.number(), v.integer(), v.minValue(0)),
   statement: v.optional(v.nullable(TextSchema), null),
   mark: v.optional(v.nullable(TextSchema), null),
+  reason: v.optional(v.nullable(TextSchema), null),
 });
 
 export type Drawer = v.InferOutput<typeof DrawerSchema>;
@@ -214,12 +216,13 @@ export function drawerOrder(set: QuestionSet): DrawerCode[] {
 /** 도메인 값을 화면·저장소와 주고받을 평범한 객체로 옮긴다. */
 export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
   return {
-    drawers: set.drawers.map(({ code, name, order, statement, mark }) => ({
+    drawers: set.drawers.map(({ code, name, order, statement, mark, reason }) => ({
       code,
       name,
       order,
       statement,
       mark,
+      reason,
     })),
     questions: set.questions.map((question) =>
       question.type === "item"

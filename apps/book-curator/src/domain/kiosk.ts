@@ -12,11 +12,11 @@ import {
 } from "./question-set.ts";
 
 /**
- * 손님 화면에 보내는 질문 세트. 관리자만 보는 `baselines`와 주인만 보는 서랍
- * 표시(`mark`)는 묶음에 넣지 않는다.
+ * 손님 화면에 보내는 질문 세트. 관리자만 보는 `baselines`는 묶음에 넣지 않는다.
+ * 서랍 이름·표시·권하는 이유는 결과 화면이 쓰므로 함께 보낸다.
  */
 export const PublicQuestionSetSchema = v.strictObject({
-  drawers: v.pipe(v.array(v.omit(DrawerSchema, ["mark"])), v.minLength(2)),
+  drawers: v.pipe(v.array(DrawerSchema), v.minLength(2)),
   questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
   scoring: ScoringSchema,
   statementTemplate: TextSchema,
@@ -51,11 +51,13 @@ export function toPublicQuestionSetDto(set: QuestionSet): PublicQuestionSetDto {
   const { questions } = toQuestionSetDto(set);
 
   return {
-    drawers: set.drawers.map(({ code, name, order, statement }) => ({
+    drawers: set.drawers.map(({ code, name, order, statement, mark, reason }) => ({
       code,
       name,
       order,
       statement,
+      mark,
+      reason,
     })),
     questions,
     scoring: { type: set.scoring.type },

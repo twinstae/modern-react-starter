@@ -16,7 +16,12 @@ import {
 
 const withDefaults = (input: typeof SEOYUN_SET_INPUT) => ({
   ...input,
-  drawers: input.drawers.map((drawer) => ({ ...drawer, statement: null, mark: null })),
+  drawers: input.drawers.map((drawer) => ({
+    ...drawer,
+    statement: null,
+    mark: null,
+    reason: null,
+  })),
   statementTemplate: DEFAULT_STATEMENT_TEMPLATE,
   citationTemplates: DEFAULT_CITATION_TEMPLATES,
 });
@@ -87,16 +92,27 @@ describe("QuestionSetSchema", () => {
     ).toThrow();
   });
 
-  it("서랍 표시를 담고, 없으면 null로 정규화해 왕복한다", () => {
+  it("서랍 표시와 권하는 이유를 담고, 없으면 null로 정규화해 왕복한다", () => {
     const input = {
       ...SEOYUN_SET_INPUT,
       drawers: SEOYUN_SET_INPUT.drawers.map((drawer, index) =>
-        index === 0 ? { ...drawer, mark: "[가정] 1번 · 열쇠 1" } : drawer,
+        index === 0
+          ? {
+              ...drawer,
+              mark: "[가정] 1번 · 열쇠 1",
+              reason: "[가정] 그 마음이 이 서랍으로 이어집니다",
+            }
+          : drawer,
       ),
     };
     const set = parseQuestionSet(input);
 
     expect(set.drawers.map(({ mark }) => mark)).toStrictEqual(["[가정] 1번 · 열쇠 1", null, null]);
+    expect(set.drawers.map(({ reason }) => reason)).toStrictEqual([
+      "[가정] 그 마음이 이 서랍으로 이어집니다",
+      null,
+      null,
+    ]);
     expect(parseQuestionSetJson(toQuestionSetJson(set))).toStrictEqual(set);
   });
 

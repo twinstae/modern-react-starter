@@ -39,7 +39,7 @@ describe("키오스크 공개 묶음 API", () => {
     );
   });
 
-  it("묶음에는 관리자용 기준 응답과 주인용 서랍 표시가 없다", async () => {
+  it("묶음에는 관리자용 기준 응답이 없고 손님 결과에 필요한 서랍 표시·이유가 있다", async () => {
     const store = createMemoryPublishedQuestionSetStore();
     await store.publish(SEED_QUESTION_SET);
     const client = createTestClient({ publishedQuestionSetStore: store });
@@ -48,7 +48,12 @@ describe("키오스크 공개 묶음 API", () => {
     if (bundle.status !== "ready") throw new Error("준비된 묶음이어야 합니다");
 
     expect("baselines" in bundle.questionSet).toBe(false);
-    expect(bundle.questionSet.drawers.every((drawer) => !("mark" in drawer))).toBe(true);
+    expect(bundle.questionSet.drawers.map(({ mark }) => mark)).toStrictEqual(
+      SEED_QUESTION_SET.drawers.map(({ mark }) => mark),
+    );
+    expect(bundle.questionSet.drawers.map(({ reason }) => reason)).toStrictEqual(
+      SEED_QUESTION_SET.drawers.map(({ reason }) => reason),
+    );
   });
 
   it("새 버전을 공개해도 이전 공개 행은 그대로다(I-11)", async () => {
