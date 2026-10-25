@@ -1,36 +1,230 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
 import { styled } from "styled-system/jsx";
 
-import { HealthStatus } from "../components/health-status.tsx";
-import { healthQueries } from "../queries.ts";
+import { NicknameStart } from "../components/nickname-start.tsx";
+import { QuestionScreen, type ItemScaleValue } from "../components/question-screen.tsx";
+import { idleState } from "../domain/idle.ts";
+import type { KioskBundle } from "../domain/kiosk.ts";
+import { answer, back, endTurn, startTurn, type Turn } from "../domain/turn.ts";
+import { useWakeLock } from "../lib/use-wake-lock.ts";
+import { kioskQueries } from "../queries.ts";
+
+type ReadyBundle = Extract<KioskBundle, { status: "ready" }>;
 
 export const Route = createFileRoute("/")({
-  // 이미 불러온 데이터가 있으면 loader가 막지 않는다. 신선도는 useSuspenseQuery의 기본 동작이 맡는다.
-  loader: ({ context }) =>
-    context.queryClient.query({ ...healthQueries.current(), staleTime: "static" }),
-  component: Home,
+  // 처음 화면에 들어올 때마다 새 묶음을 받는다. 차례가 시작되면 그 묶음을 메모리에 고정한다.
+  loader: ({ context }) => context.queryClient.query({ ...kioskQueries.current(), staleTime: 0 }),
+  component: Kiosk,
 });
 
-const Main = styled("main", {
+const Screen = styled("main", {
   base: {
-    maxWidth: "2xl",
-    mx: "auto",
-    px: "8",
-    py: "12",
+    minH: "100dvh",
     display: "flex",
     flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
     gap: "6",
+    px: "page",
+    py: "12",
+    bg: "canvas",
+    color: "fg.default",
+    textAlign: "center",
   },
 });
 
-function Home() {
-  const { data: health } = useSuspenseQuery(healthQueries.current());
+const Title = styled("h1", {
+  base: { fontFamily: "heading", fontSize: "kiosk-title", fontWeight: "600" },
+});
+
+const Body = styled("p", { base: { color: "fg.muted", fontSize: "kiosk-body" } });
+
+const QuietButton = styled("button", {
+  base: {
+    borderWidth: "0",
+    borderRadius: "l2",
+    bg: "transparent",
+    color: "fg.muted",
+    fontFamily: "body",
+    fontSize: "kiosk-body",
+    cursor: "pointer",
+    px: "4",
+    py: "3",
+    _hover: { color: "fg.default", bg: "paper.200" },
+    _focusVisible: { outline: "2px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+  },
+});
+
+const PromptLayer = styled("div", {
+  base: {
+    position: "fixed",
+    inset: "0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    bg: "rgba(33, 28, 23, 0.45)",
+    zIndex: "modal",
+  },
+});
+
+const PromptCard = styled("div", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4",
+    maxW: "xl",
+    mx: "6",
+    px: "8",
+    py: "10",
+    borderRadius: "l2",
+    bg: "paper.50",
+    color: "fg.default",
+    textAlign: "center",
+    boxShadow: "lg",
+  },
+});
+
+const PromptTitle = styled("h2", {
+  base: { fontFamily: "heading", fontSize: "kiosk-question", fontWeight: "600" },
+});
+
+function Kiosk() {
+  const { data } = useSuspenseQuery(kioskQueries.current());
+  const queryClient = useQueryClient();
+  const [turn, setTurn] = useState<Turn | null>(null);
+  const [bundle, setBundle] = useState<ReadyBundle | null>(null);
+  const [lastActivityAt, setLastActivityAt] = useState<number | null>(null);
+  const [promptShown, setPromptShown] = useState(false);
+  const [promptVisible, setPromptVisible] = useState(false);
+
+  const resetToStart = useCallback(() => {
+    setTurn(endTurn() ?? null);
+    setBundle(null);
+    setLastActivityAt(null);
+    setPromptShown(false);
+    setPromptVisible(false);
+    void queryClient.refetchQueries({ queryKey: kioskQueries.current().queryKey, exact: true });
+  }, [queryClient]);
+
+  const touch = useCallback(() => {
+    setLastActivityAt(Date.now());
+    setPromptShown(false);
+    setPromptVisible(false);
+  }, []);
+
+  useEffect(() => {
+    if (turn === null || lastActivityAt === null) return;
+
+    const tick = () => {
+      const state = idleState(lastActivityAt, Date.now());
+      if (state === "expired") {
+        resetToStart();
+        return;
+      }
+      if (state === "prompt" && !promptShown) {
+        setPromptShown(true);
+        setPromptVisible(true);
+      }
+    };
+
+    tick();
+    const timer = window.setInterval(tick, 1_000);
+    return () => window.clearInterval(timer);
+  }, [turn, lastActivityAt, promptShown, resetToStart]);
+
+  useWakeLock(turn !== null);
+
+  const start = (nickname: string) => {
+    if (data.status !== "ready") return;
+    setBundle(data);
+    setTurn(startTurn(nickname, crypto.randomUUID()));
+    touch();
+  };
+
+  const respond = (value: ItemScaleValue) => {
+    if (turn === null || bundle === null) return;
+    setTurn(answer(bundle.questionSet, turn, value));
+    touch();
+  };
+
+  const goBack = () => {
+    if (turn === null) return;
+    setTurn(back(turn));
+    touch();
+  };
+
+  if (data.status === "preparing") {
+    return (
+      <Screen>
+        <Title>지금, 어떤 책이 필요한가</Title>
+        <Body role="status" aria-label="준비 상태">
+          질문을 준비하고 있어요. 잠시만 기다려 주세요.
+        </Body>
+      </Screen>
+    );
+  }
+
+  if (turn === null || bundle === null) {
+    return <NicknameStart onStart={start} />;
+  }
+
+  const question = bundle.questionSet.questions[turn.answers.length];
+  const total = bundle.questionSet.questions.length;
+
+  let content: React.ReactNode;
+  if (question === undefined) {
+    // TODO(TICKET-00007): 결과 화면이 들어올 자리. 지금은 차례를 끝내는 길만 둔다.
+    content = (
+      <Screen>
+        <Title>모든 질문에 답했어요</Title>
+        <Body>큐레이터의 문장을 준비하고 있어요.</Body>
+        <QuietButton type="button" onClick={resetToStart}>
+          처음으로
+        </QuietButton>
+      </Screen>
+    );
+  } else if (question.type === "choice") {
+    content = (
+      <Screen>
+        <Title>이 질문은 아직 화면에 없어요</Title>
+        <Body>문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요.</Body>
+        <QuietButton type="button" onClick={resetToStart}>
+          처음으로
+        </QuietButton>
+      </Screen>
+    );
+  } else {
+    content = (
+      <QuestionScreen
+        key={turn.answers.length}
+        questionText={question.text}
+        index={turn.answers.length}
+        total={total}
+        onAnswer={respond}
+        onBack={goBack}
+      />
+    );
+  }
 
   return (
-    <Main>
-      <h1>지금, 어떤 책이 필요한가</h1>
-      <HealthStatus health={health} />
-    </Main>
+    <>
+      {content}
+      {promptVisible ? (
+        <PromptLayer>
+          <PromptCard role="alertdialog" aria-modal="true" aria-labelledby="idle-prompt-title">
+            <PromptTitle id="idle-prompt-title">계속하시겠어요?</PromptTitle>
+            <Body>잠시 응답이 없어요. 이대로 두면 처음 화면으로 돌아갑니다.</Body>
+            <QuietButton type="button" onClick={touch}>
+              계속하기
+            </QuietButton>
+            <QuietButton type="button" onClick={resetToStart}>
+              처음으로
+            </QuietButton>
+          </PromptCard>
+        </PromptLayer>
+      ) : null}
+    </>
   );
 }
