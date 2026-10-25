@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { check, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
 
 import type { BookRelevance } from "../domain/book.ts";
-import type { DrawerCode } from "../domain/question-set.ts";
+import type { DrawerCode, QuestionSetDto } from "../domain/question-set.ts";
 
 /** 책. 서랍별 관련도와 핵심 단어는 모양이 고정된 JSON으로 저장한다. */
 export const books = pgTable("books", {
@@ -13,6 +13,25 @@ export const books = pgTable("books", {
   keywords: jsonb("keywords").$type<string[]>().notNull(),
   reason: text("reason").notNull(),
   question: text("question").notNull(),
+});
+
+/**
+ * 공개된 질문 세트 한 버전. 버전 번호가 기본 키이고 본문은 통째로 읽고 쓴다.
+ * 공개한 행은 고치지 않고 새 버전을 더한다(I-11).
+ */
+export const publishedQuestionSets = pgTable(
+  "published_question_sets",
+  {
+    version: integer("version").primaryKey(),
+    questionSet: jsonb("question_set").$type<QuestionSetDto>().notNull(),
+  },
+  (table) => [check("published_question_sets_version_positive", sql`${table.version} > 0`)],
+);
+
+/** 지금 손님에게 보여 주는 공개 버전을 가리키는 한 줄. */
+export const publishedQuestionSetPointer = pgTable("published_question_set_pointer", {
+  id: text("id").primaryKey(),
+  version: integer("version").notNull(),
 });
 
 /** 서랍 하나에 든 책과 수량. 같은 책을 여러 서랍에 둘 수 있다. */
