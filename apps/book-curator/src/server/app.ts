@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import * as v from "valibot";
 
+import { AdminMeSchema } from "../admin-dto.ts";
 import type { EventStore } from "../application/event-store-ports.ts";
 import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
 import type { PublishedQuestionSetStore } from "../application/published-question-set-ports.ts";
@@ -26,14 +27,6 @@ export interface AppDeps {
   /** 주인 PIN과 짧은 토큰의 저장소. */
   ownerAccessStore: OwnerAccessStore;
 }
-
-const AdminMeSchema = v.strictObject({
-  user: v.strictObject({
-    id: v.string(),
-    name: v.string(),
-    email: v.string(),
-  }),
-});
 
 const OwnerPinBodySchema = v.strictObject({ pin: OwnerPinSchema });
 

@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
+import { getAdminMe } from "./admin-api.ts";
 import { api } from "./api-client.ts";
 import { parseKioskCurrent } from "./domain/kiosk.ts";
 import { unwrap } from "./unwrap.ts";
@@ -19,5 +20,16 @@ export const kioskQueries = {
       queryKey: ["kiosk", "current"],
       queryFn: async () => parseKioskCurrent(await unwrap(api.kiosk.current.get())),
       staleTime: Infinity,
+    }),
+};
+
+/** 운영자 세션. 브라우저에서만 부르고, 401이면 `null`이라 로그인 화면을 보여 준다. */
+export const adminQueries = {
+  me: () =>
+    queryOptions({
+      queryKey: ["admin", "me"],
+      queryFn: getAdminMe,
+      retry: false,
+      staleTime: 0,
     }),
 };
