@@ -26,7 +26,7 @@
 - 다른 앱(`apps/demo`, `apps/solo-quest`, `apps/simple-event`)과 `packages/ui`의
   기존 동작을 바꾸지 않는다. 공용 원시 컴포넌트를 더할 때도 기존 API를 깨지 않는다.
 - 배포, 실제 계정, 실제 책방 데이터, 사람의 확인이 필요한 일은 하지 않는다.
-  막히면 `docs/OPEN-QUESTIONS.md`에 적고 보고한다.
+  막히면 `docs/OPEN-QUESTIONS.md`에 더하고 보고한다. 이미 정해진 것을 다시 묻지 않는다.
 
 ## 3. 경계: parse, don't validate
 
