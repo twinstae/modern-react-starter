@@ -25,8 +25,8 @@ const book = (
     author,
     relevance: relevanceFor(main),
     keywords,
-    reason: `${title}을(를) 지금 건네고 싶은 이유`,
-    question: `${title}을(를) 읽으며 함께 생각해 볼 질문`,
+    reason: "이 책을 지금 건네고 싶은 이유",
+    question: "이 책을 읽고 함께 생각해 볼 질문",
   });
 
 /**
