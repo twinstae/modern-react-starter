@@ -94,6 +94,12 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `domain/rank.ts`: `rank(scores, order)` → `{ first, second, similar }`.
   `SIMILAR_SCORE_GAP = 0.5`는 표시일 뿐 순위를 바꾸지 않는다.
 - `domain/seoyun.fixture.ts`: 기준 응답 예시(B6 1순위, B1 2순위).
+- `domain/analyze.ts`: `analyze(set, rng, recorded?)` → `SetReport`. 표본
+  `SAMPLE_SIZE`(4,000), 서랍별 1순위 10~18% 게이트(`FIRST_RATE_MIN/MAX`), 구조·
+  기준 응답·실패/경고를 한 보고에 담는다. 같은 시드는 같은 보고를 낸다.
+- `domain/random.ts`: `seededRng(seed)` 시드 고정 난수. 도메인에서 `Math.random` 대신 쓴다.
+- `domain/seed-question-set.ts`: MVP 시드 7서랍×2문항과 서윤 기준 응답.
+  `SEED_RANDOM_SEED`(79)로 점검한다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.
 
