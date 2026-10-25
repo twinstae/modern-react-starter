@@ -47,6 +47,18 @@ export const publishedQuestionSetPointer = pgTable("published_question_set_point
   version: integer("version").notNull(),
 });
 
+/**
+ * 아직 공개하지 않은 질문 세트 초안. 공개 버전과 달리 고칠 수 있다.
+ * 본문은 통째로 읽고 쓰는 jsonb다.
+ */
+export const questionSetDrafts = pgTable("question_set_drafts", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  questionSet: jsonb("question_set").$type<QuestionSetDto>().notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 /** 서랍 하나에 든 책과 수량. 같은 책을 여러 서랍에 둘 수 있다. */
 export const drawerStock = pgTable(
   "drawer_stock",
