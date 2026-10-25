@@ -37,13 +37,15 @@ describe("PGlite 파일 DB의 주인 잠금", () => {
 
     try {
       const first = await openDatabase(dataDir);
-      await setOwnerPin(createDrizzleOwnerAccessStore(first), "4821");
-      const unlocked = await unlockOwner(
-        createDrizzleOwnerAccessStore(first),
-        "4821",
-        NOW,
-        () => "reopen-token",
-      );
+      const firstStore = createDrizzleOwnerAccessStore(first);
+      await setOwnerPin(firstStore, "4821");
+      const unlocked = await unlockOwner(firstStore, "4821", NOW, () => "reopen-token");
+
+      const stored = await firstStore.read();
+      expect(stored?.pinHash).not.toContain("4821");
+      const tokenRows = await first.select({ tokenHash: ownerTokens.tokenHash }).from(ownerTokens);
+      expect(tokenRows.map((row) => row.tokenHash)).not.toContain("reopen-token");
+
       await first.$client.close();
       if (unlocked.status !== "unlocked") throw new Error("토큰을 만들지 못했습니다");
 
