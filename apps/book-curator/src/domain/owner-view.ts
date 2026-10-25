@@ -1,4 +1,4 @@
-import type { Book } from "./book.ts";
+import type { ShelfBook } from "./book.ts";
 import type { Curation } from "./curate.ts";
 import type { Drawer, DrawerCode } from "./question-set.ts";
 import {
@@ -51,10 +51,14 @@ export interface DrawerBookView {
   readonly quantity: number;
 }
 
-const indexBooks = (books: readonly Book[]): ReadonlyMap<string, Book> =>
+const indexBooks = (books: readonly ShelfBook[]): ReadonlyMap<string, ShelfBook> =>
   new Map(books.map((book) => [book.id, book]));
 
-function requireBook(books: ReadonlyMap<string, Book>, bookId: string, drawer: DrawerCode): Book {
+function requireBook(
+  books: ReadonlyMap<string, ShelfBook>,
+  bookId: string,
+  drawer: DrawerCode,
+): ShelfBook {
   const book = books.get(bookId);
   if (book === undefined) throw new MissingBookError(bookId, drawer);
   return book;
@@ -63,7 +67,7 @@ function requireBook(books: ReadonlyMap<string, Book>, bookId: string, drawer: D
 const drawerViews = (
   curation: Curation,
   stock: readonly DrawerStockEntry[],
-  books: ReadonlyMap<string, Book>,
+  books: ReadonlyMap<string, ShelfBook>,
 ): OwnerDrawerView[] =>
   curation.drawers.map((drawer) => {
     const entries = stock.filter(({ drawer: code }) => code === drawer.code);
@@ -101,7 +105,7 @@ const findDrawer = (drawers: readonly OwnerDrawerView[], code: DrawerCode): Owne
 export function ownerView(
   curation: Curation,
   stock: readonly DrawerStockEntry[],
-  books: readonly Book[],
+  books: readonly ShelfBook[],
 ): OwnerView {
   const byId = indexBooks(books);
   const drawers = drawerViews(curation, stock, byId);
@@ -124,7 +128,7 @@ export function ownerView(
 export function drawerBooksView(
   drawer: Pick<Drawer, "code">,
   stock: readonly DrawerStockEntry[],
-  books: readonly Book[],
+  books: readonly ShelfBook[],
 ): readonly DrawerBookView[] {
   const byId = indexBooks(books);
 

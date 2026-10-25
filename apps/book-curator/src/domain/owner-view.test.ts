@@ -2,6 +2,7 @@ import { expectTypeOf } from "vite-plus/test";
 import { describe, expect, it } from "vite-plus/test";
 
 import { curate } from "./curate.ts";
+import type { Book, ShelfBook } from "./book.ts";
 import {
   drawerBooksView,
   ownerView,
@@ -85,6 +86,20 @@ describe("ownerView", () => {
 
     expect(() => ownerView(curation, stock, SHELF_BOOKS)).toThrow(MissingBookError);
     expect(() => ownerView(curation, stock, SHELF_BOOKS)).toThrow("book-x");
+  });
+
+  it("공개 서가의 최소 책(ShelfBook)만으로 view를 만든다", () => {
+    const shelfBooks: ShelfBook[] = SHELF_BOOKS.map(({ id, title, author, reason, question }) => ({
+      id,
+      title,
+      author,
+      reason,
+      question,
+    }));
+
+    expect(ownerView(curation, SHELF_STOCK, shelfBooks).recommended.books).toHaveLength(3);
+    expect(drawerBooksView({ code: "B6" }, SHELF_STOCK, shelfBooks)).toHaveLength(3);
+    expectTypeOf<Book>().toMatchTypeOf<ShelfBook>();
   });
 });
 

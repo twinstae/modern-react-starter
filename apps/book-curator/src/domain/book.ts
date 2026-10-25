@@ -25,6 +25,20 @@ export type BookRelevance = v.InferOutput<typeof BookRelevanceSchema>;
 
 export const BookIdSchema = TextSchema;
 
+/**
+ * 서랍 속 책 안내와 주인 확인이 함께 쓰는 최소한의 책. 관련도·핵심 단어 없이
+ * 손님에게 보이는 필드만 가진다. 공개 키오스크 서가에서도 그대로 만들 수 있다.
+ */
+export const ShelfBookSchema = v.strictObject({
+  id: BookIdSchema,
+  title: TextSchema,
+  author: TextSchema,
+  reason: TextSchema,
+  question: TextSchema,
+});
+
+export type ShelfBook = v.InferOutput<typeof ShelfBookSchema>;
+
 const KeywordsSchema = v.pipe(
   v.array(TextSchema),
   v.minLength(1),
@@ -35,13 +49,9 @@ const KeywordsSchema = v.pipe(
 );
 
 export const BookSchema = v.strictObject({
-  id: BookIdSchema,
-  title: TextSchema,
-  author: TextSchema,
+  ...ShelfBookSchema.entries,
   relevance: BookRelevanceSchema,
   keywords: KeywordsSchema,
-  reason: TextSchema,
-  question: TextSchema,
 });
 
 export type Book = v.InferOutput<typeof BookSchema>;
