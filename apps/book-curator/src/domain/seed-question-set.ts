@@ -11,13 +11,13 @@ import { parseQuestionSet, type QuestionSet } from "./question-set.ts";
  */
 export const SEED_QUESTION_SET_INPUT = {
   drawers: [
-    { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0 },
-    { code: "B1", name: "나를 들여다보는 책", order: 1 },
-    { code: "B4", name: "사회를 이해하는 책", order: 2 },
-    { code: "B2", name: "관계를 다시 생각하는 책", order: 3 },
-    { code: "B7", name: "잠시 멈춰 생각하는 책", order: 4 },
-    { code: "B3", name: "다른 삶을 만나는 책", order: 5 },
-    { code: "B5", name: "세계를 넓혀 보는 책", order: 6 },
+    { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0, mark: "[가정] 1번 · 열쇠 1" },
+    { code: "B1", name: "나를 들여다보는 책", order: 1, mark: "[가정] 2번 · 열쇠 2" },
+    { code: "B4", name: "사회를 이해하는 책", order: 2, mark: "[가정] 3번 · 열쇠 3" },
+    { code: "B2", name: "관계를 다시 생각하는 책", order: 3, mark: "[가정] 4번 · 열쇠 4" },
+    { code: "B7", name: "잠시 멈춰 생각하는 책", order: 4, mark: "[가정] 5번 · 열쇠 5" },
+    { code: "B3", name: "다른 삶을 만나는 책", order: 5, mark: "[가정] 6번 · 열쇠 6" },
+    { code: "B5", name: "세계를 넓혀 보는 책", order: 6, mark: "[가정] 7번 · 열쇠 7" },
   ],
   questions: [
     {

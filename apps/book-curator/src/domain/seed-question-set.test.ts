@@ -23,6 +23,15 @@ describe("MVP 시드 질문 세트", () => {
         ).length,
       })),
     ).toStrictEqual(SEED_QUESTION_SET.drawers.map(({ code }) => ({ drawer: code, items: 2 })));
+    expect(SEED_QUESTION_SET.drawers.map(({ mark }) => mark)).toStrictEqual([
+      "[가정] 1번 · 열쇠 1",
+      "[가정] 2번 · 열쇠 2",
+      "[가정] 3번 · 열쇠 3",
+      "[가정] 4번 · 열쇠 4",
+      "[가정] 5번 · 열쇠 5",
+      "[가정] 6번 · 열쇠 6",
+      "[가정] 7번 · 열쇠 7",
+    ]);
     expect(SEED_QUESTION_SET.baselines).toStrictEqual([
       {
         name: "서윤",
