@@ -81,6 +81,22 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - 스타일·CSS·DOM 구조를 단언하지 않는다. 레이아웃은 Storybook 태블릿 뷰포트에서 본다.
 - 타이머는 시각·타이머를 주입해 순수 코어에서 확인한다.
 
+## 5.1 이미 있는 코어 (다음 티켓이 다시 만들지 말 것)
+
+- `domain/question-set.ts`: `QuestionSetSchema`, `parseQuestionSet`, `toQuestionSetDto`,
+  `toQuestionSetJson`, `parseQuestionSetJson`, `drawerOrder`. 모르는 필드는 거부한다.
+- `domain/answer.ts`: `AnswerValueSchema`(1~5 정수 또는 선택지 id), `answerValueFor`,
+  `InvalidAnswerError`.
+- `domain/turn.ts`: `startTurn(nickname)`, `answer(set, turn, value)`, `back(turn)`,
+  `endTurn()`(→ `undefined`). 답 목록 하나가 진행 상태다.
+- `domain/scoring/`: `scoreItemMean`, `scoreChoiceWeight`, 공통 `DrawerScores`.
+  문항 없는 서랍은 점수 0으로 남는다. 동점의 "5의 수"는 반전 후 유효값 기준이다.
+- `domain/rank.ts`: `rank(scores, order)` → `{ first, second, similar }`.
+  `SIMILAR_SCORE_GAP = 0.5`는 표시일 뿐 순위를 바꾸지 않는다.
+- `domain/seoyun.fixture.ts`: 기준 응답 예시(B6 1순위, B1 2순위).
+- `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
+- `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.
+
 ## 6. 도구와 명령
 
 이 저장소는 Vite+를 쓴다. `vite`/`vitest` 대신 `vp dev`, `vp test`, `vp build`,
