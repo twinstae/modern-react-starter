@@ -20,13 +20,14 @@ describe("키오스크 묶음", () => {
 
     expect(publicSet).not.toHaveProperty("baselines");
     expect(publicSet.drawers).toStrictEqual(
-      SEED_QUESTION_SET.drawers.map(({ code, name, order, statement, mark, reason }) => ({
+      SEED_QUESTION_SET.drawers.map(({ code, name, order, statement, mark, reason, keywords }) => ({
         code,
         name,
         order,
         statement,
         mark,
         reason,
+        keywords,
       })),
     );
     expect(publicSet.drawers.map(({ mark }) => mark)).toStrictEqual(

@@ -52,6 +52,7 @@ const drawersArbitrary: fc.Arbitrary<Drawer[]> = fc
           statement: null,
           mark: null,
           reason: null,
+          keywords: [],
         })),
       ),
   );

@@ -81,13 +81,14 @@ export function toPublicQuestionSetDto(set: QuestionSet): PublicQuestionSetDto {
   const { questions } = toQuestionSetDto(set);
 
   return {
-    drawers: set.drawers.map(({ code, name, order, statement, mark, reason }) => ({
+    drawers: set.drawers.map(({ code, name, order, statement, mark, reason, keywords }) => ({
       code,
       name,
       order,
       statement,
       mark,
       reason,
+      keywords: [...keywords],
     })),
     questions,
     scoring: { type: set.scoring.type },

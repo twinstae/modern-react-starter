@@ -22,6 +22,7 @@ const withDefaults = (input: typeof SEOYUN_SET_INPUT) => ({
     statement: null,
     mark: null,
     reason: null,
+    keywords: [],
   })),
   statementTemplate: DEFAULT_STATEMENT_TEMPLATE,
   secondStatementTemplate: DEFAULT_SECOND_STATEMENT_TEMPLATE,
@@ -124,6 +125,18 @@ describe("QuestionSetSchema", () => {
       parseQuestionSet({
         ...SEOYUN_SET_INPUT,
         questions: [{ ...SEOYUN_SET_INPUT.questions[0], points: 3 }],
+      }),
+    ).toThrow();
+  });
+
+  it("서랍 핵심 단어는 없으면 빈 배열이고 겹치면 거부한다", () => {
+    const set = parseQuestionSet(SEOYUN_SET_INPUT);
+
+    expect(set.drawers.map(({ keywords }) => keywords)).toStrictEqual([[], [], []]);
+    expect(() =>
+      parseQuestionSet({
+        ...SEOYUN_SET_INPUT,
+        drawers: [{ ...SEOYUN_SET_INPUT.drawers[0], keywords: ["삶", "삶"] }],
       }),
     ).toThrow();
   });

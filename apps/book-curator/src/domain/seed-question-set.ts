@@ -19,6 +19,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 0,
       mark: "1번 · 열쇠 1",
       reason: "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요.",
+      keywords: ["일", "생활", "실천", "변화"],
     },
     {
       code: "B1",
@@ -26,6 +27,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 1,
       mark: "2번 · 열쇠 2",
       reason: "나를 들여다보고 싶은 날에는 천천히 자신에게 말을 거는 책을 권해요.",
+      keywords: ["나", "마음", "정체성", "취향", "삶"],
     },
     {
       code: "B4",
@@ -33,6 +35,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 2,
       mark: "3번 · 열쇠 3",
       reason: "세상이 답답할 때는 그 구조를 함께 들여다보는 책이 좋아요.",
+      keywords: ["계급", "불평등", "노동", "정치", "제도"],
     },
     {
       code: "B2",
@@ -40,6 +43,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 3,
       mark: "4번 · 열쇠 4",
       reason: "가까운 사람과의 거리가 고민될 때 관계를 다시 그려 보는 책이 도움이 돼요.",
+      keywords: ["가족", "친구", "사랑", "거리", "관계"],
     },
     {
       code: "B7",
@@ -47,6 +51,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 4,
       mark: "5번 · 열쇠 5",
       reason: "잠시 멈추고 싶을 때는 곁에 오래 두고 읽는 책이 잘 어울려요.",
+      keywords: ["철학", "사유", "예술", "관찰"],
     },
     {
       code: "B3",
@@ -54,6 +59,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 5,
       mark: "6번 · 열쇠 6",
       reason: "다른 삶이 궁금할 때는 내가 모르던 사람의 하루를 만나는 책을 권해요.",
+      keywords: ["타인", "경험", "노동", "다양한 삶"],
     },
     {
       code: "B5",
@@ -61,6 +67,7 @@ export const SEED_QUESTION_SET_INPUT = {
       order: 6,
       mark: "7번 · 열쇠 7",
       reason: "세계를 넓히고 싶을 때는 역사와 과학을 건너오는 책이 좋아요.",
+      keywords: ["역사", "문화", "과학", "환경", "문명"],
     },
   ],
   questions: [

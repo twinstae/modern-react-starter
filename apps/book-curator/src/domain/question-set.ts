@@ -25,6 +25,7 @@ export const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
  * `statement`가 있으면 공통 상태 문장 템플릿 대신 그 문장을 쓴다. 없으면 `null`이다.
  * `mark`는 주인이 서랍을 알아보는 번호·열쇠 표시다. 없으면 `null`이다.
  * `reason`은 큐레이터가 이 서랍을 권하는 이유다. 없으면 `null`이다.
+ * `keywords`는 관리자 화면에서 서랍을 설명하는 핵심 단어다. 없으면 빈 배열로 정규화한다.
  * 서랍 수는 데이터다. 코드가 B1~B7이어도 질문 세트가 2개만 가질 수 있다.
  */
 export const DrawerSchema = v.strictObject({
@@ -34,6 +35,13 @@ export const DrawerSchema = v.strictObject({
   statement: v.optional(v.nullable(TextSchema), null),
   mark: v.optional(v.nullable(TextSchema), null),
   reason: v.optional(v.nullable(TextSchema), null),
+  keywords: v.optional(
+    v.pipe(
+      v.array(TextSchema),
+      v.check((keywords) => unique(keywords), "핵심 단어는 겹치지 않아야 합니다"),
+    ),
+    [],
+  ),
 });
 
 export type Drawer = v.InferOutput<typeof DrawerSchema>;
@@ -221,13 +229,14 @@ export function drawerOrder(set: QuestionSet): DrawerCode[] {
 /** 도메인 값을 화면·저장소와 주고받을 평범한 객체로 옮긴다. */
 export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
   return {
-    drawers: set.drawers.map(({ code, name, order, statement, mark, reason }) => ({
+    drawers: set.drawers.map(({ code, name, order, statement, mark, reason, keywords }) => ({
       code,
       name,
       order,
       statement,
       mark,
       reason,
+      keywords: [...keywords],
     })),
     questions: set.questions.map((question) =>
       question.type === "item"
