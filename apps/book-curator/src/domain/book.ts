@@ -25,24 +25,41 @@ export type BookRelevance = v.InferOutput<typeof BookRelevanceSchema>;
 
 export const BookIdSchema = TextSchema;
 
+const KeywordsSchema = v.pipe(
+  v.array(TextSchema),
+  v.minLength(1),
+  v.check(
+    (keywords) => new Set(keywords).size === keywords.length,
+    "핵심 단어는 겹치지 않아야 합니다",
+  ),
+);
+
 export const BookSchema = v.strictObject({
   id: BookIdSchema,
   title: TextSchema,
   author: TextSchema,
   relevance: BookRelevanceSchema,
-  keywords: v.pipe(
-    v.array(TextSchema),
-    v.minLength(1),
-    v.check(
-      (keywords) => new Set(keywords).size === keywords.length,
-      "핵심 단어는 겹치지 않아야 합니다",
-    ),
-  ),
+  keywords: KeywordsSchema,
   reason: TextSchema,
   question: TextSchema,
 });
 
 export type Book = v.InferOutput<typeof BookSchema>;
+
+/**
+ * 운영자가 입력하는 책. id는 서버가 만들므로 받지 않는다.
+ * 부록 C의 항목과 같고, 서가 밖의 값(가격·재고·서랍)은 받지 않는다.
+ */
+export const BookInputSchema = v.strictObject({
+  title: TextSchema,
+  author: TextSchema,
+  relevance: BookRelevanceSchema,
+  keywords: KeywordsSchema,
+  reason: TextSchema,
+  question: TextSchema,
+});
+
+export type BookInput = v.InferOutput<typeof BookInputSchema>;
 
 /** 책을 화면·저장소와 주고받는 평범한 객체. 도메인 값을 그대로 흘리지 않는다. */
 export type BookDto = v.InferOutput<typeof BookSchema>;
@@ -50,6 +67,11 @@ export type BookDto = v.InferOutput<typeof BookSchema>;
 /** 경계에서 책을 파싱한다. 관련도는 서랍 일곱 개가 모두 0~5 정수여야 한다. */
 export function parseBook(value: unknown): Book {
   return v.parse(BookSchema, value);
+}
+
+/** 운영자 입력을 경계에서 파싱한다. id가 없고, 모르는 필드는 거부한다. */
+export function parseBookInput(value: unknown): BookInput {
+  return v.parse(BookInputSchema, value);
 }
 
 /** 도메인 값을 DTO로 옮긴다. 관련도와 핵심 단어는 새 객체·배열로 복사한다. */

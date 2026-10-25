@@ -6,11 +6,14 @@ import { DrawerCodeSchema, type Drawer, type DrawerCode } from "./question-set.t
 /** 서랍마다 수량 1 이상인 책이 이만큼은 있어야 공개하고 열쇠를 건넬 수 있다(I-7). */
 export const MINIMUM_SHELF_KINDS = 3;
 
+/** 서랍 속 수량. 0은 "없음"이고 줄을 지우지 않는다(R-9). */
+export const DrawerQuantitySchema = v.pipe(v.number(), v.integer(), v.minValue(0));
+
 /** 서랍 하나에 든 책 한 권과 수량. 같은 책을 여러 서랍에 둘 수 있다. */
 export const DrawerStockEntrySchema = v.strictObject({
   drawer: DrawerCodeSchema,
   bookId: BookIdSchema,
-  quantity: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  quantity: DrawerQuantitySchema,
 });
 
 export type DrawerStockEntry = v.InferOutput<typeof DrawerStockEntrySchema>;
@@ -43,17 +46,21 @@ export function shelfKinds(stock: readonly DrawerStockEntry[], drawer: DrawerCod
 }
 
 /** 게이트를 통과하지 못한 서랍. 이름을 함께 돌려 화면이 서랍 코드를 보이지 않게 한다. */
-export interface ShelfGateLacking {
-  readonly drawer: DrawerCode;
-  readonly name: string;
-  readonly kinds: number;
-}
+export const ShelfGateLackingSchema = v.strictObject({
+  drawer: DrawerCodeSchema,
+  name: v.pipe(v.string(), v.minLength(1)),
+  kinds: v.pipe(v.number(), v.integer(), v.minValue(0)),
+});
+
+export type ShelfGateLacking = v.InferOutput<typeof ShelfGateLackingSchema>;
 
 /** 서가 게이트 결과. 부족한 서랍이 없어야 통과다. */
-export interface ShelfGateResult {
-  readonly passed: boolean;
-  readonly lacking: readonly ShelfGateLacking[];
-}
+export const ShelfGateSchema = v.strictObject({
+  passed: v.boolean(),
+  lacking: v.array(ShelfGateLackingSchema),
+});
+
+export type ShelfGateResult = v.InferOutput<typeof ShelfGateSchema>;
 
 /**
  * 서랍마다 수량 1 이상인 책이 3종 이상인지 본다(I-7).

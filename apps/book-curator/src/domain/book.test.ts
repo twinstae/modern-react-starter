@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseBook, parseBookJson, toBookDto, toBookJson, type Book } from "./book.ts";
+import {
+  parseBook,
+  parseBookInput,
+  parseBookJson,
+  toBookDto,
+  toBookJson,
+  type Book,
+} from "./book.ts";
 
 const BOOK_INPUT = {
   id: "book-b6-1",
@@ -46,6 +53,18 @@ describe("BookSchema", () => {
 
   it("모르는 필드를 거부한다", () => {
     expect(() => parseBook({ ...BOOK_INPUT, stock: 2 })).toThrow();
+  });
+
+  it("운영자 입력은 id 없이 받고, id·가격 같은 서가 밖 필드는 거부한다", () => {
+    const { id: _id, ...input } = BOOK_INPUT;
+
+    expect(parseBookInput(input)).toStrictEqual(input);
+    expect(() => parseBookInput(BOOK_INPUT)).toThrow();
+    expect(() => parseBookInput({ ...input, price: 12000 })).toThrow();
+    expect(() =>
+      parseBookInput({ ...input, relevance: { ...input.relevance, B3: 1.5 } }),
+    ).toThrow();
+    expect(() => parseBookInput({ ...input, keywords: [] })).toThrow();
   });
 
   it("DTO와 JSON 왕복에도 같은 책이다", () => {
