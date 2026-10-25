@@ -16,10 +16,7 @@ import {
  * 표시(`mark`)는 묶음에 넣지 않는다.
  */
 export const PublicQuestionSetSchema = v.strictObject({
-  drawers: v.pipe(
-    v.array(v.omit(DrawerSchema, ["mark"])),
-    v.minLength(2),
-  ),
+  drawers: v.pipe(v.array(v.omit(DrawerSchema, ["mark"])), v.minLength(2)),
   questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
   scoring: ScoringSchema,
   statementTemplate: TextSchema,

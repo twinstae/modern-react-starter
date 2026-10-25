@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import {
-  parseKioskCurrent,
-  toKioskCurrentDto,
-  toPublicQuestionSetDto,
-} from "./kiosk.ts";
+import { parseKioskCurrent, toKioskCurrentDto, toPublicQuestionSetDto } from "./kiosk.ts";
 import { SEED_QUESTION_SET } from "./seed-question-set.ts";
 
 describe("키오스크 묶음", () => {
@@ -29,7 +25,9 @@ describe("키오스크 묶음", () => {
   });
 
   it("공개 묶음을 받으면 기준 응답이 빈 질문 세트로 파싱한다", () => {
-    const bundle = parseKioskCurrent(toKioskCurrentDto({ version: 2, questionSet: SEED_QUESTION_SET }));
+    const bundle = parseKioskCurrent(
+      toKioskCurrentDto({ version: 2, questionSet: SEED_QUESTION_SET }),
+    );
 
     expect(bundle.status).toBe("ready");
     if (bundle.status !== "ready") throw new Error("준비된 묶음이어야 합니다");

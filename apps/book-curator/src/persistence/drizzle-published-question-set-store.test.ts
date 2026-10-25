@@ -38,7 +38,10 @@ describe("PGlite 파일 DB의 공개 버전", () => {
 
       const second = await openDatabase(dataDir);
       const reopened = createDrizzlePublishedQuestionSetStore(second);
-      expect(await reopened.current()).toStrictEqual({ version: 1, questionSet: SEED_QUESTION_SET });
+      expect(await reopened.current()).toStrictEqual({
+        version: 1,
+        questionSet: SEED_QUESTION_SET,
+      });
       expect(await reopened.get(1)).toStrictEqual({ version: 1, questionSet: SEED_QUESTION_SET });
       await second.$client.close();
     } finally {

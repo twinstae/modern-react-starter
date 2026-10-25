@@ -87,10 +87,7 @@
       "compositePrimaryKeys": {
         "drawer_stock_drawer_book_id_pk": {
           "name": "drawer_stock_drawer_book_id_pk",
-          "columns": [
-            "drawer",
-            "book_id"
-          ]
+          "columns": ["drawer", "book_id"]
         }
       },
       "uniqueConstraints": {},

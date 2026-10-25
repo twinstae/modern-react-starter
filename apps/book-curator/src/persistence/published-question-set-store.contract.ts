@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import type { PublishedQuestionSetStore } from "../application/published-question-set-ports.ts";
-import {
-  parseQuestionSet,
-  toQuestionSetDto,
-  type QuestionSet,
-} from "../domain/question-set.ts";
+import { parseQuestionSet, toQuestionSetDto, type QuestionSet } from "../domain/question-set.ts";
 import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
 
 const changedFirstQuestion = (set: QuestionSet): QuestionSet =>
