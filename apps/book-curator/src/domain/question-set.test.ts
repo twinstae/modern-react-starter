@@ -7,10 +7,23 @@ import {
   toQuestionSetJson,
 } from "./question-set.ts";
 import { SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
+import {
+  DEFAULT_CITATION_TEMPLATES,
+  DEFAULT_STATEMENT_TEMPLATE,
+  UnknownJosaError,
+  UnknownPlaceholderError,
+} from "./statement.ts";
+
+const withDefaults = (input: typeof SEOYUN_SET_INPUT) => ({
+  ...input,
+  drawers: input.drawers.map((drawer) => ({ ...drawer, statement: null })),
+  statementTemplate: DEFAULT_STATEMENT_TEMPLATE,
+  citationTemplates: DEFAULT_CITATION_TEMPLATES,
+});
 
 describe("QuestionSetSchema", () => {
   it("서랍·문항·채점 방식을 파싱해 도메인 값으로 만든다", () => {
-    expect(parseQuestionSet(SEOYUN_SET_INPUT)).toStrictEqual(SEOYUN_SET_INPUT);
+    expect(parseQuestionSet(SEOYUN_SET_INPUT)).toStrictEqual(withDefaults(SEOYUN_SET_INPUT));
   });
 
   it("관리자가 정한 서랍 순서를 돌려준다", () => {
@@ -149,6 +162,85 @@ describe("BaselineAnswersSchema", () => {
       parseQuestionSet({
         ...input,
         baselines: [{ ...input.baselines[0], note: "가정" }],
+      }),
+    ).toThrow();
+  });
+});
+
+describe("문장 템플릿", () => {
+  const input = {
+    ...SEOYUN_SET_INPUT,
+    statementTemplate: "{nickname} 님에게는 지금 {drawer:이/가} 필요한 상태입니다",
+    citationTemplates: {
+      item: "‘{quote}’에 그렇다고 답하신",
+      choice: "‘{quote}’를 고르신",
+    },
+    drawers: [
+      {
+        code: "B6",
+        name: "삶의 방식을 바꾸는 책",
+        order: 0,
+        statement: "삶을 바꾸고 싶은 {nickname} 님에게 {drawer:이/가} 있습니다",
+      },
+      { code: "B1", name: "나를 들여다보는 책", order: 1, statement: null },
+      { code: "B2", name: "관계를 다시 생각하는 책", order: 2, statement: null },
+    ],
+  } as const;
+
+  it("빠진 문장 템플릿은 기본값으로 채워 한 가지 모양으로 만든다", () => {
+    const set = parseQuestionSet(SEOYUN_SET_INPUT);
+
+    expect(set.statementTemplate).toBe(DEFAULT_STATEMENT_TEMPLATE);
+    expect(set.citationTemplates).toStrictEqual(DEFAULT_CITATION_TEMPLATES);
+    expect(set.drawers.map(({ statement }) => statement)).toStrictEqual([null, null, null]);
+  });
+
+  it("공통·서랍별·인용 문형을 담고 JSON으로 왕복한다", () => {
+    const set = parseQuestionSet(input);
+
+    expect(set.drawers[0].statement).toBe(input.drawers[0].statement);
+    expect(set.drawers[1].statement).toBeNull();
+    expect(parseQuestionSetJson(toQuestionSetJson(set))).toStrictEqual(set);
+  });
+
+  it("공통 템플릿과 서랍별 문장의 모르는 자리표시를 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({ ...input, statementTemplate: "{nickname} 님에게 {shelf}" }),
+    ).toThrow(UnknownPlaceholderError);
+
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        drawers: [
+          { ...input.drawers[0], statement: "{drawer:이/가} {mood}" },
+          input.drawers[1],
+          input.drawers[2],
+        ],
+      }),
+    ).toThrow(UnknownPlaceholderError);
+  });
+
+  it("모르는 조사가 든 템플릿을 거부한다", () => {
+    expect(() => parseQuestionSet({ ...input, statementTemplate: "{drawer:이/가/는}" })).toThrow(
+      UnknownJosaError,
+    );
+  });
+
+  it("인용 문형의 모르는 자리표시를 거부한다", () => {
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        citationTemplates: { ...input.citationTemplates, item: "‘{quote}’ {drawer}" },
+      }),
+    ).toThrow(UnknownPlaceholderError);
+  });
+
+  it("빈 문장 템플릿과 서랍별 문장은 거부한다", () => {
+    expect(() => parseQuestionSet({ ...input, statementTemplate: "   " })).toThrow();
+    expect(() =>
+      parseQuestionSet({
+        ...input,
+        drawers: [{ ...input.drawers[0], statement: "  " }, input.drawers[1], input.drawers[2]],
       }),
     ).toThrow();
   });

@@ -45,7 +45,12 @@ const drawersArbitrary: fc.Arbitrary<Drawer[]> = fc
         ),
       )
       .map(([codes, orders]) =>
-        codes.map((code, index) => ({ code, name: NAMES[code], order: orders[index] })),
+        codes.map((code, index) => ({
+          code,
+          name: NAMES[code],
+          order: orders[index],
+          statement: null,
+        })),
       ),
   );
 

@@ -1,6 +1,12 @@
 import * as v from "valibot";
 
 import { answerValueFor, AnswerValueSchema } from "./answer.ts";
+import {
+  assertCitationTemplate,
+  assertStatementTemplate,
+  DEFAULT_CITATION_TEMPLATES,
+  DEFAULT_STATEMENT_TEMPLATE,
+} from "./statement.ts";
 
 /** 서랍 코드. 질문 세트와 서가가 서로를 가리키는 유일한 값이고 이용자에게는 보이지 않는다. */
 export const DrawerCodeSchema = v.picklist(["B1", "B2", "B3", "B4", "B5", "B6", "B7"]);
@@ -13,12 +19,14 @@ const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
 
 /**
  * 서랍 정의. `order`는 관리자가 정한 순서이고, 동점이 끝까지 갈 때만 쓰인다.
+ * `statement`가 있으면 공통 상태 문장 템플릿 대신 그 문장을 쓴다. 없으면 `null`이다.
  * 서랍 수는 데이터다. 코드가 B1~B7이어도 질문 세트가 2개만 가질 수 있다.
  */
 export const DrawerSchema = v.strictObject({
   code: DrawerCodeSchema,
   name: TextSchema,
   order: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  statement: v.optional(v.nullable(TextSchema), null),
 });
 
 export type Drawer = v.InferOutput<typeof DrawerSchema>;
@@ -95,6 +103,14 @@ export const ScoringSchema = v.variant("type", [
 
 export type Scoring = v.InferOutput<typeof ScoringSchema>;
 
+/** 권하는 이유 앞에 붙이는 직접 인용 문형. 문항형과 선택형을 따로 둔다. */
+export const CitationTemplatesSchema = v.strictObject({
+  item: TextSchema,
+  choice: TextSchema,
+});
+
+export type CitationTemplates = v.InferOutput<typeof CitationTemplatesSchema>;
+
 const drawerCodes = (drawers: readonly Drawer[]) => new Set(drawers.map(({ code }) => code));
 
 /**
@@ -121,6 +137,8 @@ export const QuestionSetSchema = v.pipe(
     ),
     questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
     scoring: ScoringSchema,
+    statementTemplate: v.optional(TextSchema, DEFAULT_STATEMENT_TEMPLATE),
+    citationTemplates: v.optional(CitationTemplatesSchema, DEFAULT_CITATION_TEMPLATES),
     baselines: v.optional(v.array(BaselineAnswersSchema), []),
   }),
   v.check((set) => {
@@ -164,11 +182,26 @@ export const QuestionSetSchema = v.pipe(
 
 export type QuestionSet = v.InferOutput<typeof QuestionSetSchema>;
 
+function assertTemplates(set: QuestionSet): void {
+  assertStatementTemplate(set.statementTemplate);
+  for (const drawer of set.drawers) {
+    if (drawer.statement !== null) assertStatementTemplate(drawer.statement);
+  }
+  assertCitationTemplate(set.citationTemplates.item);
+  assertCitationTemplate(set.citationTemplates.choice);
+}
+
 /** 질문 세트 JSON의 모양. 직렬화는 이 모양으로만 옮긴다. */
 export type QuestionSetDto = v.InferOutput<typeof QuestionSetSchema>;
 
+/**
+ * 질문 세트를 파싱하고 문장 템플릿의 자리표시까지 확인한다. 모르는 자리표시나 조사는
+ * 이름 있는 오류로 거부한다. 템플릿이 빠지면 기본 문형으로 채운다.
+ */
 export function parseQuestionSet(value: unknown): QuestionSet {
-  return v.parse(QuestionSetSchema, value);
+  const set = v.parse(QuestionSetSchema, value);
+  assertTemplates(set);
+  return set;
 }
 
 /** 관리자가 정한 서랍 순서. 동점이 끝까지 갈 때 rank가 쓴다. */
@@ -179,7 +212,12 @@ export function drawerOrder(set: QuestionSet): DrawerCode[] {
 /** 도메인 값을 화면·저장소와 주고받을 평범한 객체로 옮긴다. */
 export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
   return {
-    drawers: set.drawers.map(({ code, name, order }) => ({ code, name, order })),
+    drawers: set.drawers.map(({ code, name, order, statement }) => ({
+      code,
+      name,
+      order,
+      statement,
+    })),
     questions: set.questions.map((question) =>
       question.type === "item"
         ? {
@@ -199,6 +237,11 @@ export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
           },
     ),
     scoring: { type: set.scoring.type },
+    statementTemplate: set.statementTemplate,
+    citationTemplates: {
+      item: set.citationTemplates.item,
+      choice: set.citationTemplates.choice,
+    },
     baselines: set.baselines.map(({ name, answers, expected }) => ({
       name,
       answers: [...answers],
