@@ -3,18 +3,41 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { styled } from "styled-system/jsx";
 
+import { api } from "../api-client.ts";
+import { createEventQueue } from "../application/event-queue.ts";
 import { NicknameStart } from "../components/nickname-start.tsx";
 import { QuestionScreen, type ItemScaleValue } from "../components/question-screen.tsx";
 import { ResultScreen } from "../components/result-screen.tsx";
 import { curate, type Curation } from "../domain/curate.ts";
+import {
+  funnel,
+  type FunnelEvent,
+  type FunnelState,
+  type FunnelTransition,
+  openFunnel,
+  questionIdAt,
+  type ResetReason,
+} from "../domain/funnel.ts";
 import { idleState } from "../domain/idle.ts";
 import type { KioskBundle } from "../domain/kiosk.ts";
 import type { QuestionSet } from "../domain/question-set.ts";
 import { answer, back, endTurn, startTurn, type Turn } from "../domain/turn.ts";
 import { useWakeLock } from "../lib/use-wake-lock.ts";
 import { kioskQueries } from "../queries.ts";
+import { unwrap } from "../unwrap.ts";
 
 type ReadyBundle = Extract<KioskBundle, { status: "ready" }>;
+
+const KIOSK_NAME = (() => {
+  const configured: unknown = import.meta.env.VITE_KIOSK_NAME;
+  if (typeof configured !== "string") return "계산대 옆";
+  const trimmed = configured.trim();
+  return trimmed === "" ? "계산대 옆" : trimmed;
+})();
+
+const sendEvents = async (events: readonly FunnelEvent[]) => {
+  await unwrap(api.events.post({ events: [...events] }));
+};
 
 export const Route = createFileRoute("/")({
   // 처음 화면에 들어올 때마다 새 묶음을 받는다. 차례가 시작되면 그 묶음을 메모리에 고정한다.
@@ -108,22 +131,60 @@ function curateTurn(questionSet: QuestionSet, turn: Turn): Curation | null {
 function Kiosk() {
   const { data } = useSuspenseQuery(kioskQueries.current());
   const queryClient = useQueryClient();
+  const [queue] = useState(() => createEventQueue(sendEvents));
   const [turn, setTurn] = useState<Turn | null>(null);
   const [bundle, setBundle] = useState<ReadyBundle | null>(null);
+  const [funnelState, setFunnelState] = useState<FunnelState | null>(null);
   const [lastActivityAt, setLastActivityAt] = useState<number | null>(null);
   const [promptShown, setPromptShown] = useState(false);
   const [promptVisible, setPromptVisible] = useState(false);
   const [ownerCheckNotice, setOwnerCheckNotice] = useState<string | null>(null);
 
-  const resetToStart = useCallback(() => {
-    setTurn(endTurn() ?? null);
-    setBundle(null);
-    setLastActivityAt(null);
-    setPromptShown(false);
-    setPromptVisible(false);
-    setOwnerCheckNotice(null);
-    void queryClient.refetchQueries({ queryKey: kioskQueries.current().queryKey, exact: true });
-  }, [queryClient]);
+  const emit = useCallback(
+    (transition: FunnelTransition) => {
+      setFunnelState(transition.state);
+      if (transition.events.length === 0) return;
+      queue.enqueue(transition.events);
+      // 전송은 최선이다. 실패해도 큐가 남고, 손님 흐름은 기다리지 않는다.
+      void queue.flush();
+    },
+    [queue],
+  );
+
+  // 묶음이 준비된 순간 세션을 열고 kiosk_ready를 한 번 남긴다. 버전도 이때 고정한다.
+  useEffect(() => {
+    if (data.status !== "ready" || funnelState !== null) return;
+
+    setBundle(data);
+    emit(
+      openFunnel({
+        sessionId: crypto.randomUUID(),
+        kioskName: KIOSK_NAME,
+        version: data.version,
+      }),
+    );
+  }, [data, emit, funnelState]);
+
+  const resetToStart = useCallback(
+    (reason: ResetReason) => {
+      if (funnelState !== null) {
+        emit(funnel(funnelState, { type: "reset", reason }));
+      }
+      setTurn(endTurn() ?? null);
+      setBundle(null);
+      setLastActivityAt(null);
+      setPromptShown(false);
+      setPromptVisible(false);
+      setOwnerCheckNotice(null);
+      void queryClient
+        .refetchQueries({ queryKey: kioskQueries.current().queryKey, exact: true })
+        .finally(() => {
+          // 새 묶음이 온 뒤에 다음 세션을 연다. 그래야 kiosk_ready와 차례의 버전이 같다.
+          setFunnelState(null);
+        });
+    },
+    [emit, funnelState, queryClient],
+  );
 
   const touch = useCallback(() => {
     setLastActivityAt(Date.now());
@@ -137,7 +198,7 @@ function Kiosk() {
     const tick = () => {
       const state = idleState(lastActivityAt, Date.now());
       if (state === "expired") {
-        resetToStart();
+        resetToStart("timeout");
         return;
       }
       if (state === "prompt" && !promptShown) {
@@ -154,21 +215,53 @@ function Kiosk() {
   useWakeLock(turn !== null);
 
   const start = (nickname: string) => {
-    if (data.status !== "ready") return;
-    setBundle(data);
-    setTurn(startTurn(nickname, crypto.randomUUID()));
+    if (bundle === null || funnelState === null || funnelState.phase !== "ready") return;
+    setTurn(startTurn(nickname, funnelState.sessionId));
+    emit(funnel(funnelState, { type: "start" }));
     setOwnerCheckNotice(null);
     touch();
   };
 
   const respond = (value: ItemScaleValue) => {
-    if (turn === null || bundle === null) return;
-    setTurn(answer(bundle.questionSet, turn, value));
+    if (turn === null || bundle === null || funnelState === null) return;
+    if (funnelState.phase !== "started") return;
+
+    const next = answer(bundle.questionSet, turn, value);
+    const transition = funnel(funnelState, {
+      type: "answer",
+      questionId: questionIdAt(turn.answers.length),
+      answer: value,
+      questionIndex: turn.answers.length,
+    });
+    emit(transition);
+
+    if (next.answers.length === bundle.questionSet.questions.length) {
+      const curation = curateTurn(bundle.questionSet, next);
+      if (curation !== null) {
+        emit(
+          funnel(transition.state, {
+            type: "view_result",
+            ranking: curation.ranking,
+            scores: curation.scores,
+          }),
+        );
+      }
+    }
+
+    setTurn(next);
     touch();
   };
 
   const goBack = () => {
-    if (turn === null) return;
+    if (turn === null || funnelState === null) return;
+    if (funnelState.phase !== "started" || turn.answers.length === 0) return;
+
+    emit(
+      funnel(funnelState, {
+        type: "back",
+        questionId: questionIdAt(turn.answers.length - 1),
+      }),
+    );
     setTurn(back(turn));
     touch();
   };
@@ -199,7 +292,7 @@ function Kiosk() {
         <Screen>
           <Title>결과를 준비하지 못했어요</Title>
           <Body>질문에 다시 답하면 큐레이터의 문장을 만들 수 있어요.</Body>
-          <QuietButton type="button" onClick={resetToStart}>
+          <QuietButton type="button" onClick={() => resetToStart("manual")}>
             다시 해 보기
           </QuietButton>
         </Screen>
@@ -209,7 +302,7 @@ function Kiosk() {
           similar={curation.ranking.similar}
           ownerCheckNotice={ownerCheckNotice}
           onOwnerCheck={() => setOwnerCheckNotice("주인 확인은 다음 단계에서 연결됩니다")}
-          onRetake={resetToStart}
+          onRetake={() => resetToStart("manual")}
         />
       );
   } else if (question.type === "choice") {
@@ -217,7 +310,7 @@ function Kiosk() {
       <Screen>
         <Title>이 질문은 아직 화면에 없어요</Title>
         <Body>문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요.</Body>
-        <QuietButton type="button" onClick={resetToStart}>
+        <QuietButton type="button" onClick={() => resetToStart("manual")}>
           처음으로
         </QuietButton>
       </Screen>
@@ -246,7 +339,7 @@ function Kiosk() {
             <QuietButton type="button" onClick={touch}>
               계속하기
             </QuietButton>
-            <QuietButton type="button" onClick={resetToStart}>
+            <QuietButton type="button" onClick={() => resetToStart("manual")}>
               처음으로
             </QuietButton>
           </PromptCard>
