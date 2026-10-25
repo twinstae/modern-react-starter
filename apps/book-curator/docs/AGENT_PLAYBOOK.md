@@ -1,0 +1,131 @@
+# book-curator 작업 에이전트 안내
+
+이 파일은 티켓을 맡은 에이전트가 **작업 전에 읽는** 안내다. 티켓 문서, `TECH_SPEC.md`,
+`CONTEXT.md`와 함께 읽고, 충돌하면 티켓과 스펙이 우선한다.
+
+## 1. 먼저 읽을 것
+
+1. `docs/TICKET-XXXXX.md` — 인수 조건이 곧 할 일 목록이다.
+2. `docs/TECH_SPEC.md` — 경계, 불변식, 검증 전략.
+3. `CONTEXT.md` — 용어. 코드 이름과 문장은 이 용어를 따른다.
+4. 이 파일의 3~7장.
+
+프런트 작업이면 아래를 **반드시** 먼저 읽는다.
+
+- https://github.com/twinstae/siheom-ts/blob/main/.claude/skills/siheom-frontend-test/SKILL.md
+- https://github.com/twinstae/siheom-ts/blob/main/.claude/skills/siheom-frontend-test/API.md
+
+참고 구현은 `apps/solo-quest`(같은 저장소)와 `../qr-quest`(운영자 인증, 저장소)다.
+백엔드 참고는 `../cosmic-js`다. 참고 코드를 그대로 베끼지 말고, 이 앱의 스펙과
+불변식에 맞는지 비판적으로 본다. 참고 구현이 더 복잡하면 더 단순한 쪽을 택한다.
+
+## 2. 범위
+
+- 티켓 하나만 한다. 다음 티켓의 코드를 미리 만들지 않는다.
+- 인수 조건 밖의 기능, 화면, 추상화, 설정을 더하지 않는다.
+- 다른 앱(`apps/demo`, `apps/solo-quest`, `apps/simple-event`)과 `packages/ui`의
+  기존 동작을 바꾸지 않는다. 공용 원시 컴포넌트를 더할 때도 기존 API를 깨지 않는다.
+- 배포, 실제 계정, 실제 책방 데이터, 사람의 확인이 필요한 일은 하지 않는다.
+  막히면 `docs/OPEN-QUESTIONS.md`에 적고 보고한다.
+
+## 3. 경계: parse, don't validate
+
+외부 세계에서 들어온 값은 **그 경계에서 도메인 모델로 파싱**한다. 검증만 하고
+`unknown`/DTO를 안쪽으로 들여보내지 않는다.
+
+- 스키마는 `domain/`에 한 번만 쓴다. 타입은 `v.InferOutput`으로 추론한다.
+- HTTP 요청/응답, 저장소 행, JSON 문서, URL 파라미터는 모두 경계다.
+- 경계마다 **매퍼**를 둔다: DTO → 도메인(파싱), 도메인 → DTO(직렬화).
+  매퍼는 `toDomain`/`toDto`처럼 이름을 붙이고, 파싱 실패는 타입이 있는 오류로 돌려준다.
+- 도메인 타입에 `any`, `unknown`, nullable 뭉치, 화면용 문자열을 넣지 않는다.
+- 새 필드를 받을 때 스키마를 느슨하게 풀지 않는다. 모르는 필드는 거부한다
+  (특히 이벤트: I-12).
+- 직렬화는 도메인 타입을 그대로 `JSON.stringify` 하지 않는다. 필요한 필드만 옮긴다.
+
+## 4. 구조
+
+```
+routes/        컨테이너: query/mutation/타이머를 컴포넌트에 연결. 분기 최소
+components/    표시만: props in, 콜백 out. fetch/저장소/도메인 계산 없음
+queries.ts     서버 상태 query option 한곳
+api-client.ts  eden treaty + unwrap
+server/        HTTP 모양(경로, 상태 코드, 인증). createApp(deps)
+application/   유스케이스: 포트를 받아 코어를 부르고 저장
+domain/        순수 코어. React·elysia·drizzle·Date.now·Math.random 금지
+persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
+```
+
+- 시각과 난수는 인자로 받는다. 테스트는 고정 시각·시드 난수를 넣는다.
+- `createApp(deps)`는 저장소, 시각, id 생성기, 인증을 인자로 받는다.
+- API 테스트는 `server/test-client.ts`의 메모리 의존성과 eden 클라이언트로 부른다.
+- 저장소는 포트 인터페이스 뒤에 숨기고, 메모리와 PGlite 구현에 같은 계약 테스트를
+  돌린다. 계약 테스트를 복사해 두 벌 쓰지 않는다.
+- 손님 화면에 점수·서랍 코드·다른 서랍 책이 새지 않게 **타입으로** 막는다(I-9).
+- 별명은 손님 쪽 메모리에만 둔다. 이벤트·요청·저장소에 별명 자리를 만들지 않는다(I-12).
+
+## 5. 테스트
+
+- TDD: 인수 조건 하나 → 실패하는 테스트 하나 → 통과시키는 최소 코드 → 정리.
+- **단위 테스트로 충분한 것을 컴포넌트 테스트로 만들지 않는다.** 순수 계산, 파싱,
+  상태 전이는 `domain`에서 값으로 확인한다.
+- 컴포넌트 테스트는 사용자가 보는 결과(접근성 이름, 보이는 글, 콜백 인자)만 확인한다.
+  컴포넌트 테스트 수를 늘리는 것이 목표가 아니다.
+- `vi.mock`/`vi.fn`/`spyOn` 금지. 의존성은 인자로 넣고, 가짜 구현은 `*.fake.ts`와
+  `fake-aliases.ts`로 연결한다.
+- 테스트 기대값은 구현에서 다시 계산하지 말고 스펙의 리터럴/픽스처로 적는다.
+  같은 동작을 여러 각도에서 반복하는 테스트는 지운다.
+- 속성 테스트는 생성기를 `*.arbitrary.ts`에 두고, 실패하면 시드를 줄여 원인을 찾는다.
+- 컴포넌트는 스토리의 `args`로 렌더링한다. 스토리와 테스트가 같은 픽스처를 쓴다.
+- `query.*("…")`의 문자열은 실제 접근성 이름과 맞춘다. 없으면 컴포넌트에
+  `<label>`, `aria-label`, `aria-labelledby`를 먼저 붙인다.
+- 스타일·CSS·DOM 구조를 단언하지 않는다. 레이아웃은 Storybook 태블릿 뷰포트에서 본다.
+- 타이머는 시각·타이머를 주입해 순수 코어에서 확인한다.
+
+## 6. 도구와 명령
+
+이 저장소는 Vite+를 쓴다. `vite`/`vitest` 대신 `vp dev`, `vp test`, `vp build`,
+`vp lint`, `vp fmt`를 쓴다. 루트 스크립트도 `vp`를 부른다.
+
+```bash
+# 앱 의존성/코드젠
+cd apps/book-curator && bun run codegen
+
+# 티켓의 좁은 테스트 (예)
+cd apps/book-curator && bun run test run src/domain/turn.test.ts
+
+# 앱 타입 검사
+bunx turbo run typecheck --filter=@repo/book-curator
+
+# 앱 테스트 전체
+bunx turbo run test --filter=@repo/book-curator -- run
+
+# 루트 전체 (마지막 확인)
+bun run ci
+```
+
+- `bun run ci`에는 `solo-quest`의 기존 간헐 실패가 있다. 이번 작업과 무관하면
+  고치지 말고, 실패 이름과 재실행 결과를 보고한다.
+- 앱 포트는 3002, Storybook은 6008을 쓴다.
+- 패키지를 더하면 루트 `package.json`의 `catalog`에 넣고 `bun install` 한다.
+
+## 7. 커밋
+
+작게, 자주. 한 커밋은 한 가지 일만 한다.
+
+- 구조 변경(rename, extract, 설정)과 동작 변경을 같은 커밋에 섞지 않는다.
+- 테스트를 먼저 통과시킨 뒤 커밋한다. 커밋 전 좁은 테스트와 타입 검사를 돌린다.
+- 메시지는 한국어 conventional style: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`,
+  `chore:`. 예: `feat: 손님이 답을 되돌아가면 뒤의 답을 버린다`.
+- **`git add -A`, `git add .` 금지.** 이 저장소에는 다른 작업의 미커밋 파일이 있다.
+  자기 작업 경로만 명시해서 더한다. 루트 공용 파일(`package.json`, `bun.lock`,
+  `CONTEXT-MAP.md`, `README.md`)은 바꾼 경우에만 명시해서 더한다.
+- 티켓 체크박스와 "작업하며 배운 것"은 마지막에 갱신하고 `docs:` 커밋으로 남긴다.
+
+## 8. 끝내고 보고할 것
+
+- 무엇을 만들었는지 3~6줄.
+- 바꾼 파일과 커밋 해시.
+- 돌린 테스트 명령과 결과. 실패가 있으면 이름과 이유.
+- 인수 조건 체크 상태.
+- 막힌 것, 사람이 정해야 할 것, 다음 에이전트가 알아야 할 것.
+- "이번에 어디서 헤맸고, 다음에 무엇을 미리 알면 좋았을지" 1~3줄.
