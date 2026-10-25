@@ -8,6 +8,17 @@ import {
   type DrawerCode,
   type QuestionSet,
 } from "../domain/question-set.ts";
+import {
+  Button as UiButton,
+  Card,
+  Field,
+  FieldError as ErrorText,
+  Input as Control,
+  Label,
+  SectionTitle as CardTitle,
+  StatusText as Status,
+  Textarea as TextArea,
+} from "../ui/index.ts";
 import { QuestionPreview } from "./question-preview.tsx";
 import { StatementPreview } from "./statement-preview.tsx";
 
@@ -54,47 +65,8 @@ const NameField = styled("div", {
   base: { display: "flex", flexDirection: "column", gap: "1", minW: "18rem", flex: "1" },
 });
 
-const Label = styled("label", {
-  base: { fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
-});
-
-const Control = styled("input", {
-  base: {
-    width: "full",
-    minH: "10",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    _focusVisible: { outline: "3px solid", outlineColor: "pine.500", outlineOffset: "2px" },
-  },
-});
-
 const NumberControl = styled(Control, {
   base: { maxW: "8rem", textAlign: "center" },
-});
-
-const TextArea = styled("textarea", {
-  base: {
-    width: "full",
-    minH: "20",
-    px: "3",
-    py: "2",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    lineHeight: "1.5",
-    resize: "vertical",
-    _focusVisible: { outline: "3px solid", outlineColor: "pine.500", outlineOffset: "2px" },
-  },
 });
 
 const Note = styled("p", {
@@ -110,19 +82,6 @@ const Grid = styled("div", {
   },
 });
 
-const Card = styled("section", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    p: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-  },
-});
-
 const CardHeader = styled("div", {
   base: {
     display: "flex",
@@ -133,10 +92,6 @@ const CardHeader = styled("div", {
     borderBottomWidth: "1px",
     borderColor: "paper.300",
   },
-});
-
-const CardTitle = styled("h3", {
-  base: { fontFamily: "heading", fontSize: "kiosk-body", fontWeight: "600", wordBreak: "keep-all" },
 });
 
 const Count = styled("span", {
@@ -174,35 +129,6 @@ const CheckLabel = styled("label", {
   },
 });
 
-const SmallButton = styled("button", {
-  base: {
-    minH: "9",
-    px: "2",
-    borderWidth: "1px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    _hover: { bg: "paper.100" },
-    _disabled: { cursor: "not-allowed", opacity: "0.5" },
-  },
-});
-
-const AddButton = styled(SmallButton, {
-  base: {
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    bg: "pine.600",
-    color: "paper.50",
-    fontWeight: "700",
-    _hover: { bg: "pine.700" },
-  },
-});
-
 const SettingsGrid = styled("div", {
   base: {
     display: "grid",
@@ -212,10 +138,6 @@ const SettingsGrid = styled("div", {
     borderTopWidth: "1px",
     borderColor: "paper.300",
   },
-});
-
-const Field = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "1", minW: "0" },
 });
 
 const WideField = styled(Field, { base: { gridColumn: "1 / -1" } });
@@ -255,34 +177,6 @@ const Select = styled("select", {
     fontFamily: "body",
     fontSize: "kiosk-caption",
   },
-});
-
-const SaveButton = styled("button", {
-  base: {
-    minH: "11",
-    px: "5",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _disabled: { cursor: "wait", opacity: "0.7" },
-  },
-});
-
-const Status = styled("p", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "seal.500", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
 });
 
 const Baseline = styled("details", {
@@ -510,7 +404,9 @@ export function QuestionSetEditor({
     <Form onSubmit={submit} noValidate aria-label="질문 세트 편집">
       <EditorHeader>
         <NameField>
-          <Label htmlFor={`${idPrefix}-name`}>초안 이름</Label>
+          <Label size="sm" htmlFor={`${idPrefix}-name`}>
+            초안 이름
+          </Label>
           <Control
             id={`${idPrefix}-name`}
             type="text"
@@ -522,9 +418,9 @@ export function QuestionSetEditor({
           <Note>
             {questions.length}문항 · 서랍 {drawers.length}개 · 저장은 초안에만 해요
           </Note>
-          <SaveButton type="submit" disabled={pending} aria-busy={pending || undefined}>
+          <UiButton type="submit" disabled={pending} aria-busy={pending || undefined}>
             {pending ? "저장하는 중…" : "초안 저장"}
-          </SaveButton>
+          </UiButton>
         </div>
       </EditorHeader>
 
@@ -580,29 +476,34 @@ export function QuestionSetEditor({
                       />
                       반대
                     </CheckLabel>
-                    <SmallButton
+                    <UiButton
+                      tone="outline"
+                      size="sm"
                       type="button"
                       aria-label={`${drawer.name} ${index + 1}번 문항 빼기`}
                       onClick={() => removeItem(item.key)}
                     >
                       빼기
-                    </SmallButton>
+                    </UiButton>
                   </ItemRow>
                 ))}
               </ItemList>
               <div>
-                <AddButton
+                <UiButton
+                  size="sm"
                   type="button"
                   aria-label={`${drawer.name} 문항 추가`}
                   onClick={() => addItem(drawer.code)}
                 >
                   문항 추가
-                </AddButton>
+                </UiButton>
               </div>
 
               <SettingsGrid>
                 <Field>
-                  <Label htmlFor={`${prefix}-drawer-name`}>서랍 이름</Label>
+                  <Label size="sm" htmlFor={`${prefix}-drawer-name`}>
+                    서랍 이름
+                  </Label>
                   <Control
                     id={`${prefix}-drawer-name`}
                     type="text"
@@ -611,7 +512,9 @@ export function QuestionSetEditor({
                   />
                 </Field>
                 <Field>
-                  <Label htmlFor={`${prefix}-keywords`}>핵심 단어</Label>
+                  <Label size="sm" htmlFor={`${prefix}-keywords`}>
+                    핵심 단어
+                  </Label>
                   <Control
                     id={`${prefix}-keywords`}
                     type="text"
@@ -622,7 +525,9 @@ export function QuestionSetEditor({
                   />
                 </Field>
                 <Field>
-                  <Label htmlFor={`${prefix}-mark`}>서랍 표시</Label>
+                  <Label size="sm" htmlFor={`${prefix}-mark`}>
+                    서랍 표시
+                  </Label>
                   <Control
                     id={`${prefix}-mark`}
                     type="text"
@@ -631,7 +536,9 @@ export function QuestionSetEditor({
                   />
                 </Field>
                 <Field>
-                  <Label htmlFor={`${prefix}-order`}>서랍 순서</Label>
+                  <Label size="sm" htmlFor={`${prefix}-order`}>
+                    서랍 순서
+                  </Label>
                   <NumberControl
                     id={`${prefix}-order`}
                     type="number"
@@ -643,7 +550,9 @@ export function QuestionSetEditor({
                   />
                 </Field>
                 <WideField>
-                  <Label htmlFor={`${prefix}-reason`}>권하는 이유</Label>
+                  <Label size="sm" htmlFor={`${prefix}-reason`}>
+                    권하는 이유
+                  </Label>
                   <TextArea
                     id={`${prefix}-reason`}
                     value={drawer.reason}
@@ -651,7 +560,9 @@ export function QuestionSetEditor({
                   />
                 </WideField>
                 <WideField>
-                  <Label htmlFor={`${prefix}-statement`}>서랍별 상태 문장</Label>
+                  <Label size="sm" htmlFor={`${prefix}-statement`}>
+                    서랍별 상태 문장
+                  </Label>
                   <Control
                     id={`${prefix}-statement`}
                     type="text"
@@ -675,7 +586,9 @@ export function QuestionSetEditor({
         </CardHeader>
         <SettingsGrid>
           <WideField>
-            <Label htmlFor={`${idPrefix}-statement-template`}>첫 상태 문장 틀</Label>
+            <Label size="sm" htmlFor={`${idPrefix}-statement-template`}>
+              첫 상태 문장 틀
+            </Label>
             <Control
               id={`${idPrefix}-statement-template`}
               type="text"
@@ -684,7 +597,9 @@ export function QuestionSetEditor({
             />
           </WideField>
           <WideField>
-            <Label htmlFor={`${idPrefix}-second-template`}>둘째 상태 문장 틀</Label>
+            <Label size="sm" htmlFor={`${idPrefix}-second-template`}>
+              둘째 상태 문장 틀
+            </Label>
             <Control
               id={`${idPrefix}-second-template`}
               type="text"
@@ -693,7 +608,9 @@ export function QuestionSetEditor({
             />
           </WideField>
           <Field>
-            <Label htmlFor={`${idPrefix}-citation-item`}>문항 인용 문형</Label>
+            <Label size="sm" htmlFor={`${idPrefix}-citation-item`}>
+              문항 인용 문형
+            </Label>
             <Control
               id={`${idPrefix}-citation-item`}
               type="text"
@@ -702,7 +619,9 @@ export function QuestionSetEditor({
             />
           </Field>
           <Field>
-            <Label htmlFor={`${idPrefix}-citation-choice`}>선택 인용 문형</Label>
+            <Label size="sm" htmlFor={`${idPrefix}-citation-choice`}>
+              선택 인용 문형
+            </Label>
             <Control
               id={`${idPrefix}-citation-choice`}
               type="text"
@@ -714,7 +633,9 @@ export function QuestionSetEditor({
       </Card>
 
       <PreviewPicker>
-        <Label htmlFor={`${idPrefix}-preview-drawer`}>미리보기 서랍</Label>
+        <Label size="sm" htmlFor={`${idPrefix}-preview-drawer`}>
+          미리보기 서랍
+        </Label>
         <Select
           id={`${idPrefix}-preview-drawer`}
           value={selectedDrawer?.code ?? ""}

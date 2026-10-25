@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import { OWNER_PIN_MAX_LENGTH, OWNER_PIN_MIN_LENGTH } from "../domain/owner-pin.ts";
+import { Button, FieldError, Hint, Input, Label } from "../ui/index.ts";
 
 const Form = styled("form", {
   base: {
@@ -10,59 +11,6 @@ const Form = styled("form", {
     gap: "3",
     width: "full",
     maxW: "24rem",
-  },
-});
-
-const Label = styled("label", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const Input = styled("input", {
-  base: {
-    width: "full",
-    height: "14",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-question",
-    letterSpacing: "0.3em",
-    textAlign: "center",
-    outline: "none",
-    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
-  },
-});
-
-const Hint = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "red.9", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const Submit = styled("button", {
-  base: {
-    width: "full",
-    height: "14",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    transition: "background-color 120ms, translate 120ms, box-shadow 120ms",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
-    _disabled: { cursor: "wait", opacity: "0.7" },
   },
 });
 
@@ -125,7 +73,10 @@ export function PinEntry({
         type="password"
         inputMode="numeric"
         autoComplete="one-time-code"
+        size="lg"
         value={pin}
+        textAlign="center"
+        letterSpacing="0.3em"
         aria-describedby={error === null ? undefined : errorId}
         aria-invalid={error === null ? undefined : true}
         aria-errormessage={error === null ? undefined : errorId}
@@ -138,13 +89,13 @@ export function PinEntry({
         숫자 {OWNER_PIN_MIN_LENGTH}~{OWNER_PIN_MAX_LENGTH}자리
       </Hint>
       {error === null ? null : (
-        <ErrorText id={errorId} role="alert">
+        <FieldError id={errorId} role="alert">
           {error}
-        </ErrorText>
+        </FieldError>
       )}
-      <Submit type="submit" disabled={pending} aria-busy={pending || undefined}>
+      <Button type="submit" size="lg" fullWidth disabled={pending} aria-busy={pending || undefined}>
         {submitLabel}
-      </Submit>
+      </Button>
     </Form>
   );
 }

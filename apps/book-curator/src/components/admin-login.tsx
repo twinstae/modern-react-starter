@@ -2,108 +2,20 @@ import { useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import type { AdminCredentials } from "../admin-dto.ts";
-
-const Screen = styled("main", {
-  base: {
-    minH: "100dvh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    px: "page",
-    py: "12",
-    bg: "canvas",
-    color: "fg.default",
-  },
-});
-
-const Card = styled("section", {
-  base: {
-    width: "full",
-    maxW: "30rem",
-    p: "6",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zineLg",
-    md: { p: "8" },
-  },
-});
-
-const Eyebrow = styled("p", {
-  base: {
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    letterSpacing: "0.12em",
-  },
-});
-
-const Title = styled("h1", {
-  base: {
-    mt: "2",
-    fontFamily: "heading",
-    fontSize: "2xl",
-    fontWeight: "600",
-    wordBreak: "keep-all",
-  },
-});
+import {
+  Button,
+  Card,
+  Eyebrow,
+  Field,
+  FieldError,
+  Input,
+  Label,
+  PageTitle,
+  Screen,
+} from "../ui/index.ts";
 
 const Form = styled("form", {
   base: { display: "flex", flexDirection: "column", gap: "4", mt: "6" },
-});
-
-const Field = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "2" },
-});
-
-const Label = styled("label", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const Input = styled("input", {
-  base: {
-    width: "full",
-    height: "12",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    outline: "none",
-    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
-  },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "red.9", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const Submit = styled("button", {
-  base: {
-    width: "full",
-    height: "14",
-    mt: "2",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    transition: "background-color 120ms, translate 120ms, box-shadow 120ms",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
-    _disabled: { cursor: "wait", opacity: "0.7" },
-  },
 });
 
 /**
@@ -140,10 +52,17 @@ export function AdminLogin({
   };
 
   return (
-    <Screen>
-      <Card aria-labelledby="admin-login-title">
+    <Screen
+      tone="none"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      px="page"
+      py="12"
+    >
+      <Card tone="paper" width="full" maxW="30rem" p="6" aria-labelledby="admin-login-title">
         <Eyebrow>BOOK SHOP 79-1</Eyebrow>
-        <Title id="admin-login-title">운영자 로그인</Title>
+        <PageTitle id="admin-login-title">운영자 로그인</PageTitle>
         <Form onSubmit={submit}>
           <Field>
             <Label htmlFor="admin-email">이메일</Label>
@@ -178,13 +97,19 @@ export function AdminLogin({
             />
           </Field>
           {error === null ? null : (
-            <ErrorText id="admin-login-error" role="alert">
+            <FieldError id="admin-login-error" role="alert">
               {error}
-            </ErrorText>
+            </FieldError>
           )}
-          <Submit type="submit" disabled={pending} aria-busy={pending || undefined}>
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            disabled={pending}
+            aria-busy={pending || undefined}
+          >
             로그인
-          </Submit>
+          </Button>
         </Form>
       </Card>
     </Screen>

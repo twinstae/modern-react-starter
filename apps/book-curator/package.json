@@ -13,7 +13,8 @@
     "test": "vp test",
     "seed:published": "bun scripts/seed-published.ts",
     "seed:operator": "bun scripts/seed-operator.ts",
-    "check": "vp lint && vp fmt --check && tsc --noEmit && vp test run",
+    "check": "bun run check:design && vp lint && vp fmt --check && tsc --noEmit && vp test run",
+    "check:design": "bun scripts/check-design.ts",
     "check:layout": "bun scripts/check-layout.ts"
   },
   "dependencies": {

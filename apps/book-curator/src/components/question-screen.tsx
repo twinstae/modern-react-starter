@@ -1,5 +1,7 @@
 import { styled } from "styled-system/jsx";
 
+import { Button, Caption, Screen } from "../ui/index.ts";
+
 export type ItemScaleValue = 1 | 2 | 3 | 4 | 5;
 
 const SCALE_OPTIONS = [
@@ -9,32 +11,6 @@ const SCALE_OPTIONS = [
   { value: 4, label: "그렇다" },
   { value: 5, label: "매우 그렇다" },
 ] as const satisfies readonly { value: ItemScaleValue; label: string }[];
-
-const Screen = styled("main", {
-  base: {
-    minH: "100dvh",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4",
-    px: "page",
-    py: "6",
-    bg: "canvas",
-    color: "fg.default",
-    borderTopWidth: "8px",
-    borderTopColor: "yellow.500",
-  },
-});
-
-const Progress = styled("p", {
-  base: {
-    alignSelf: "flex-start",
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    letterSpacing: "0.08em",
-  },
-});
 
 const Body = styled("div", {
   base: {
@@ -142,26 +118,6 @@ const ScaleRadio = styled("input", {
   },
 });
 
-const Footer = styled("footer", {
-  base: { display: "flex", justifyContent: "flex-start", maxW: "6xl", width: "full", mx: "auto" },
-});
-
-const BackButton = styled("button", {
-  base: {
-    borderWidth: "0",
-    bg: "transparent",
-    color: "fg.muted",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    fontWeight: "600",
-    cursor: "pointer",
-    px: "3",
-    py: "2",
-    _hover: { color: "fg.default" },
-    _focusVisible: { outline: "3px solid", outlineColor: "pine.600", outlineOffset: "3px" },
-  },
-});
-
 /**
  * 문항 하나. 다섯 칸 중 하나를 누르면 그 값으로 바로 다음 문항을 부른다.
  * 문항 수는 데이터이므로 `total`을 그대로 보여 준다(I-5).
@@ -180,10 +136,16 @@ export function QuestionScreen({
   onBack: () => void;
 }) {
   return (
-    <Screen>
-      <Progress role="status" aria-label="진행">
+    <Screen display="flex" flexDirection="column" gap="4" px="page" py="6">
+      <Caption
+        role="status"
+        aria-label="진행"
+        color="pine.700"
+        fontWeight="700"
+        letterSpacing="0.08em"
+      >
         {index + 1} / {total}
-      </Progress>
+      </Caption>
       <Body>
         <QuestionArea>
           <QuestionText>{questionText}</QuestionText>
@@ -205,11 +167,9 @@ export function QuestionScreen({
           ))}
         </ScaleFieldset>
       </Body>
-      <Footer>
-        <BackButton type="button" aria-label="되돌아가기" onClick={onBack}>
-          ← 이전 질문
-        </BackButton>
-      </Footer>
+      <Button tone="quiet" aria-label="되돌아가기" onClick={onBack} alignSelf="flex-start">
+        ← 이전 질문
+      </Button>
     </Screen>
   );
 }

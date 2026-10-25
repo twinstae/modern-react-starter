@@ -3,6 +3,7 @@ import { styled } from "styled-system/jsx";
 
 import type { DrawerCode } from "../domain/question-set.ts";
 import { MINIMUM_SHELF_KINDS } from "../domain/shelf.ts";
+import { Button, Card, Input, MutedText, WarningBox } from "../ui/index.ts";
 
 export interface DrawerBoardBook {
   readonly bookId: string;
@@ -25,20 +26,6 @@ const Board = styled("div", {
     gridTemplateColumns: "repeat(auto-fit, minmax(19rem, 1fr))",
     gap: "4",
     alignItems: "start",
-  },
-});
-
-const Card = styled("section", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    p: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zine",
   },
 });
 
@@ -79,21 +66,6 @@ const Kinds = styled("p", {
   },
 });
 
-const Warning = styled("p", {
-  base: {
-    px: "2",
-    py: "2",
-    borderWidth: "1px",
-    borderColor: "seal.500",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "seal.500",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-  },
-});
-
 const BookList = styled("ul", {
   base: { display: "flex", flexDirection: "column", gap: "2", m: "0", p: "0", listStyle: "none" },
 });
@@ -123,44 +95,6 @@ const BookAuthor = styled("span", {
   base: { display: "block", color: "fg.muted", fontSize: "kiosk-caption", fontWeight: "400" },
 });
 
-const NumberInput = styled("input", {
-  base: {
-    width: "full",
-    minH: "9",
-    px: "2",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    textAlign: "center",
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
-  },
-});
-
-const RemoveButton = styled("button", {
-  base: {
-    minH: "9",
-    px: "2",
-    borderWidth: "1px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    cursor: "pointer",
-    _hover: { bg: "paper.100" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
-  },
-});
-
-const Empty = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
 const AddRow = styled("div", {
   base: {
     display: "grid",
@@ -187,24 +121,6 @@ const Select = styled("select", {
   },
 });
 
-const AddButton = styled("button", {
-  base: {
-    minH: "9",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    _disabled: { cursor: "not-allowed", opacity: "0.5" },
-  },
-});
-
 function QuantityInput({
   label,
   quantity,
@@ -226,12 +142,14 @@ function QuantityInput({
   };
 
   return (
-    <NumberInput
+    <Input
+      size="sm"
       aria-label={label}
       type="text"
       inputMode="numeric"
       pattern="[0-9]*"
       value={value}
+      textAlign="center"
       onChange={(event) => setValue(event.target.value)}
       onBlur={commit}
       onKeyDown={(event) => {
@@ -269,7 +187,7 @@ function DrawerCard({
   };
 
   return (
-    <Card aria-labelledby={`drawer-${drawer.code}`}>
+    <Card tone="paper" aria-labelledby={`drawer-${drawer.code}`}>
       <CardHeader>
         <div>
           <DrawerName id={`drawer-${drawer.code}`}>{drawer.name}</DrawerName>
@@ -279,14 +197,14 @@ function DrawerCard({
       </CardHeader>
 
       {drawer.kinds < MINIMUM_SHELF_KINDS ? (
-        <Warning role="status" aria-label={`${drawer.name} 3종 미만 경고`}>
-          {drawer.name}은 {MINIMUM_SHELF_KINDS}종 미만이라 이 서랍은 아직 열 수 없어요. 지금{" "}
-          {drawer.kinds}종이에요.
-        </Warning>
+        <WarningBox role="status" aria-label={`${drawer.name} 3종 미만 경고`}>
+          3종 미만 · {drawer.kinds}종. {MINIMUM_SHELF_KINDS - drawer.kinds}종 더 채우면 열 수
+          있어요.
+        </WarningBox>
       ) : null}
 
       {drawer.books.length === 0 ? (
-        <Empty>아직 책이 없어요.</Empty>
+        <MutedText>아직 책이 없어요.</MutedText>
       ) : (
         <BookList>
           {drawer.books.map((book) => (
@@ -301,13 +219,14 @@ function DrawerCard({
                 quantity={book.quantity}
                 onCommit={(quantity) => onSetQuantity(drawer.code, book.bookId, quantity)}
               />
-              <RemoveButton
-                type="button"
+              <Button
+                tone="outline"
+                size="sm"
                 aria-label={`${drawer.name} ${book.title} 빼기`}
                 onClick={() => onRemove(drawer.code, book.bookId)}
               >
                 빼기
-              </RemoveButton>
+              </Button>
             </BookRow>
           ))}
         </BookList>
@@ -326,18 +245,20 @@ function DrawerCard({
             </option>
           ))}
         </Select>
-        <NumberInput
+        <Input
+          size="sm"
           aria-label={`${drawer.name} 새 책 수량`}
           type="number"
           inputMode="numeric"
           min={0}
           step={1}
           value={addQuantity}
+          textAlign="center"
           onChange={(event) => setAddQuantity(event.target.value)}
         />
-        <AddButton type="button" onClick={add} disabled={!canAdd}>
+        <Button size="sm" onClick={add} disabled={!canAdd}>
           넣기
-        </AddButton>
+        </Button>
       </AddRow>
     </Card>
   );

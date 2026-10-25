@@ -3,6 +3,17 @@ import { styled } from "styled-system/jsx";
 
 import { parseBookInput, type Book, type BookInput, type BookRelevance } from "../domain/book.ts";
 import { DRAWER_CODES, type DrawerCode } from "../domain/question-set.ts";
+import {
+  Button,
+  Card,
+  Field,
+  FieldError,
+  Hint,
+  Input,
+  Label,
+  SectionTitle,
+  Textarea,
+} from "../ui/index.ts";
 
 export interface BookFormDrawer {
   readonly code: DrawerCode;
@@ -43,67 +54,12 @@ const Legend = styled("legend", {
   base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
 });
 
-const Field = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "1" },
-});
-
-const Label = styled("label", {
-  base: { fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
-});
-
-const Control = styled("input", {
-  base: {
-    width: "full",
-    minH: "11",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    outline: "none",
-    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
-    _invalid: { borderColor: "seal.500" },
-  },
-});
-
-const TextArea = styled("textarea", {
-  base: {
-    width: "full",
-    minH: "24",
-    px: "3",
-    py: "2",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    lineHeight: "1.5",
-    resize: "vertical",
-    outline: "none",
-    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
-    _invalid: { borderColor: "seal.500" },
-  },
-});
-
 const RelevanceGrid = styled("div", {
   base: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(12rem, 1fr))",
     gap: "3",
   },
-});
-
-const Hint = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "seal.500", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
 });
 
 const Actions = styled("div", {
@@ -115,43 +71,6 @@ const Actions = styled("div", {
     pt: "4",
     borderTopWidth: "2px",
     borderColor: "border",
-  },
-});
-
-const CancelButton = styled("button", {
-  base: {
-    minH: "11",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    _hover: { bg: "paper.100" },
-  },
-});
-
-const Submit = styled("button", {
-  base: {
-    minH: "11",
-    px: "5",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _disabled: { cursor: "wait", opacity: "0.7" },
   },
 });
 
@@ -295,17 +214,19 @@ export function BookForm({
 
     return (
       <Field>
-        <Label htmlFor={idFor(field)}>{label}</Label>
+        <Label size="sm" htmlFor={idFor(field)}>
+          {label}
+        </Label>
         {options.multiline === true ? (
-          <TextArea {...inputProps} />
+          <Textarea {...inputProps} />
         ) : (
-          <Control {...inputProps} type="text" />
+          <Input {...inputProps} type="text" />
         )}
         {options.hint === undefined ? null : <Hint>{options.hint}</Hint>}
         {error === undefined ? null : (
-          <ErrorText id={errorIdFor(field)} role="alert">
+          <FieldError id={errorIdFor(field)} role="alert">
             {error}
-          </ErrorText>
+          </FieldError>
         )}
       </Field>
     );
@@ -328,8 +249,10 @@ export function BookForm({
             const error = errors[field];
             return (
               <Field key={drawer.code}>
-                <Label htmlFor={idFor(field)}>{drawer.name} 관련도</Label>
-                <Control
+                <Label size="sm" htmlFor={idFor(field)}>
+                  {drawer.name} 관련도
+                </Label>
+                <Input
                   id={idFor(field)}
                   name={field}
                   type="number"
@@ -343,9 +266,9 @@ export function BookForm({
                   onChange={(event) => updateRelevance(drawer.code, event.target.value)}
                 />
                 {error === undefined ? null : (
-                  <ErrorText id={errorIdFor(field)} role="alert">
+                  <FieldError id={errorIdFor(field)} role="alert">
                     {error}
-                  </ErrorText>
+                  </FieldError>
                 )}
               </Field>
             );
@@ -353,17 +276,17 @@ export function BookForm({
         </RelevanceGrid>
       </Fieldset>
 
-      {errors.form === undefined ? null : <ErrorText role="alert">{errors.form}</ErrorText>}
+      {errors.form === undefined ? null : <FieldError role="alert">{errors.form}</FieldError>}
 
       <Actions>
         {onCancel === undefined ? null : (
-          <CancelButton type="button" onClick={onCancel}>
+          <Button tone="outline" type="button" onClick={onCancel}>
             취소
-          </CancelButton>
+          </Button>
         )}
-        <Submit type="submit" disabled={pending} aria-busy={pending || undefined}>
+        <Button type="submit" disabled={pending} aria-busy={pending || undefined}>
           {submitLabel}
-        </Submit>
+        </Button>
       </Actions>
     </Form>
   );
@@ -382,15 +305,29 @@ export function BookDialog({
 
   return (
     <Overlay>
-      <Panel role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <Card
+        tone="paper"
+        width="full"
+        maxW="56rem"
+        p="6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <DialogHeader>
-          <DialogTitle id={titleId}>{title}</DialogTitle>
-          <CloseButton type="button" onClick={onClose} aria-label="책 편집 닫기">
+          <SectionTitle id={titleId}>{title}</SectionTitle>
+          <Button
+            tone="outline"
+            size="sm"
+            type="button"
+            onClick={onClose}
+            aria-label="책 편집 닫기"
+          >
             닫기
-          </CloseButton>
+          </Button>
         </DialogHeader>
         {children}
-      </Panel>
+      </Card>
     </Overlay>
   );
 }
@@ -410,19 +347,6 @@ const Overlay = styled("div", {
   },
 });
 
-const Panel = styled("div", {
-  base: {
-    width: "full",
-    maxW: "56rem",
-    p: "6",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zineLg",
-  },
-});
-
 const DialogHeader = styled("div", {
   base: {
     display: "flex",
@@ -432,26 +356,5 @@ const DialogHeader = styled("div", {
     pb: "3",
     borderBottomWidth: "2px",
     borderColor: "border",
-  },
-});
-
-const DialogTitle = styled("h2", {
-  base: { fontFamily: "heading", fontSize: "2xl", fontWeight: "600" },
-});
-
-const CloseButton = styled("button", {
-  base: {
-    minH: "10",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    _hover: { bg: "paper.100" },
   },
 });

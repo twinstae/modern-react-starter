@@ -2,22 +2,12 @@ import { styled } from "styled-system/jsx";
 
 import type { Book } from "../domain/book.ts";
 import type { DrawerCode } from "../domain/question-set.ts";
+import { Button, Card, MutedText } from "../ui/index.ts";
 
 export interface BookListDrawer {
   readonly code: DrawerCode;
   readonly name: string;
 }
-
-const Wrapper = styled("div", {
-  base: {
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zine",
-    overflowX: "auto",
-  },
-});
 
 const Table = styled("table", {
   base: {
@@ -59,35 +49,6 @@ const Title = styled("span", {
 
 const Quiet = styled("span", { base: { color: "fg.muted" } });
 
-const EditButton = styled("button", {
-  base: {
-    minH: "10",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    _hover: { bg: "yellow.100" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
-  },
-});
-
-const Empty = styled("p", {
-  base: {
-    p: "8",
-    color: "fg.muted",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    textAlign: "center",
-  },
-});
-
 /** 관련도가 높은 서랍 두 곳만 서랍 이름으로 요약한다. 코드는 화면에 내보내지 않는다. */
 function relevanceSummary(book: Book, drawers: readonly BookListDrawer[]): string {
   const named = drawers
@@ -117,14 +78,16 @@ export function BookList({
 }) {
   if (books.length === 0) {
     return (
-      <Wrapper>
-        <Empty>아직 등록한 책이 없어요. 책 추가로 첫 책을 넣어 주세요.</Empty>
-      </Wrapper>
+      <Card tone="paper" p="0" overflowX="auto">
+        <MutedText fontSize="kiosk-body" p="8" textAlign="center">
+          아직 등록한 책이 없어요. 책 추가로 첫 책을 넣어 주세요.
+        </MutedText>
+      </Card>
     );
   }
 
   return (
-    <Wrapper>
+    <Card tone="paper" p="0" overflowX="auto">
       <Table>
         <thead>
           <tr>
@@ -151,14 +114,14 @@ export function BookList({
                 <Quiet>{relevanceSummary(book, drawers)}</Quiet>
               </Cell>
               <Cell>
-                <EditButton type="button" onClick={() => onEdit(book)}>
+                <Button tone="outline" size="sm" onClick={() => onEdit(book)}>
                   {book.title} 고치기
-                </EditButton>
+                </Button>
               </Cell>
             </tr>
           ))}
         </tbody>
       </Table>
-    </Wrapper>
+    </Card>
   );
 }

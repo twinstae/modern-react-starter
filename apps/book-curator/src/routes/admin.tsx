@@ -29,19 +29,22 @@ import type { Book, BookInput } from "../domain/book.ts";
 import type { DrawerCode, QuestionSet } from "../domain/question-set.ts";
 import { shelfKinds } from "../domain/shelf.ts";
 import { adminQueries, kioskQueries } from "../queries.ts";
+import {
+  Button,
+  Card,
+  Eyebrow,
+  MutedText,
+  PageTitle,
+  Screen,
+  SectionTitle,
+  StatusText,
+  Tab,
+  TabList,
+  WarningText,
+} from "../ui/index.ts";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
-});
-
-const Screen = styled("main", {
-  base: {
-    minH: "100dvh",
-    px: "page",
-    py: "8",
-    bg: "canvas",
-    color: "fg.default",
-  },
 });
 
 const Centered = styled("div", {
@@ -50,62 +53,6 @@ const Centered = styled("div", {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-  },
-});
-
-const LoginCard = styled("section", {
-  base: {
-    width: "full",
-    maxW: "30rem",
-    p: "6",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zineLg",
-    md: { p: "8" },
-  },
-});
-
-const Eyebrow = styled("p", {
-  base: {
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    letterSpacing: "0.12em",
-  },
-});
-
-const Title = styled("h1", {
-  base: {
-    mt: "2",
-    fontFamily: "heading",
-    fontSize: "2xl",
-    fontWeight: "600",
-    wordBreak: "keep-all",
-  },
-});
-
-const Note = styled("p", {
-  base: { mt: "3", color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const QuietButton = styled("button", {
-  base: {
-    minH: "10",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    _hover: { bg: "paper.100" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
   },
 });
 
@@ -138,41 +85,6 @@ const LoginBar = styled("div", {
   base: { display: "flex", alignItems: "center", gap: "3" },
 });
 
-const TabList = styled("div", {
-  base: {
-    display: "flex",
-    gap: "2",
-    mt: "5",
-    pb: "2",
-    borderBottomWidth: "2px",
-    borderColor: "border",
-  },
-});
-
-const Tab = styled("button", {
-  base: {
-    minH: "11",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "transparent",
-    borderRadius: "l2",
-    bg: "transparent",
-    color: "fg.muted",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    fontWeight: "700",
-    cursor: "pointer",
-    _hover: { bg: "paper.100" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
-    '&[aria-selected="true"]': {
-      borderColor: "border",
-      bg: "yellow.100",
-      color: "fg.default",
-      boxShadow: "zine",
-    },
-  },
-});
-
 const Panel = styled("section", {
   base: { display: "flex", flexDirection: "column", gap: "4", mt: "6" },
 });
@@ -185,38 +97,6 @@ const PanelHeader = styled("div", {
     gap: "3",
     flexWrap: "wrap",
   },
-});
-
-const SectionTitle = styled("h2", {
-  base: { fontFamily: "heading", fontSize: "xl", fontWeight: "600" },
-});
-
-const PrimaryButton = styled("button", {
-  base: {
-    minH: "11",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _disabled: { cursor: "not-allowed", opacity: "0.6" },
-  },
-});
-
-const Status = styled("p", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const Failure = styled("p", {
-  base: { color: "seal.500", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
 });
 
 const PinPanel = styled("section", {
@@ -439,9 +319,9 @@ function AdminPage() {
 
   if (me.isPending) {
     return (
-      <Screen>
+      <Screen tone="none" px="page" py="8">
         <Centered>
-          <Note role="status">운영자 세션을 확인하고 있어요.</Note>
+          <MutedText role="status">운영자 세션을 확인하고 있어요.</MutedText>
         </Centered>
       </Screen>
     );
@@ -449,15 +329,15 @@ function AdminPage() {
 
   if (me.isError) {
     return (
-      <Screen>
+      <Screen tone="none" px="page" py="8">
         <Centered>
-          <LoginCard>
-            <Title>운영자 세션을 읽지 못했어요</Title>
-            <Note>잠시 뒤 다시 열어 주세요.</Note>
-            <QuietButton type="button" onClick={() => void me.refetch()}>
+          <Card tone="paper" width="full" maxW="30rem" p="6" md={{ p: "8" }}>
+            <PageTitle fontSize="2xl">운영자 세션을 읽지 못했어요</PageTitle>
+            <MutedText>잠시 뒤 다시 열어 주세요.</MutedText>
+            <Button tone="outline" size="sm" type="button" onClick={() => void me.refetch()}>
               다시 시도
-            </QuietButton>
-          </LoginCard>
+            </Button>
+          </Card>
         </Centered>
       </Screen>
     );
@@ -471,16 +351,18 @@ function AdminPage() {
   const drawerError = putQuantity.error ?? removeBook.error;
 
   return (
-    <Screen>
+    <Screen tone="none" px="page" py="8">
       <Workspace>
         <Header>
           <div>
             <Eyebrow>BOOK SHOP 79-1</Eyebrow>
-            <Title>운영자 화면</Title>
+            <PageTitle fontSize="2xl">운영자 화면</PageTitle>
             <Email>{me.data.user.email}</Email>
           </div>
           <LoginBar>
-            <QuietButton
+            <Button
+              tone="outline"
+              size="sm"
               type="button"
               onClick={async () => {
                 await signOutAdmin();
@@ -488,7 +370,7 @@ function AdminPage() {
               }}
             >
               로그아웃
-            </QuietButton>
+            </Button>
           </LoginBar>
         </Header>
 
@@ -519,23 +401,25 @@ function AdminPage() {
           <Panel role="tabpanel" id="admin-panel-shelf" aria-labelledby="admin-tab-shelf">
             <PanelHeader>
               <SectionTitle>서가</SectionTitle>
-              <PrimaryButton
+              <Button
                 type="button"
                 onClick={() => setEditing("new")}
                 disabled={shelfData === undefined}
               >
                 책 추가
-              </PrimaryButton>
+              </Button>
             </PanelHeader>
 
-            {shelf.isPending ? <Note role="status">서가를 읽고 있어요.</Note> : null}
-            {shelf.isError ? <Failure role="alert">{messageOf(shelf.error)}</Failure> : null}
+            {shelf.isPending ? <MutedText role="status">서가를 읽고 있어요.</MutedText> : null}
+            {shelf.isError ? (
+              <WarningText role="alert">{messageOf(shelf.error)}</WarningText>
+            ) : null}
             {shelfData === undefined ? null : (
               <>
-                <Note>
+                <MutedText>
                   {shelfData.books.length}권 · 관련도는 참고용이고, 서랍 표시는 질문 세트에서
                   옵니다.
-                </Note>
+                </MutedText>
                 <BookList
                   books={shelfData.books}
                   drawers={shelfData.drawers}
@@ -550,12 +434,16 @@ function AdminPage() {
           <Panel role="tabpanel" id="admin-panel-drawers" aria-labelledby="admin-tab-drawers">
             <PanelHeader>
               <SectionTitle>서랍</SectionTitle>
-              <Note>수량 0은 “없음”이고, 책을 빼면 목록에서 사라져요.</Note>
+              <MutedText>수량 0은 “없음”이고, 책을 빼면 목록에서 사라져요.</MutedText>
             </PanelHeader>
 
-            {shelf.isPending ? <Note role="status">서랍을 읽고 있어요.</Note> : null}
-            {shelf.isError ? <Failure role="alert">{messageOf(shelf.error)}</Failure> : null}
-            {drawerError === null ? null : <Failure role="alert">{messageOf(drawerError)}</Failure>}
+            {shelf.isPending ? <MutedText role="status">서랍을 읽고 있어요.</MutedText> : null}
+            {shelf.isError ? (
+              <WarningText role="alert">{messageOf(shelf.error)}</WarningText>
+            ) : null}
+            {drawerError === null ? null : (
+              <WarningText role="alert">{messageOf(drawerError)}</WarningText>
+            )}
             {shelfData === undefined ? null : (
               <DrawerBoard
                 drawers={drawerBoardDrawers(shelfData)}
@@ -576,13 +464,15 @@ function AdminPage() {
           <Panel role="tabpanel" id="admin-panel-questions" aria-labelledby="admin-tab-questions">
             <PanelHeader>
               <SectionTitle>질문 세트</SectionTitle>
-              <Note>
+              <MutedText>
                 문장을 쓰는 자리예요. 저장은 초안에만 하고, 점검을 통과해야 새 버전으로 공개할 수
                 있어요.
-              </Note>
+              </MutedText>
             </PanelHeader>
 
-            {drafts.isError ? <Failure role="alert">{messageOf(drafts.error)}</Failure> : null}
+            {drafts.isError ? (
+              <WarningText role="alert">{messageOf(drafts.error)}</WarningText>
+            ) : null}
             <QuestionSetDraftBar
               drafts={drafts.data ?? []}
               selectedId={selectedDraftId}
@@ -595,13 +485,13 @@ function AdminPage() {
             />
 
             {selectedDraftId === null ? (
-              <Note>초안을 고르거나, 공개 버전을 복제해 새 초안을 만드세요.</Note>
+              <MutedText>초안을 고르거나, 공개 버전을 복제해 새 초안을 만드세요.</MutedText>
             ) : null}
             {selectedDraftId !== null && draft.isPending ? (
-              <Note role="status">초안을 읽고 있어요.</Note>
+              <MutedText role="status">초안을 읽고 있어요.</MutedText>
             ) : null}
             {selectedDraftId !== null && draft.isError ? (
-              <Failure role="alert">{messageOf(draft.error)}</Failure>
+              <WarningText role="alert">{messageOf(draft.error)}</WarningText>
             ) : null}
             {draft.data === undefined ? null : (
               <QuestionSetEditor
@@ -623,10 +513,10 @@ function AdminPage() {
             )}
 
             {selectedDraftId !== null && report.isPending ? (
-              <Note role="status">점검을 돌리고 있어요.</Note>
+              <MutedText role="status">점검을 돌리고 있어요.</MutedText>
             ) : null}
             {selectedDraftId !== null && report.isError ? (
-              <Failure role="alert">{messageOf(report.error)}</Failure>
+              <WarningText role="alert">{messageOf(report.error)}</WarningText>
             ) : null}
             {report.data === undefined || draft.data === undefined ? null : (
               <SetReportPanel
@@ -642,14 +532,14 @@ function AdminPage() {
             )}
 
             {versions.data === undefined ? null : (
-              <Note>
+              <MutedText>
                 공개 버전:{" "}
                 {versions.data.length === 0
                   ? "아직 없음"
                   : versions.data
                       .map(({ version, questionCount }) => `${version}번(${questionCount}문항)`)
                       .join(" · ")}
-              </Note>
+              </MutedText>
             )}
           </Panel>
         ) : null}
@@ -658,7 +548,9 @@ function AdminPage() {
           <Panel role="tabpanel" id="admin-panel-pin" aria-labelledby="admin-tab-pin">
             <SectionTitle>주인 PIN</SectionTitle>
             <PinPanel>
-              <Note>태블릿에서 주인 확인을 열 때 쓰는 PIN이에요. 정하거나 바꿀 수 있어요.</Note>
+              <MutedText>
+                태블릿에서 주인 확인을 열 때 쓰는 PIN이에요. 정하거나 바꿀 수 있어요.
+              </MutedText>
               <PinEntry
                 title="주인 PIN"
                 submitLabel="PIN 저장"
@@ -669,7 +561,7 @@ function AdminPage() {
                   return failure;
                 }}
               />
-              {pinSaved ? <Status role="status">PIN을 저장했어요.</Status> : null}
+              {pinSaved ? <StatusText role="status">PIN을 저장했어요.</StatusText> : null}
             </PinPanel>
           </Panel>
         ) : null}

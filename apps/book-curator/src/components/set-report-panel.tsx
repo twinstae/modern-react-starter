@@ -2,20 +2,12 @@ import { styled } from "styled-system/jsx";
 
 import type { PublishBlockerDto, QuestionSetDraftReportDto } from "../admin-dto.ts";
 import type { DrawerCode } from "../domain/question-set.ts";
-
-const Panel = styled("section", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "5",
-    p: "5",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zineLg",
-  },
-});
+import {
+  Button,
+  Card as Panel,
+  FieldError as ErrorText,
+  StatusText as Status,
+} from "../ui/index.ts";
 
 const Header = styled("div", {
   base: {
@@ -119,34 +111,6 @@ const Actions = styled("div", {
     borderTopWidth: "2px",
     borderColor: "border",
   },
-});
-
-const PublishButton = styled("button", {
-  base: {
-    minH: "11",
-    px: "5",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    _hover: { bg: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _disabled: { cursor: "not-allowed", opacity: "0.6" },
-  },
-});
-
-const Status = styled("p", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "seal.500", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
 });
 
 const percent = (rate: number): string => `${(rate * 100).toFixed(1)}%`;
@@ -356,13 +320,14 @@ export function SetReportPanel({
 
       <Actions>
         <Note>공개하면 새 버전 번호가 붙고, 지금 공개 중인 버전이 바뀌어요.</Note>
-        <PublishButton
+        <Button
           type="button"
+          size="md"
           onClick={onPublish}
           disabled={!report.canPublish || publishing}
         >
           {publishing ? "공개하는 중…" : "새 버전으로 공개"}
-        </PublishButton>
+        </Button>
       </Actions>
 
       {publishMessage === null ? null : <Status role="status">{publishMessage}</Status>}

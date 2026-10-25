@@ -2,14 +2,24 @@ import { useState } from "react";
 import { styled } from "styled-system/jsx";
 
 import { NICKNAME_MAX_LENGTH, parseNickname } from "../domain/statement.ts";
+import {
+  BodyText,
+  Button,
+  Eyebrow,
+  FieldError,
+  FormCard,
+  Hint,
+  Input,
+  Label,
+  PageTitle,
+  Screen,
+  StatusText,
+} from "../ui/index.ts";
 
-const Screen = styled("main", {
+const NicknameScreen = styled(Screen, {
   base: {
-    minH: "100dvh",
     display: "grid",
     gridTemplateRows: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
-    bg: "canvas",
-    color: "fg.default",
     lg: { gridTemplateColumns: "1.05fr 1fr", gridTemplateRows: "1fr" },
   },
 });
@@ -59,104 +69,8 @@ const Intro = styled("div", {
   },
 });
 
-const Eyebrow = styled("p", {
-  base: {
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    letterSpacing: "0.12em",
-  },
-});
-
-const Title = styled("h1", {
-  base: {
-    fontFamily: "heading",
-    fontSize: "kiosk-title",
-    fontWeight: "600",
-    lineHeight: "1.25",
-    wordBreak: "keep-all",
-  },
-});
-
-const PromiseText = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-body", lineHeight: "1.5" },
-});
-
-const Meta = styled("p", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const Form = styled("form", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4",
-    width: "full",
-    maxW: "32rem",
-    p: "6",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-    boxShadow: "zineLg",
-    md: { p: "8" },
-  },
-});
-
 const LabelRow = styled("div", {
   base: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "3" },
-});
-
-const Label = styled("label", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const Hint = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const NicknameInput = styled("input", {
-  base: {
-    width: "full",
-    height: "16",
-    px: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    outline: "none",
-    _placeholder: { color: "fg.muted" },
-    _focusVisible: { borderColor: "pine.500", outline: "3px solid", outlineColor: "pine.500" },
-  },
-});
-
-const ErrorText = styled("p", {
-  base: { color: "red.9", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const StartButton = styled("button", {
-  base: {
-    width: "full",
-    height: "16",
-    borderWidth: "2px",
-    borderColor: "pine.700",
-    borderRadius: "l2",
-    bg: "pine.600",
-    color: "paper.50",
-    fontFamily: "body",
-    fontSize: "kiosk-body",
-    fontWeight: "700",
-    cursor: "pointer",
-    boxShadow: "zine",
-    transition: "background-color 120ms, translate 120ms, box-shadow 120ms",
-    _hover: { bg: "pine.700", borderColor: "pine.700" },
-    _active: { translate: "2px 2px", boxShadow: "none" },
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "3px" },
-  },
 });
 
 const errorMessage = (nickname: string): string | null => {
@@ -185,17 +99,18 @@ export function NicknameStart({
   const [error, setError] = useState<string | null>(initialError);
 
   return (
-    <Screen>
+    <NicknameScreen tone="none">
       <BrandPanel>
         <Intro>
           <Eyebrow>BOOK SHOP 79-1 · 서촌</Eyebrow>
-          <Title>지금, 어떤 책이 필요한가</Title>
-          <PromiseText>별명으로 시작해요. 별명은 저장하지 않아요.</PromiseText>
-          <Meta>질문 {questionCount}개 · 3분쯤 걸려요</Meta>
+          <PageTitle>지금, 어떤 책이 필요한가</PageTitle>
+          <BodyText color="fg.muted">별명으로 시작해요. 별명은 저장하지 않아요.</BodyText>
+          <StatusText>질문 {questionCount}개 · 3분쯤 걸려요</StatusText>
         </Intro>
       </BrandPanel>
       <FormPanel>
-        <Form
+        <FormCard
+          maxW="32rem"
           onSubmit={(event) => {
             event.preventDefault();
             const problem = errorMessage(nickname);
@@ -207,9 +122,10 @@ export function NicknameStart({
             <Label htmlFor="nickname">별명</Label>
             <Hint id="nickname-hint">실명이 아니어도 괜찮아요</Hint>
           </LabelRow>
-          <NicknameInput
+          <Input
             id="nickname"
             name="nickname"
+            size="lg"
             value={nickname}
             placeholder="예: 토끼"
             autoComplete="off"
@@ -222,13 +138,15 @@ export function NicknameStart({
             }}
           />
           {error === null ? null : (
-            <ErrorText id="nickname-error" role="alert">
+            <FieldError id="nickname-error" role="alert">
               {error}
-            </ErrorText>
+            </FieldError>
           )}
-          <StartButton type="submit">시작하기</StartButton>
-        </Form>
+          <Button type="submit" size="lg" fullWidth>
+            시작하기
+          </Button>
+        </FormCard>
       </FormPanel>
-    </Screen>
+    </NicknameScreen>
   );
 }
