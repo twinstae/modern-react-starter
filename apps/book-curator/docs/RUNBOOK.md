@@ -27,6 +27,10 @@ bun run storybook           # http://localhost:6008
 - 키오스크 흐름: 별명 → 문항 → (TICKET-00007 전까지) 완료 안내 → 처음으로.
 - 유휴 90초에 "계속하시겠어요?"가 한 번 뜨고, 120초에 처음 화면으로 돌아간다.
   이 값은 `src/domain/idle.ts`의 `IDLE_LIMITS`다.
+- 태블릿 이름은 `VITE_KIOSK_NAME`으로 정한다. 예: `VITE_KIOSK_NAME="창가 자리" bun run dev`.
+  없으면 "계산대 옆"이다. 이벤트의 `kioskName`에만 쓰고 사람과 연결하지 않는다.
+- 이벤트는 `POST /api/events`로 `.data/pglite`의 `funnel_events`에 추가 전용으로 쌓인다.
+  전송이 실패해도 화면을 막지 않고, 다음 전송 때 남은 것부터 다시 보낸다.
 
 ## 확인
 
