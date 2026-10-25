@@ -40,7 +40,8 @@ function finalConsonantOf(word: string): number | undefined {
   const trimmed = word.trimEnd();
   if (trimmed.length === 0) throw new InvalidJosaWordError(word);
 
-  const last = trimmed.codePointAt(trimmed.length - 1);
+  let last: number | undefined;
+  for (const char of trimmed) last = char.codePointAt(0);
   if (last === undefined || last < HANGUL_FIRST || last > HANGUL_LAST) return undefined;
 
   const final = (last - HANGUL_FIRST) % FINAL_COUNT;

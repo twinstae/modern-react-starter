@@ -27,6 +27,8 @@ describe("attachJosa", () => {
     expect(attachJosa("Book", "은/는")).toBe("Book는");
     expect(attachJosa("Book", "와/과")).toBe("Book와");
     expect(attachJosa("Book", "(으)로")).toBe("Book로");
+    expect(attachJosa("🐰", "이/가")).toBe("🐰가");
+    expect(attachJosa("🐰", "(으)로")).toBe("🐰로");
   });
 
   it("마지막 글자를 보기 전에 끝의 공백을 지운다", () => {
