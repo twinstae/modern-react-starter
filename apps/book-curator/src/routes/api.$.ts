@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import { openDatabase } from "../persistence/database.ts";
+import { createDrizzleBookStore } from "../persistence/drizzle-book-store.ts";
+import { createDrizzleDrawerStockStore } from "../persistence/drizzle-drawer-stock-store.ts";
 import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
 import { createDrizzleOwnerAccessStore } from "../persistence/drizzle-owner-access-store.ts";
 import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
@@ -19,6 +21,9 @@ const app = createApp({
     secret: process.env.BETTER_AUTH_SECRET,
   }),
   ownerAccessStore: createDrizzleOwnerAccessStore(database),
+  bookStore: createDrizzleBookStore(database),
+  stockStore: createDrizzleDrawerStockStore(database),
+  newBookId: () => `book-${crypto.randomUUID()}`,
 });
 
 const handle = ({ request }: { request: Request }) => app.fetch(request);
