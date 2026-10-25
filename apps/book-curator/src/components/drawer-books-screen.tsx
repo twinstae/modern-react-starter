@@ -17,6 +17,8 @@ const Screen = styled("main", {
     py: "8",
     bg: "canvas",
     color: "fg.default",
+    borderTopWidth: "8px",
+    borderTopColor: "yellow.500",
     textAlign: "left",
   },
 });

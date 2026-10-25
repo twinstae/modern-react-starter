@@ -168,6 +168,15 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   컴포넌트에는 **건넨 서랍만** 넘긴다. T12의 `ownerView`/`drawerBooksView`가 그 경계다.
 - 서랍 표시(`mark`)는 공개 질문 세트 소유다(I-11). `/admin` 서가 화면에서 직접 고치지
   않고, TICKET-00011의 새 버전 공개로 바꾼다.
+- `application/owner-records.ts` + `/api/owner/handover`, `/api/owner/purchases`:
+  주인 토큰이 있어야 하고, 추천·건넨 서랍·버전, 산 책·서랍·버전을 추가 전용으로 남긴다.
+  구매는 `DrawerStockStore.decrease`로 원자적으로 수량을 줄이며 0 밑으로 내리지 않는다.
+- `/` 라우트의 주인 흐름: 결과 → `OwnerPinScreen` → `OwnerCheckScreen` → `DrawerBooksScreen`.
+  토큰은 라우트 메모리에만 두고, 만료되면 PIN으로 돌아가거나 산 책 기록만 잠근다.
+  `ShelfBook`(id/title/author/reason/question)로 공개 서가에서 view를 만들고,
+  손님 책 화면에는 건넨 서랍만 넘긴다. 이벤트는 funnel의 handover/book_view/purchase/reset.
+- 주인 확인은 7서랍을 모두 펼치면 세로로 길어진다. 추천·2순위를 먼저 보이고 나머지
+  서랍은 스크롤/접기로 고른다. 고객 화면(질문·결과·서랍 속 책)은 스크롤 없이 맞춘다.
 - `domain/question-set.arbitrary.ts`: 무작위 질문 세트·답·상호작용열 생성기.
   `curatableAnsweredQuestionSetArbitrary`는 모든 서랍에 긍정 기여가 남는 세트다.
 - `domain/health.ts`는 뼈대 예시다. 새 도메인 규칙과 섞지 않는다.

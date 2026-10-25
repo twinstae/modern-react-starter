@@ -239,6 +239,25 @@ const OtherCard = styled("div", {
   },
 });
 
+const OtherDetails = styled("details", {
+  base: {
+    borderTopWidth: "1px",
+    borderColor: "paper.300",
+    pt: "2",
+  },
+});
+
+const OtherSummary = styled("summary", {
+  base: {
+    cursor: "pointer",
+    color: "pine.700",
+    fontFamily: "body",
+    fontSize: "kiosk-caption",
+    fontWeight: "700",
+    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
+  },
+});
+
 const PrimaryButton = styled("button", {
   base: {
     minH: "14",
@@ -419,8 +438,14 @@ export function OwnerCheckScreen({
                   <DrawerNameSmall>{drawer.name}</DrawerNameSmall>
                   {drawer.mark === null ? null : <DrawerMarkSmall>{drawer.mark}</DrawerMarkSmall>}
                 </DrawerHead>
-                <OwnerBookList books={drawer.books} />
                 <BelowMinimum drawer={drawer} />
+                <OtherDetails>
+                  <OtherSummary>
+                    책 {drawer.books.length}종 ·{" "}
+                    {drawer.books.reduce((sum, book) => sum + book.quantity, 0)}권 보기
+                  </OtherSummary>
+                  <OwnerBookList books={drawer.books} />
+                </OtherDetails>
                 <DrawerButton type="button" onClick={() => onHandover(drawer.drawer)}>
                   {drawer.name} 열쇠 건넴
                 </DrawerButton>

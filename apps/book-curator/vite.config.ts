@@ -20,6 +20,9 @@ export default defineConfig({
     viteReact(),
   ]),
   test: {
+    // PGlite와 브라우저 프로젝트가 동시에 뜨면 메모리가 모자라 브라우저 iframe이
+    // 초기화되지 않는다. 한 워커로 순서대로 돌려 결과를 안정시킨다.
+    maxWorkers: 1,
     projects: [
       {
         extends: true,
@@ -61,6 +64,7 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
+            connectTimeout: 120_000,
             provider: playwright({}),
             instances: [{ browser: "chromium" }],
           },

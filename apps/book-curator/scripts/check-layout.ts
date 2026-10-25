@@ -73,6 +73,22 @@ const cases = [
     viewport: "tabletLandscape",
   },
   {
+    id: "components-owner-check-screen--all-drawers",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+    // 주인 화면은 7서랍을 모두 펼치면 세로로 길어진다. 추천·2순위가 먼저 보이고,
+    // 나머지 서랍은 스크롤해 고르는 것을 의도한다. 고객 화면은 스크롤을 허용하지 않는다.
+    allowScroll: true,
+  },
+  {
+    id: "components-owner-check-screen--all-drawers-landscape",
+    width: 1112,
+    height: 834,
+    viewport: "tabletLandscape",
+    allowScroll: true,
+  },
+  {
     id: "components-drawer-books-screen--three-books",
     width: 834,
     height: 1112,
@@ -173,10 +189,16 @@ for (const testCase of cases) {
   if (metrics.scrollWidth > metrics.clientWidth + 1) {
     failures.push(`${testCase.id}: 가로 스크롤 ${metrics.scrollWidth} > ${metrics.clientWidth}`);
   }
-  if (metrics.mainHeight > testCase.height + 2) {
+  if (
+    !("allowScroll" in testCase && testCase.allowScroll) &&
+    metrics.mainHeight > testCase.height + 2
+  ) {
     failures.push(`${testCase.id}: 화면 높이 초과 ${metrics.mainHeight} > ${testCase.height}`);
   }
-  if (metrics.scrollHeight > metrics.clientHeight + 1) {
+  if (
+    !("allowScroll" in testCase && testCase.allowScroll) &&
+    metrics.scrollHeight > metrics.clientHeight + 1
+  ) {
     failures.push(`${testCase.id}: 세로 스크롤 ${metrics.scrollHeight} > ${metrics.clientHeight}`);
   }
   if (metrics.overlaps.length > 0) {
