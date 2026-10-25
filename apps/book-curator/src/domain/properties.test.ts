@@ -65,7 +65,7 @@ describe("큐레이션 코어 속성", () => {
   it("답하기·되돌아가기 무작위열의 결과는 최종 답을 바로 한 결과와 같다(I-3)", () => {
     fc.assert(
       fc.property(interactionSequenceArbitrary, ({ questionSet, interactions }) => {
-        let turn = startTurn("토끼");
+        let turn = startTurn("토끼", "session-1");
         const finalAnswers: AnswerValue[] = [];
 
         for (const interaction of interactions) {
