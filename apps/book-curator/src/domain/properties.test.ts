@@ -5,6 +5,7 @@ import type { AnswerValue } from "./answer.ts";
 import { analyze } from "./analyze.ts";
 import { cite, NoCitationError } from "./citation.ts";
 import { curate } from "./curate.ts";
+import { drawerBooksView } from "./owner-view.ts";
 import {
   drawerOrder,
   parseQuestionSet,
@@ -19,6 +20,7 @@ import {
   interactionSequenceArbitrary,
   questionSetArbitrary,
 } from "./question-set.arbitrary.ts";
+import { shelvedAnsweredQuestionSetArbitrary } from "./shelf.arbitrary.ts";
 import { seededRng } from "./random.ts";
 import { rank } from "./rank.ts";
 import { scoreChoiceWeight } from "./scoring/choice-weight.ts";
@@ -275,6 +277,51 @@ describe("큐레이션 코어 속성", () => {
           "recommendedStatement",
           "secondStatement",
         ]);
+      }),
+    );
+  });
+
+  it("무작위 서가와 순위에서도 손님 view model에는 건넨 서랍의 책만 있다(I-9)", () => {
+    fc.assert(
+      fc.property(shelvedAnsweredQuestionSetArbitrary, ({ questionSet, answers, books, stock }) => {
+        const curation = curate(questionSet, answers, "토끼");
+        const handed = questionSet.drawers.find(({ code }) => code === curation.ranking.first);
+        if (handed === undefined) throw new Error("추천 서랍이 질문 세트에 없습니다");
+
+        const view = drawerBooksView(handed, stock, books);
+        const expected = stock
+          .filter((entry) => entry.drawer === handed.code)
+          .map((entry) => {
+            const book = books.find(({ id }) => id === entry.bookId);
+            if (book === undefined) throw new Error("서가에 없는 책입니다");
+            return {
+              title: book.title,
+              author: book.author,
+              reason: book.reason,
+              question: book.question,
+              quantity: entry.quantity,
+            };
+          });
+
+        expect(view).toStrictEqual(expected);
+        expect(Object.keys(view[0] ?? {}).sort()).toStrictEqual([
+          "author",
+          "quantity",
+          "question",
+          "reason",
+          "title",
+        ]);
+        expect(JSON.stringify(view)).not.toMatch(/\bB[1-7]\b/);
+
+        const viewTitles = new Set(view.map(({ title }) => title));
+        const handedTitles = new Set(expected.map(({ title }) => title));
+        for (const entry of stock) {
+          if (entry.drawer === handed.code) continue;
+          const book = books.find(({ id }) => id === entry.bookId);
+          if (book === undefined) throw new Error("서가에 없는 책입니다");
+          if (handedTitles.has(book.title)) continue;
+          expect(viewTitles.has(book.title)).toBe(false);
+        }
       }),
     );
   });
