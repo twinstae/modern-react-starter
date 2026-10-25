@@ -33,3 +33,9 @@ packages/
 | `bun run format`    | oxfmt (레포 전체)                                                               |
 
 패키지 하나만: `bunx turbo run test --filter=@repo/ui`, Storybook: `bunx turbo run storybook --filter=@repo/ui`.
+
+## 커밋 전 검사
+
+`git config core.hooksPath .githooks`를 한 번 실행하면, `apps/book-curator` 변경을
+커밋할 때 그 앱의 `bun run check`가 자동으로 돈다. 훅은 다른 앱이 스테이징됐을 때는
+아무것도 하지 않는다.

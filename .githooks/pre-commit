@@ -1,0 +1,13 @@
+#!/bin/sh
+# book-curator 파일이 스테이징되면 앱 게이트를 커밋 전에 돌린다.
+# 활성화: git config core.hooksPath .githooks
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/book-curator/' || true)
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+echo "book-curator: 변경이 있어 bun run check를 돌립니다..."
+cd apps/book-curator
+bun run check
