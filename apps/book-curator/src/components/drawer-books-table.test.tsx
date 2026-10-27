@@ -3,11 +3,7 @@ import { actions, given, query, runSiheom } from "@siheom/react";
 
 import type { BookInput } from "../domain/drawer.ts";
 import { DrawerBooksTable } from "./drawer-books-table.tsx";
-
-const BOOKS = [
-  { id: "b1", title: "삶을 바꾸는 연습", author: "김연습", publisher: "연습출판" },
-  { id: "b2", title: "작은 습관", author: "박습관", publisher: "" },
-];
+import * as Stories from "./drawer-books-table.stories.tsx";
 
 describe("DrawerBooksTable", () => {
   it("책을 고치면 고친 제목·저자·출판사로 남고, 빼면 그 책이 빠진다", async () => {
@@ -17,8 +13,7 @@ describe("DrawerBooksTable", () => {
     await runSiheom(
       given.render(
         <DrawerBooksTable
-          books={BOOKS}
-          onAdd={async () => undefined}
+          {...Stories.drawerBooksTableArgs}
           onUpdate={async (bookId, book) => {
             updated.push([bookId, book]);
             return undefined;

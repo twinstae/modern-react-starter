@@ -3,6 +3,7 @@ import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
 import type { BookInput } from "../domain/drawer.ts";
 import { BookCsvUpload } from "./book-csv-upload.tsx";
+import * as Stories from "./book-csv-upload.stories.tsx";
 
 const csvFile = (text: string) => new File([text], "책.csv", { type: "text/csv" });
 
@@ -38,7 +39,7 @@ describe("BookCsvUpload", () => {
 
   it("틀린 줄이 있으면 몇 번째 줄인지 알려 주고 올리지 않는다", async () => {
     await runSiheom(
-      given.render(<BookCsvUpload onUpload={async () => undefined} />),
+      given.render(<BookCsvUpload {...Stories.bookCsvUploadArgs} />),
       actions.upload(query.label("책 CSV 파일"), csvFile("제목,저자,출판사\n,김연습,\n")),
       assertions.textContent(query.alert("CSV 오류"), "2번째 줄: 제목을 넣어 주세요"),
     );

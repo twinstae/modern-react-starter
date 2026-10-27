@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { actions, given, query, runSiheom } from "@siheom/react";
 
 import { DrawerQuestionsEditor } from "./drawer-questions-editor.tsx";
+import * as Stories from "./drawer-questions-editor.stories.tsx";
 
 describe("DrawerQuestionsEditor", () => {
   it("한 줄에 하나씩 쓴 문항을 빈 줄 없이 저장한다", async () => {
@@ -10,7 +11,7 @@ describe("DrawerQuestionsEditor", () => {
     await runSiheom(
       given.render(
         <DrawerQuestionsEditor
-          questions={["요즘 생활에서 뭔가를 바꾸고 싶다"]}
+          {...Stories.drawerQuestionsEditorArgs}
           onSave={async (questions) => {
             saved.push(questions);
             return undefined;
