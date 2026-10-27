@@ -1,24 +1,13 @@
-import { styled } from "styled-system/jsx";
-
 import { renderCitation, renderStatement } from "../domain/statement.ts";
-import { Card, Eyebrow, MutedText, ReasonText, WarningText } from "../ui/index.ts";
-
-const Title = styled("h3", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const Citation = styled("blockquote", {
-  base: {
-    m: "0",
-    pl: "3",
-    borderLeftWidth: "4px",
-    borderColor: "yellow.500",
-    color: "fg.muted",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    lineHeight: "1.5",
-  },
-});
+import {
+  Card,
+  Citation,
+  Eyebrow,
+  MutedText,
+  ReasonText,
+  SubTitle,
+  WarningText,
+} from "../ui/index.ts";
 
 const rendered = (render: () => string): string => {
   try {
@@ -54,14 +43,14 @@ export function StatementPreview({
 
   return (
     <Card tone="paper" aria-labelledby="statement-preview-title">
-      <Title id="statement-preview-title">상태 문장 미리보기</Title>
+      <SubTitle id="statement-preview-title">상태 문장 미리보기</SubTitle>
       <Eyebrow>첫 문장</Eyebrow>
       <ReasonText>{first}</ReasonText>
       <Eyebrow>둘째 문장</Eyebrow>
       <ReasonText>{second}</ReasonText>
       <MutedText>서랍 이름에 붙는 조사: {josa}</MutedText>
       <Eyebrow>인용</Eyebrow>
-      <Citation>{citation}</Citation>
+      <Citation fontSize="kiosk-caption">{citation}</Citation>
       <MutedText>별명 “{nickname}”과 지금 고른 서랍 이름으로 계산했어요.</MutedText>
       {first === "문형을 확인해 주세요" || second === "문형을 확인해 주세요" ? (
         <WarningText role="alert">문장 틀의 자리표시와 조사를 확인해 주세요.</WarningText>

@@ -1,5 +1,4 @@
 import * as v from "valibot";
-import { styled } from "styled-system/jsx";
 
 import type { QuestionSetDraftSummaryDto } from "../admin-dto.ts";
 import {
@@ -8,6 +7,7 @@ import {
   Field,
   Label,
   MutedText,
+  Row,
   Select,
   SimpleForm,
   StatusText,
@@ -15,10 +15,6 @@ import {
   TextField,
   WarningText,
 } from "../ui/index.ts";
-
-const Row = styled("div", {
-  base: { display: "flex", alignItems: "flex-end", gap: "3", flexWrap: "wrap" },
-});
 
 const DraftNameSchema = v.object({
   name: v.pipe(v.string(), v.trim(), v.minLength(1, "초안 이름을 넣어 주세요")),
@@ -46,7 +42,7 @@ export function QuestionSetDraftBar({
 }) {
   return (
     <Bar aria-label="질문 세트 초안 고르기">
-      <Row>
+      <Row alignItems="flex-end" flexWrap="wrap">
         <Field>
           <Label htmlFor="question-set-draft-select">질문 세트 초안</Label>
           <Select
@@ -79,7 +75,7 @@ export function QuestionSetDraftBar({
           return undefined;
         }}
       >
-        <Row>
+        <Row alignItems="flex-end" flexWrap="wrap">
           <TextField name="name" label="새 초안 이름" placeholder="예: 11월 질문 세트" />
           <SubmitButton disabled={busy}>초안 만들기</SubmitButton>
         </Row>

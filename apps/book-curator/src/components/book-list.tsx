@@ -1,53 +1,11 @@
-import { styled } from "styled-system/jsx";
-
 import type { Book } from "../domain/book.ts";
 import type { DrawerCode } from "../domain/question-set.ts";
-import { Button, Card, MutedText } from "../ui/index.ts";
+import { Button, Card, InlineText, MutedText, Table, Td, Th } from "../ui/index.ts";
 
 export interface BookListDrawer {
   readonly code: DrawerCode;
   readonly name: string;
 }
-
-const Table = styled("table", {
-  base: {
-    width: "full",
-    minW: "48rem",
-    borderCollapse: "collapse",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    textAlign: "left",
-  },
-});
-
-const HeadCell = styled("th", {
-  base: {
-    px: "3",
-    py: "3",
-    borderBottomWidth: "2px",
-    borderColor: "border",
-    color: "pine.700",
-    fontWeight: "700",
-    whiteSpace: "nowrap",
-  },
-});
-
-const Cell = styled("td", {
-  base: {
-    px: "3",
-    py: "3",
-    borderBottomWidth: "1px",
-    borderColor: "paper.300",
-    verticalAlign: "top",
-    overflowWrap: "anywhere",
-  },
-});
-
-const Title = styled("span", {
-  base: { fontFamily: "heading", fontSize: "kiosk-body", fontWeight: "600" },
-});
-
-const Quiet = styled("span", { base: { color: "fg.muted" } });
 
 /** 관련도가 높은 서랍 두 곳만 서랍 이름으로 요약한다. 코드는 화면에 내보내지 않는다. */
 function relevanceSummary(book: Book, drawers: readonly BookListDrawer[]): string {
@@ -91,33 +49,35 @@ export function BookList({
       <Table>
         <thead>
           <tr>
-            <HeadCell scope="col">제목</HeadCell>
-            <HeadCell scope="col">저자</HeadCell>
-            <HeadCell scope="col">핵심 단어</HeadCell>
-            <HeadCell scope="col">관련도 요약</HeadCell>
-            <HeadCell scope="col">
+            <Th scope="col">제목</Th>
+            <Th scope="col">저자</Th>
+            <Th scope="col">핵심 단어</Th>
+            <Th scope="col">관련도 요약</Th>
+            <Th scope="col">
               <span aria-hidden="true">고치기</span>
-            </HeadCell>
+            </Th>
           </tr>
         </thead>
         <tbody>
           {books.map((book) => (
             <tr key={book.id}>
-              <Cell>
-                <Title>{book.title}</Title>
-              </Cell>
-              <Cell>{book.author}</Cell>
-              <Cell>
-                <Quiet>{book.keywords.join(", ")}</Quiet>
-              </Cell>
-              <Cell>
-                <Quiet>{relevanceSummary(book, drawers)}</Quiet>
-              </Cell>
-              <Cell>
+              <Td>
+                <InlineText fontFamily="heading" fontSize="kiosk-body" weight="normal">
+                  {book.title}
+                </InlineText>
+              </Td>
+              <Td>{book.author}</Td>
+              <Td>
+                <InlineText tone="muted">{book.keywords.join(", ")}</InlineText>
+              </Td>
+              <Td>
+                <InlineText tone="muted">{relevanceSummary(book, drawers)}</InlineText>
+              </Td>
+              <Td>
                 <Button tone="outline" size="sm" onClick={() => onEdit(book)}>
                   {book.title} 고치기
                 </Button>
-              </Cell>
+              </Td>
             </tr>
           ))}
         </tbody>

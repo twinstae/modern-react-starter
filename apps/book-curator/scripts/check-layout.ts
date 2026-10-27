@@ -22,19 +22,34 @@ const cases = [
     height: 834,
     viewport: "tabletLandscape",
   },
-  { id: "components-result-screen--seoyun", width: 834, height: 1112, viewport: "tabletPortrait" },
+  {
+    id: "components-result-screen--seoyun",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+    // 결과 화면은 두 칸을 스크롤 스냅으로 넘긴다.
+    allowScroll: true,
+  },
   {
     id: "components-result-screen--seoyun-landscape",
     width: 1112,
     height: 834,
     viewport: "tabletLandscape",
+    allowScroll: true,
   },
-  { id: "components-result-screen--longest", width: 834, height: 1112, viewport: "tabletPortrait" },
+  {
+    id: "components-result-screen--longest",
+    width: 834,
+    height: 1112,
+    viewport: "tabletPortrait",
+    allowScroll: true,
+  },
   {
     id: "components-result-screen--longest-landscape",
     width: 1112,
     height: 834,
     viewport: "tabletLandscape",
+    allowScroll: true,
   },
   {
     id: "components-owner-check-screen--normal",
@@ -78,7 +93,8 @@ const cases = [
     height: 1112,
     viewport: "tabletPortrait",
     // 주인 화면은 7서랍을 모두 펼치면 세로로 길어진다. 추천·2순위가 먼저 보이고,
-    // 나머지 서랍은 스크롤해 고르는 것을 의도한다. 고객 화면은 스크롤을 허용하지 않는다.
+    // 나머지 서랍은 스크롤해 고르는 것을 의도한다. 결과 화면은 두 칸을 스크롤 스냅으로
+    // 넘기고, 나머지 고객 화면은 한 화면에 맞춘다.
     allowScroll: true,
   },
   {

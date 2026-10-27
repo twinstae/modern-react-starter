@@ -1,102 +1,29 @@
-import { styled } from "styled-system/jsx";
-
 import type { DrawerBookView } from "../domain/owner-view.ts";
 import {
+  Badge,
   Button,
   Caption,
   Card,
+  CardHeader,
   CardTitle,
   Eyebrow,
+  Grid,
+  InlineText,
+  List,
+  ListItem,
   MarkText,
   MutedText,
   PageTitle,
   ReasonText,
+  Row,
   Screen,
+  Stack,
 } from "../ui/index.ts";
 
 /** 화면이 책을 구분해 기록을 부를 수 있도록 서랍 속 책 view에 id만 더한다(I-9). */
 export interface DrawerBooksScreenBook extends DrawerBookView {
   readonly bookId: string;
 }
-
-const DrawerScreen = styled(Screen, {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "5",
-    px: "page",
-    py: "8",
-    textAlign: "left",
-  },
-});
-
-const Header = styled("header", {
-  base: { display: "flex", flexDirection: "column", gap: "1", textAlign: "center" },
-});
-
-const TitleRow = styled("div", {
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    justifyContent: "center",
-    gap: "3",
-  },
-});
-
-const BookGrid = styled("section", {
-  base: {
-    display: "grid",
-    gap: "4",
-    width: "full",
-    maxW: "72rem",
-    mx: "auto",
-    alignItems: "stretch",
-    md: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
-    lg: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
-  },
-});
-
-const CardHead = styled("div", {
-  base: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "2" },
-});
-
-const Quantity = styled("span", {
-  base: {
-    flexShrink: "0",
-    px: "2",
-    py: "0.5",
-    borderRadius: "l2",
-    bg: "paper.100",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-  },
-});
-
-const OwnerList = styled("ul", {
-  base: {
-    display: "grid",
-    gap: "2",
-    m: "0",
-    p: "0",
-    listStyle: "none",
-    md: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
-    lg: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
-  },
-});
-
-const OwnerRow = styled("li", {
-  base: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2" },
-});
-
-const Recorded = styled("span", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "800" },
-});
-
-const Footer = styled("footer", {
-  base: { display: "flex", flexDirection: "column", alignItems: "center", gap: "2" },
-});
 
 /**
  * 열쇠를 받은 손님에게 그 서랍의 책만 보여 준다. 책마다 제목·저자·권하는 이유·함께
@@ -121,16 +48,33 @@ export function DrawerBooksScreen({
   onFinish: () => void;
 }) {
   return (
-    <DrawerScreen tone="customer" aria-label="서랍 속 책 안내">
-      <Header>
+    <Screen
+      tone="customer"
+      aria-label="서랍 속 책 안내"
+      display="flex"
+      flexDirection="column"
+      gap="5"
+      px="page"
+      py="8"
+      textAlign="left"
+    >
+      <Stack gap="1" textAlign="center" alignItems="center">
         <Eyebrow>열쇠를 받았어요</Eyebrow>
-        <TitleRow>
+        <Row alignItems="baseline" justifyContent="center" flexWrap="wrap" gap="3">
           <PageTitle>{drawer.name}</PageTitle>
           {drawer.mark === null ? null : <MarkText>{drawer.mark}</MarkText>}
-        </TitleRow>
-      </Header>
+        </Row>
+      </Stack>
 
-      <BookGrid aria-label="서랍 속 책">
+      <Grid
+        columns="three"
+        gap="4"
+        width="full"
+        maxW="72rem"
+        mx="auto"
+        alignItems="stretch"
+        aria-label="서랍 속 책"
+      >
         {books.length === 0 ? (
           <Card tone="paper">
             <CardTitle>아직 이 서랍이 비어 있어요</CardTitle>
@@ -139,19 +83,19 @@ export function DrawerBooksScreen({
         ) : (
           books.map((book) => (
             <Card key={book.bookId} tone="paper">
-              <CardHead>
+              <CardHeader>
                 <CardTitle>{book.title}</CardTitle>
-                <Quantity aria-label={`${book.title} 수량`}>
+                <Badge aria-label={`${book.title} 수량`}>
                   {book.quantity === 0 ? "없음" : `${book.quantity}권`}
-                </Quantity>
-              </CardHead>
+                </Badge>
+              </CardHeader>
               <MutedText>{book.author}</MutedText>
               <ReasonText>{book.reason}</ReasonText>
               <Caption color="fg.muted">{book.question}</Caption>
             </Card>
           ))
         )}
-      </BookGrid>
+      </Grid>
 
       <Card tone="flat" aria-label="산 책 기록">
         <Eyebrow tone="seal">산 책 기록 · 주인만</Eyebrow>
@@ -161,14 +105,19 @@ export function DrawerBooksScreen({
             {notice}
           </MutedText>
         )}
-        <OwnerList>
+        <List layout="three" gap="2">
           {books.map((book) => {
             const recorded = recordedBookIds.includes(book.bookId);
             return (
-              <OwnerRow key={book.bookId}>
+              <ListItem key={book.bookId}>
                 <span>
                   {book.title}
-                  {recorded ? <Recorded role="status"> · 기록했어요</Recorded> : null}
+                  {recorded ? (
+                    <InlineText role="status" tone="pine" weight="extra">
+                      {" "}
+                      · 기록했어요
+                    </InlineText>
+                  ) : null}
                 </span>
                 <Button
                   tone="outline"
@@ -179,17 +128,17 @@ export function DrawerBooksScreen({
                 >
                   이 책 기록
                 </Button>
-              </OwnerRow>
+              </ListItem>
             );
           })}
-        </OwnerList>
+        </List>
       </Card>
 
-      <Footer>
+      <Stack alignItems="center" gap="2">
         <Button type="button" size="lg" onClick={onFinish}>
           처음으로
         </Button>
-      </Footer>
-    </DrawerScreen>
+      </Stack>
+    </Screen>
   );
 }

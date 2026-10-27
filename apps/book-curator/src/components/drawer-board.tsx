@@ -1,9 +1,22 @@
 import { useState } from "react";
-import { styled } from "styled-system/jsx";
 
 import type { DrawerCode } from "../domain/question-set.ts";
 import { MINIMUM_SHELF_KINDS } from "../domain/shelf.ts";
-import { Button, Card, Input, MutedText, Select, WarningBox } from "../ui/index.ts";
+import {
+  AutoGrid,
+  Button,
+  Card,
+  CardHeader,
+  InlineText,
+  Input,
+  List,
+  ListItem,
+  MutedText,
+  Row,
+  Select,
+  SubTitle,
+  WarningBox,
+} from "../ui/index.ts";
 
 export interface DrawerBoardBook {
   readonly bookId: string;
@@ -19,92 +32,6 @@ export interface DrawerBoardDrawer {
   readonly kinds: number;
   readonly books: readonly DrawerBoardBook[];
 }
-
-const Board = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(19rem, 1fr))",
-    gap: "4",
-    alignItems: "start",
-  },
-});
-
-const CardHeader = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: "3",
-    pb: "3",
-    borderBottomWidth: "1px",
-    borderColor: "paper.300",
-  },
-});
-
-const DrawerName = styled("h3", {
-  base: { fontFamily: "heading", fontSize: "kiosk-body", fontWeight: "600", wordBreak: "keep-all" },
-});
-
-const Mark = styled("span", {
-  base: {
-    display: "inline-block",
-    mt: "1",
-    color: "seal.500",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-  },
-});
-
-const Kinds = styled("p", {
-  base: {
-    flexShrink: "0",
-    color: "fg.muted",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    whiteSpace: "nowrap",
-  },
-});
-
-const BookList = styled("ul", {
-  base: { display: "flex", flexDirection: "column", gap: "2", m: "0", p: "0", listStyle: "none" },
-});
-
-const BookRow = styled("li", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) 5rem auto",
-    alignItems: "center",
-    gap: "2",
-    pb: "2",
-    borderBottomWidth: "1px",
-    borderColor: "paper.200",
-  },
-});
-
-const BookTitle = styled("span", {
-  base: {
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    overflowWrap: "anywhere",
-  },
-});
-
-const BookAuthor = styled("span", {
-  base: { display: "block", color: "fg.muted", fontSize: "kiosk-caption", fontWeight: "400" },
-});
-
-const AddRow = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) 4.5rem auto",
-    gap: "2",
-    pt: "2",
-    borderTopWidth: "1px",
-    borderColor: "paper.300",
-  },
-});
 
 function QuantityInput({
   label,
@@ -173,12 +100,18 @@ function DrawerCard({
 
   return (
     <Card tone="paper" aria-labelledby={`drawer-${drawer.code}`}>
-      <CardHeader>
+      <CardHeader divider pb="3" alignItems="flex-start">
         <div>
-          <DrawerName id={`drawer-${drawer.code}`}>{drawer.name}</DrawerName>
-          {drawer.mark === null ? null : <Mark>{drawer.mark}</Mark>}
+          <SubTitle id={`drawer-${drawer.code}`}>{drawer.name}</SubTitle>
+          {drawer.mark === null ? null : (
+            <InlineText tone="seal" weight="strong" display="block" mt="1">
+              {drawer.mark}
+            </InlineText>
+          )}
         </div>
-        <Kinds>{drawer.kinds}종</Kinds>
+        <InlineText tone="muted" flexShrink="0" whiteSpace="nowrap">
+          {drawer.kinds}종
+        </InlineText>
       </CardHeader>
 
       {drawer.kinds < MINIMUM_SHELF_KINDS ? (
@@ -191,12 +124,22 @@ function DrawerCard({
       {drawer.books.length === 0 ? (
         <MutedText>아직 책이 없어요.</MutedText>
       ) : (
-        <BookList>
+        <List gap="2">
           {drawer.books.map((book) => (
-            <BookRow key={book.bookId}>
+            <ListItem
+              key={book.bookId}
+              display="grid"
+              gridTemplateColumns="minmax(0, 1fr) 5rem auto"
+              gap="2"
+              bordered
+            >
               <span>
-                <BookTitle>{book.title}</BookTitle>
-                <BookAuthor>{book.author}</BookAuthor>
+                <InlineText weight="strong" display="block" overflowWrap="anywhere">
+                  {book.title}
+                </InlineText>
+                <InlineText tone="muted" display="block">
+                  {book.author}
+                </InlineText>
               </span>
               <QuantityInput
                 key={`${book.bookId}:${book.quantity}`}
@@ -212,13 +155,14 @@ function DrawerCard({
               >
                 빼기
               </Button>
-            </BookRow>
+            </ListItem>
           ))}
-        </BookList>
+        </List>
       )}
 
-      <AddRow>
+      <Row gap="2" pt="2" borderTopWidth="1px" borderColor="paper.300">
         <Select
+          flex="1"
           aria-label={`${drawer.name}에 책 추가`}
           value={selected}
           onChange={(event) => setSelected(event.target.value)}
@@ -232,6 +176,7 @@ function DrawerCard({
         </Select>
         <Input
           size="sm"
+          width="4.5rem"
           aria-label={`${drawer.name} 새 책 수량`}
           type="number"
           inputMode="numeric"
@@ -244,7 +189,7 @@ function DrawerCard({
         <Button size="sm" onClick={add} disabled={!canAdd}>
           넣기
         </Button>
-      </AddRow>
+      </Row>
     </Card>
   );
 }
@@ -267,7 +212,7 @@ export function DrawerBoard({
   onRemove: (drawer: DrawerCode, bookId: string) => void;
 }) {
   return (
-    <Board>
+    <AutoGrid min="md" alignItems="start">
       {drawers.map((drawer) => (
         <DrawerCard
           key={drawer.code}
@@ -278,6 +223,6 @@ export function DrawerBoard({
           onRemove={onRemove}
         />
       ))}
-    </Board>
+    </AutoGrid>
   );
 }

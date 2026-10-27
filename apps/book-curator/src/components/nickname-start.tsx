@@ -1,5 +1,4 @@
 import * as v from "valibot";
-import { styled } from "styled-system/jsx";
 
 import { NicknameSchema, parseNickname } from "../domain/statement.ts";
 import {
@@ -8,63 +7,11 @@ import {
   PageTitle,
   Screen,
   SimpleForm,
+  Stack,
   StatusText,
   SubmitButton,
   TextField,
 } from "../ui/index.ts";
-
-const NicknameScreen = styled(Screen, {
-  base: {
-    display: "grid",
-    gridTemplateRows: "minmax(0, 0.9fr) minmax(0, 1.1fr)",
-    lg: { gridTemplateColumns: "1.05fr 1fr", gridTemplateRows: "1fr" },
-  },
-});
-
-const BrandPanel = styled("section", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "3",
-    px: "page",
-    py: "10",
-    bg: "yellow.500",
-    borderBottomWidth: "2px",
-    borderColor: "ink.900",
-    textAlign: "center",
-    lg: {
-      alignItems: "flex-start",
-      borderBottomWidth: "0",
-      borderRightWidth: "2px",
-      textAlign: "left",
-    },
-  },
-});
-
-const FormPanel = styled("section", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    px: "page",
-    py: "8",
-    bg: "paper.50",
-  },
-});
-
-const Intro = styled("div", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "3",
-    maxW: "44rem",
-    textAlign: "center",
-    lg: { alignItems: "flex-start", textAlign: "left" },
-  },
-});
 
 const NicknameFormSchema = v.object({ nickname: NicknameSchema });
 
@@ -84,15 +31,50 @@ export function NicknameStart({
   initialError?: string | null;
 }) {
   return (
-    <NicknameScreen tone="none">
-      <BrandPanel>
-        <Intro>
+    <Screen
+      tone="none"
+      display="grid"
+      gridTemplateRows="minmax(0, 0.9fr) minmax(0, 1.1fr)"
+      lg={{ gridTemplateColumns: "1.05fr 1fr", gridTemplateRows: "1fr" }}
+    >
+      <Stack
+        as="section"
+        alignItems="center"
+        justifyContent="center"
+        gap="3"
+        px="page"
+        py="10"
+        bg="yellow.500"
+        borderBottomWidth="2px"
+        borderColor="ink.900"
+        textAlign="center"
+        lg={{
+          alignItems: "flex-start",
+          borderBottomWidth: "0",
+          borderRightWidth: "2px",
+          textAlign: "left",
+        }}
+      >
+        <Stack
+          alignItems="center"
+          gap="3"
+          maxW="44rem"
+          textAlign="center"
+          lg={{ alignItems: "flex-start", textAlign: "left" }}
+        >
           <Eyebrow>BOOK SHOP 79-1 · 서촌</Eyebrow>
           <PageTitle>지금, 어떤 책이 필요한가</PageTitle>
           <StatusText>질문 {questionCount}개 · 3분쯤 걸려요</StatusText>
-        </Intro>
-      </BrandPanel>
-      <FormPanel>
+        </Stack>
+      </Stack>
+      <Stack
+        as="section"
+        alignItems="center"
+        justifyContent="center"
+        px="page"
+        py="8"
+        bg="paper.50"
+      >
         <FormCard maxW="32rem">
           <SimpleForm
             aria-label="별명으로 시작하기"
@@ -115,7 +97,7 @@ export function NicknameStart({
             </SubmitButton>
           </SimpleForm>
         </FormCard>
-      </FormPanel>
-    </NicknameScreen>
+      </Stack>
+    </Screen>
   );
 }

@@ -106,6 +106,23 @@ export const CheckLabel = styled("label", {
   },
 });
 
+/** 여러 입력을 하나의 주제로 묶는 칸. 위쪽 구분선으로 앞 내용과 나눈다. */
+export const Fieldset = styled("fieldset", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "3",
+    mt: "2",
+    pt: "4",
+    borderTopWidth: "1px",
+    borderColor: "paper.300",
+  },
+});
+
+export const Legend = styled("legend", {
+  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
+});
+
 /** 입력 폼을 종이 카드처럼 묶는 틀. 폼 자체가 카드인 화면(별명)에서 쓴다. */
 export const FormCard = styled("div", {
   base: {

@@ -1,42 +1,40 @@
 main: "서랍 속 책 안내"
-  banner:
+  paragraph:
+    "열쇠를 받았어요"
+  heading: "삶의 방식을 바꾸는 책"
+    - properties: [level=1]
+  paragraph:
+    "1번 · 열쇠 1"
+  article:
+    heading: "삶을 바꾸는 연습"
+      - properties: [level=2]
+    "2권"
     paragraph:
-      "열쇠를 받았어요"
-    heading: "삶의 방식을 바꾸는 책"
-      - properties: [level=1]
+      "김연습"
     paragraph:
-      "1번 · 열쇠 1"
-  region: "서랍 속 책"
-    article:
-      heading: "삶을 바꾸는 연습"
-        - properties: [level=2]
-      "2권"
-      paragraph:
-        "김연습"
-      paragraph:
-        "이 책을 지금 건네고 싶은 이유"
-      paragraph:
-        "이 책을 읽고 함께 생각해 볼 질문"
-    article:
-      heading: "하루의 구조"
-        - properties: [level=2]
-      "없음"
-      paragraph:
-        "박구조"
-      paragraph:
-        "이 책을 지금 건네고 싶은 이유"
-      paragraph:
-        "이 책을 읽고 함께 생각해 볼 질문"
-    article:
-      heading: "작은 실험"
-        - properties: [level=2]
-      "1권"
-      paragraph:
-        "이실험"
-      paragraph:
-        "이 책을 지금 건네고 싶은 이유"
-      paragraph:
-        "이 책을 읽고 함께 생각해 볼 질문"
+      "이 책을 지금 건네고 싶은 이유"
+    paragraph:
+      "이 책을 읽고 함께 생각해 볼 질문"
+  article:
+    heading: "하루의 구조"
+      - properties: [level=2]
+    "없음"
+    paragraph:
+      "박구조"
+    paragraph:
+      "이 책을 지금 건네고 싶은 이유"
+    paragraph:
+      "이 책을 읽고 함께 생각해 볼 질문"
+  article:
+    heading: "작은 실험"
+      - properties: [level=2]
+    "1권"
+    paragraph:
+      "이실험"
+    paragraph:
+      "이 책을 지금 건네고 싶은 이유"
+    paragraph:
+      "이 책을 읽고 함께 생각해 볼 질문"
   article: "산 책 기록"
     paragraph:
       "산 책 기록 · 주인만"
@@ -62,6 +60,5 @@ main: "서랍 속 책 안내"
         button: "작은 실험 이 책 기록"
           - states: [disabled=true]
           "이 책 기록"
-  contentinfo:
-    button: "처음으로"
-      - interaction: [focusable=true] [tabbable=true]
+  button: "처음으로"
+    - interaction: [focusable=true] [tabbable=true]

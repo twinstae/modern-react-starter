@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { styled } from "styled-system/jsx";
 
 import {
   clonePublishedQuestionSetDraft,
@@ -33,10 +32,15 @@ import {
   Button,
   Card,
   Eyebrow,
+  InlineText,
   MutedText,
+  PageHeader,
   PageTitle,
+  Row,
   Screen,
+  Section,
   SectionTitle,
+  Stack,
   StatusText,
   Tab,
   TabList,
@@ -45,62 +49,6 @@ import {
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
-});
-
-const Centered = styled("div", {
-  base: {
-    minH: "calc(100dvh - 4rem)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
-
-const Workspace = styled("div", {
-  base: { width: "full", maxW: "80rem", mx: "auto" },
-});
-
-const Header = styled("header", {
-  base: {
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: "4",
-    pb: "4",
-    borderBottomWidth: "2px",
-    borderColor: "border",
-  },
-});
-
-const Email = styled("p", {
-  base: {
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    overflowWrap: "anywhere",
-  },
-});
-
-const LoginBar = styled("div", {
-  base: { display: "flex", alignItems: "center", gap: "3" },
-});
-
-const Panel = styled("section", {
-  base: { display: "flex", flexDirection: "column", gap: "4", mt: "6" },
-});
-
-const PanelHeader = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "3",
-    flexWrap: "wrap",
-  },
-});
-
-const PinPanel = styled("section", {
-  base: { display: "flex", flexDirection: "column", gap: "3", maxW: "28rem" },
 });
 
 type TabName = "shelf" | "drawers" | "questions" | "pin";
@@ -320,9 +268,9 @@ function AdminPage() {
   if (me.isPending) {
     return (
       <Screen tone="none" px="page" py="8">
-        <Centered>
+        <Stack minH="calc(100dvh - 4rem)" alignItems="center" justifyContent="center" gap="0">
           <MutedText role="status">운영자 세션을 확인하고 있어요.</MutedText>
-        </Centered>
+        </Stack>
       </Screen>
     );
   }
@@ -330,7 +278,7 @@ function AdminPage() {
   if (me.isError) {
     return (
       <Screen tone="none" px="page" py="8">
-        <Centered>
+        <Stack minH="calc(100dvh - 4rem)" alignItems="center" justifyContent="center" gap="0">
           <Card tone="paper" width="full" maxW="30rem" p="6" md={{ p: "8" }}>
             <PageTitle fontSize="2xl">운영자 세션을 읽지 못했어요</PageTitle>
             <MutedText>잠시 뒤 다시 열어 주세요.</MutedText>
@@ -338,7 +286,7 @@ function AdminPage() {
               다시 시도
             </Button>
           </Card>
-        </Centered>
+        </Stack>
       </Screen>
     );
   }
@@ -352,14 +300,16 @@ function AdminPage() {
 
   return (
     <Screen tone="none" px="page" py="8">
-      <Workspace>
-        <Header>
+      <Stack width="full" maxW="80rem" mx="auto" gap="0">
+        <PageHeader pb="4">
           <div>
             <Eyebrow>BOOK SHOP 79-1</Eyebrow>
             <PageTitle fontSize="2xl">운영자 화면</PageTitle>
-            <Email>{me.data.user.email}</Email>
+            <InlineText display="block" weight="strong" overflowWrap="anywhere">
+              {me.data.user.email}
+            </InlineText>
           </div>
-          <LoginBar>
+          <Row gap="3">
             <Button
               tone="outline"
               size="sm"
@@ -371,8 +321,8 @@ function AdminPage() {
             >
               로그아웃
             </Button>
-          </LoginBar>
-        </Header>
+          </Row>
+        </PageHeader>
 
         <TabList role="tablist" aria-label="운영자 화면">
           {(
@@ -398,8 +348,14 @@ function AdminPage() {
         </TabList>
 
         {tab === "shelf" ? (
-          <Panel role="tabpanel" id="admin-panel-shelf" aria-labelledby="admin-tab-shelf">
-            <PanelHeader>
+          <Section
+            mt="6"
+            gap="4"
+            role="tabpanel"
+            id="admin-panel-shelf"
+            aria-labelledby="admin-tab-shelf"
+          >
+            <Row justifyContent="space-between" flexWrap="wrap" gap="3">
               <SectionTitle>서가</SectionTitle>
               <Button
                 type="button"
@@ -408,7 +364,7 @@ function AdminPage() {
               >
                 책 추가
               </Button>
-            </PanelHeader>
+            </Row>
 
             {shelf.isPending ? <MutedText role="status">서가를 읽고 있어요.</MutedText> : null}
             {shelf.isError ? (
@@ -427,15 +383,21 @@ function AdminPage() {
                 />
               </>
             )}
-          </Panel>
+          </Section>
         ) : null}
 
         {tab === "drawers" ? (
-          <Panel role="tabpanel" id="admin-panel-drawers" aria-labelledby="admin-tab-drawers">
-            <PanelHeader>
+          <Section
+            mt="6"
+            gap="4"
+            role="tabpanel"
+            id="admin-panel-drawers"
+            aria-labelledby="admin-tab-drawers"
+          >
+            <Row justifyContent="space-between" flexWrap="wrap" gap="3">
               <SectionTitle>서랍</SectionTitle>
               <MutedText>수량 0은 “없음”이고, 책을 빼면 목록에서 사라져요.</MutedText>
-            </PanelHeader>
+            </Row>
 
             {shelf.isPending ? <MutedText role="status">서랍을 읽고 있어요.</MutedText> : null}
             {shelf.isError ? (
@@ -457,18 +419,24 @@ function AdminPage() {
                 onRemove={(drawer, bookId) => removeBook.mutate({ drawer, bookId })}
               />
             )}
-          </Panel>
+          </Section>
         ) : null}
 
         {tab === "questions" ? (
-          <Panel role="tabpanel" id="admin-panel-questions" aria-labelledby="admin-tab-questions">
-            <PanelHeader>
+          <Section
+            mt="6"
+            gap="4"
+            role="tabpanel"
+            id="admin-panel-questions"
+            aria-labelledby="admin-tab-questions"
+          >
+            <Row justifyContent="space-between" flexWrap="wrap" gap="3">
               <SectionTitle>질문 세트</SectionTitle>
               <MutedText>
                 문장을 쓰는 자리예요. 저장은 초안에만 하고, 점검을 통과해야 새 버전으로 공개할 수
                 있어요.
               </MutedText>
-            </PanelHeader>
+            </Row>
 
             {drafts.isError ? (
               <WarningText role="alert">{messageOf(drafts.error)}</WarningText>
@@ -541,13 +509,19 @@ function AdminPage() {
                       .join(" · ")}
               </MutedText>
             )}
-          </Panel>
+          </Section>
         ) : null}
 
         {tab === "pin" ? (
-          <Panel role="tabpanel" id="admin-panel-pin" aria-labelledby="admin-tab-pin">
+          <Section
+            mt="6"
+            gap="4"
+            role="tabpanel"
+            id="admin-panel-pin"
+            aria-labelledby="admin-tab-pin"
+          >
             <SectionTitle>주인 PIN</SectionTitle>
-            <PinPanel>
+            <Stack gap="3" maxW="28rem">
               <MutedText>
                 태블릿에서 주인 확인을 열 때 쓰는 PIN이에요. 정하거나 바꿀 수 있어요.
               </MutedText>
@@ -562,8 +536,8 @@ function AdminPage() {
                 }}
               />
               {pinSaved ? <StatusText role="status">PIN을 저장했어요.</StatusText> : null}
-            </PinPanel>
-          </Panel>
+            </Stack>
+          </Section>
         ) : null}
 
         {editing === null || shelfData === undefined ? null : (
@@ -590,7 +564,7 @@ function AdminPage() {
             />
           </BookDialog>
         )}
-      </Workspace>
+      </Stack>
     </Screen>
   );
 }

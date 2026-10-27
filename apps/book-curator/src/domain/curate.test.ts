@@ -24,6 +24,21 @@ describe("curate", () => {
     });
   });
 
+  it("2순위 서랍에 고유 문장이 있으면 별명을 넣어 그 문장을 쓴다", () => {
+    const set = parseQuestionSet({
+      ...SEOYUN_SET_INPUT,
+      drawers: SEOYUN_SET_INPUT.drawers.map((drawer) =>
+        drawer.code === "B1"
+          ? { ...drawer, statement: "{nickname} 님은 지금, 나를 천천히 들여다볼 때예요." }
+          : drawer,
+      ),
+    });
+
+    const { customer } = curate(set, SEOYUN_ANSWERS, "토끼");
+
+    expect(customer.secondStatement).toBe("토끼 님은 지금, 나를 천천히 들여다볼 때예요.");
+  });
+
   it("추천 서랍의 표시와 권하는 이유를 손님 view model에 옮긴다", () => {
     const set = parseQuestionSet({
       ...SEOYUN_SET_INPUT,

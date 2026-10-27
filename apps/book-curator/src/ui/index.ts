@@ -6,10 +6,12 @@ export {
   CheckLabel,
   Field,
   FieldError,
+  Fieldset,
   FormCard,
   Hint,
   Input,
   Label,
+  Legend,
   NumberField,
   Select,
   SelectField,
@@ -19,13 +21,35 @@ export {
   TextareaField,
   TextField,
 } from "./form.tsx";
+export {
+  Actions,
+  AutoGrid,
+  Badge,
+  CardHeader,
+  Disclosure,
+  DisclosureSummary,
+  Grid,
+  InfoBox,
+  List,
+  ListItem,
+  PageHeader,
+  Row,
+  Section,
+  Split,
+  Stack,
+} from "./layout.tsx";
+export { ProgressBar } from "./progress.tsx";
+export { ScaleField, ScalePreview, type ScaleOption } from "./scale.tsx";
 export { Screen } from "./screen.tsx";
 export { Tab, TabList } from "./tabs.tsx";
+export { Table, Td, Th } from "./table.tsx";
 export {
   BodyText,
   Caption,
   CardTitle,
+  Citation,
   Eyebrow,
+  InlineText,
   MarkText,
   MutedText,
   PageTitle,
@@ -34,6 +58,7 @@ export {
   SecondaryTitle,
   SectionTitle,
   StatusText,
+  SubTitle,
   WarningBox,
   WarningText,
 } from "./text.tsx";

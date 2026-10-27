@@ -1,117 +1,22 @@
-import { styled } from "styled-system/jsx";
-
 import type { PublishBlockerDto, QuestionSetDraftReportDto } from "../admin-dto.ts";
 import type { DrawerCode } from "../domain/question-set.ts";
 import {
+  Actions,
   Button,
   Card as Panel,
   FieldError as ErrorText,
+  InlineText,
+  List,
+  ListItem,
+  MutedText,
+  PageHeader,
+  ProgressBar,
+  Section,
+  SectionTitle,
+  Stack,
   StatusText as Status,
+  SubTitle,
 } from "../ui/index.ts";
-
-const Header = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: "3",
-    flexWrap: "wrap",
-    pb: "3",
-    borderBottomWidth: "2px",
-    borderColor: "border",
-  },
-});
-
-const Title = styled("h3", {
-  base: { fontFamily: "heading", fontSize: "xl", fontWeight: "600" },
-});
-
-const Summary = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const Section = styled("section", {
-  base: { display: "flex", flexDirection: "column", gap: "2" },
-});
-
-const SectionTitle = styled("h4", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const Bars = styled("ul", {
-  base: { display: "flex", flexDirection: "column", gap: "2", m: "0", p: "0", listStyle: "none" },
-});
-
-const BarRow = styled("li", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "minmax(8rem, 1fr) minmax(0, 2fr)",
-    alignItems: "center",
-    gap: "3",
-  },
-});
-
-const DrawerName = styled("span", {
-  base: { fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700", wordBreak: "keep-all" },
-});
-
-const Track = styled("div", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1",
-  },
-});
-
-const Bar = styled("div", {
-  base: {
-    height: "3",
-    borderWidth: "1px",
-    borderColor: "border",
-    bg: "paper.100",
-  },
-});
-
-const Fill = styled("div", {
-  base: { height: "full", bg: "pine.500" },
-});
-
-const RecordedFill = styled("div", {
-  base: { height: "full", bg: "yellow.500", borderTopWidth: "1px", borderColor: "border" },
-});
-
-const Rate = styled("span", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const IssueList = styled("ul", {
-  base: { display: "flex", flexDirection: "column", gap: "1", m: "0", p: "0", listStyle: "none" },
-});
-
-const FailureItem = styled("li", {
-  base: { color: "seal.500", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "700" },
-});
-
-const WarningItem = styled("li", {
-  base: { color: "pine.700", fontFamily: "body", fontSize: "kiosk-caption", fontWeight: "600" },
-});
-
-const Note = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const Actions = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "3",
-    flexWrap: "wrap",
-    pt: "3",
-    borderTopWidth: "2px",
-    borderColor: "border",
-  },
-});
 
 const percent = (rate: number): string => `${(rate * 100).toFixed(1)}%`;
 
@@ -151,6 +56,32 @@ const blockerText = (
   return issueText({ code, drawers: blocker.drawers, baselines: blocker.baselines }, names);
 };
 
+const FailureItem = ({ children, label }: { children: React.ReactNode; label: string }) => (
+  <ListItem
+    aria-label={label}
+    display="block"
+    color="seal.500"
+    fontFamily="body"
+    fontSize="kiosk-caption"
+    fontWeight="700"
+  >
+    {children}
+  </ListItem>
+);
+
+const WarningItem = ({ children, label }: { children: React.ReactNode; label: string }) => (
+  <ListItem
+    aria-label={label}
+    display="block"
+    color="pine.700"
+    fontFamily="body"
+    fontSize="kiosk-caption"
+    fontWeight="600"
+  >
+    {children}
+  </ListItem>
+);
+
 /**
  * 공개 전 점검 보고. 관리자가 "어느 서랍의 문항을 고쳐야 하는지" 먼저 보이게 하고,
  * 세부 기준 응답은 아래에 둔다. 공개 버튼은 서버가 돌려준 `canPublish`로만 열린다.
@@ -176,105 +107,99 @@ export function SetReportPanel({
 
   return (
     <Panel aria-labelledby="set-report-title">
-      <Header>
+      <PageHeader>
         <div>
-          <Title id="set-report-title">공개 전 점검</Title>
-          <Summary>
+          <SectionTitle id="set-report-title">공개 전 점검</SectionTitle>
+          <MutedText>
             표본 {report.report.sample.samples.toLocaleString("ko-KR")}건 · 쌓인 응답{" "}
             {recorded === undefined ? "아직 없음" : `${recorded.samples}건`}
-          </Summary>
+          </MutedText>
         </div>
         {report.canPublish ? (
           <Status role="status">점검과 서가 게이트를 통과했어요.</Status>
         ) : (
           <ErrorText role="alert">아직 공개할 수 없어요.</ErrorText>
         )}
-      </Header>
+      </PageHeader>
 
       <Section>
-        <SectionTitle>서랍별 1순위 비율</SectionTitle>
-        <Note>초록 막대는 표본, 노란 막대는 쌓인 응답이에요. 10~18% 안이어야 해요.</Note>
-        <Bars>
+        <SubTitle>서랍별 1순위 비율</SubTitle>
+        <MutedText>초록 막대는 표본, 노란 막대는 쌓인 응답이에요. 10~18% 안이어야 해요.</MutedText>
+        <List gap="2">
           {report.report.sample.byDrawer.map((rate) => {
             const name = names.get(rate.drawer) ?? rate.drawer;
             const recordedRate = recorded?.byDrawer.find(({ drawer }) => drawer === rate.drawer);
             return (
-              <BarRow key={rate.drawer}>
-                <DrawerName>{name}</DrawerName>
-                <Track>
-                  <Bar
-                    role="progressbar"
-                    aria-label={`${name} 표본 1순위 비율`}
-                    aria-valuenow={Math.round(rate.firstRate * 100)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                  >
-                    <Fill style={{ width: `${rate.firstRate * 100}%` }} />
-                  </Bar>
+              <ListItem
+                key={rate.drawer}
+                display="grid"
+                gridTemplateColumns="minmax(8rem, 1fr) minmax(0, 2fr)"
+                alignItems="center"
+                gap="3"
+              >
+                <InlineText weight="strong">{name}</InlineText>
+                <Stack gap="1">
+                  <ProgressBar label={`${name} 표본 1순위 비율`} value={rate.firstRate} />
                   {recordedRate === undefined ? null : (
-                    <Bar
-                      role="progressbar"
-                      aria-label={`${name} 쌓인 응답 1순위 비율`}
-                      aria-valuenow={Math.round(recordedRate.firstRate * 100)}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                    >
-                      <RecordedFill style={{ width: `${recordedRate.firstRate * 100}%` }} />
-                    </Bar>
+                    <ProgressBar
+                      label={`${name} 쌓인 응답 1순위 비율`}
+                      value={recordedRate.firstRate}
+                      tone="yellow"
+                    />
                   )}
-                  <Rate>
+                  <InlineText tone="muted">
                     표본 {percent(rate.firstRate)}
                     {recordedRate === undefined
                       ? ""
                       : ` · 쌓인 응답 ${percent(recordedRate.firstRate)}`}
-                  </Rate>
-                </Track>
-              </BarRow>
+                  </InlineText>
+                </Stack>
+              </ListItem>
             );
           })}
-        </Bars>
+        </List>
       </Section>
 
       <Section>
-        <SectionTitle>고칠 곳</SectionTitle>
+        <SubTitle>고칠 곳</SubTitle>
         {failures.length === 0 ? (
-          <Note>막는 문제는 없어요.</Note>
+          <MutedText>막는 문제는 없어요.</MutedText>
         ) : (
-          <IssueList aria-label="점검 실패">
+          <List aria-label="점검 실패" gap="1">
             {failures.map((issue, index) => (
               <FailureItem
                 key={`${issue.code}-${index}`}
-                aria-label={`점검 실패: ${issueText(issue, names)}`}
+                label={`점검 실패: ${issueText(issue, names)}`}
               >
                 {issueText(issue, names)}
               </FailureItem>
             ))}
-          </IssueList>
+          </List>
         )}
         {report.report.gate.warnings.length === 0 ? null : (
-          <IssueList aria-label="점검 경고">
+          <List aria-label="점검 경고" gap="1">
             {report.report.gate.warnings.map((issue, index) => (
               <WarningItem
                 key={`${issue.code}-${index}`}
-                aria-label={`점검 경고: ${issueText(issue, names)}`}
+                label={`점검 경고: ${issueText(issue, names)}`}
               >
                 {issueText(issue, names)}
               </WarningItem>
             ))}
-          </IssueList>
+          </List>
         )}
       </Section>
 
       <Section>
-        <SectionTitle>기준 응답</SectionTitle>
+        <SubTitle>기준 응답</SubTitle>
         {report.report.structure.baselines.length === 0 ? (
-          <Note>이 초안에는 기준 응답이 없어요.</Note>
+          <MutedText>이 초안에는 기준 응답이 없어요.</MutedText>
         ) : (
-          <IssueList aria-label="기준 응답 점검">
+          <List aria-label="기준 응답 점검" gap="1">
             {report.report.structure.baselines.map((baseline) => (
               <WarningItem
                 key={baseline.name}
-                aria-label={`기준 응답 ${baseline.name} ${baseline.matches ? "일치" : "불일치"}`}
+                label={`기준 응답 ${baseline.name} ${baseline.matches ? "일치" : "불일치"}`}
               >
                 {baseline.name}: 기대 {names.get(baseline.expectedFirst) ?? baseline.expectedFirst}{" "}
                 · {names.get(baseline.expectedSecond) ?? baseline.expectedSecond} → 실제{" "}
@@ -283,43 +208,43 @@ export function SetReportPanel({
                 {baseline.matches ? "(일치)" : "(불일치)"}
               </WarningItem>
             ))}
-          </IssueList>
+          </List>
         )}
       </Section>
 
       <Section>
-        <SectionTitle>서가 게이트</SectionTitle>
+        <SubTitle>서가 게이트</SubTitle>
         {report.shelfGate.passed ? (
-          <Note>모든 서랍에 책이 3종 이상 있어요.</Note>
+          <MutedText>모든 서랍에 책이 3종 이상 있어요.</MutedText>
         ) : (
-          <IssueList aria-label="서가 게이트 부족">
+          <List aria-label="서가 게이트 부족" gap="1">
             {report.shelfGate.lacking.map(({ drawer, name, kinds }) => (
-              <FailureItem key={drawer} aria-label={`서가 게이트 ${name} ${kinds}종`}>
+              <FailureItem key={drawer} label={`서가 게이트 ${name} ${kinds}종`}>
                 {name}: {kinds}종 (3종 이상 필요)
               </FailureItem>
             ))}
-          </IssueList>
+          </List>
         )}
       </Section>
 
       {report.blockers.length === 0 ? null : (
         <Section>
-          <SectionTitle>공개를 막는 이유</SectionTitle>
-          <IssueList aria-label="공개를 막는 이유">
+          <SubTitle>공개를 막는 이유</SubTitle>
+          <List aria-label="공개를 막는 이유" gap="1">
             {report.blockers.map((blocker, index) => (
               <FailureItem
                 key={`${blocker.code}-${index}`}
-                aria-label={`공개 막힘: ${blockerText(blocker, names, report)}`}
+                label={`공개 막힘: ${blockerText(blocker, names, report)}`}
               >
                 {blockerText(blocker, names, report)}
               </FailureItem>
             ))}
-          </IssueList>
+          </List>
         </Section>
       )}
 
-      <Actions>
-        <Note>공개하면 새 버전 번호가 붙고, 지금 공개 중인 버전이 바뀌어요.</Note>
+      <Actions align="between" divider>
+        <MutedText>공개하면 새 버전 번호가 붙고, 지금 공개 중인 버전이 바뀌어요.</MutedText>
         <Button
           type="button"
           size="md"

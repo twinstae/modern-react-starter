@@ -5,9 +5,13 @@ import { styled } from "styled-system/jsx";
 import { BookInputSchema, type Book, type BookInput } from "../domain/book.ts";
 import { DRAWER_CODES, type DrawerCode } from "../domain/question-set.ts";
 import {
+  Actions,
+  AutoGrid,
   Button,
   Card,
+  Fieldset,
   Hint,
+  Legend,
   NumberField,
   SectionTitle,
   SimpleForm,
@@ -20,42 +24,6 @@ export interface BookFormDrawer {
   readonly code: DrawerCode;
   readonly name: string;
 }
-
-const FormSection = styled("fieldset", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    mt: "2",
-    pt: "4",
-    borderTopWidth: "1px",
-    borderColor: "paper.300",
-  },
-});
-
-const Legend = styled("legend", {
-  base: { fontFamily: "body", fontSize: "kiosk-body", fontWeight: "700" },
-});
-
-const RelevanceGrid = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(12rem, 1fr))",
-    gap: "3",
-  },
-});
-
-const Actions = styled("div", {
-  base: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "3",
-    mt: "2",
-    pt: "4",
-    borderTopWidth: "2px",
-    borderColor: "border",
-  },
-});
 
 const splitKeywords = (value: string): string[] =>
   value
@@ -164,10 +132,10 @@ export function BookForm({
       <TextareaField name="reason" label="권하는 이유" />
       <TextareaField name="question" label="함께 생각해 볼 질문" />
 
-      <FormSection>
+      <Fieldset>
         <Legend>서랍별 관련도</Legend>
         <Hint>0은 거의 관계없음, 5는 아주 잘 맞음이에요. 정수로 적어 주세요.</Hint>
-        <RelevanceGrid>
+        <AutoGrid min="sm" gap="3">
           {drawers.map((drawer) => (
             <NumberField
               key={drawer.code}
@@ -178,10 +146,10 @@ export function BookForm({
               step={1}
             />
           ))}
-        </RelevanceGrid>
-      </FormSection>
+        </AutoGrid>
+      </Fieldset>
 
-      <Actions>
+      <Actions divider mt="2">
         {onCancel === undefined ? null : (
           <Button tone="outline" type="button" onClick={onCancel}>
             취소

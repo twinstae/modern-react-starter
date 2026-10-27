@@ -1,156 +1,32 @@
-import { styled } from "styled-system/jsx";
-
 import type { OwnerBookView, OwnerDrawerView, OwnerView } from "../domain/owner-view.ts";
 import type { DrawerCode } from "../domain/question-set.ts";
 import {
+  Badge,
   BodyText,
   Button,
   Card,
+  CardHeader,
   CardTitle,
+  Disclosure,
+  DisclosureSummary,
   Eyebrow,
+  Grid,
+  InfoBox,
+  InlineText,
+  List,
+  ListItem,
   MarkText,
   MutedText,
+  PageHeader,
   PageTitle,
   ReasonText,
   Screen,
+  Section,
   SectionTitle,
+  Split,
+  Stack,
   WarningText,
 } from "../ui/index.ts";
-
-const OwnerScreen = styled(Screen, {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1",
-    px: "page",
-    py: "2",
-    textAlign: "left",
-  },
-});
-
-const Header = styled("header", {
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "3",
-  },
-});
-
-const HeaderText = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "1" },
-});
-
-const OwnerLabel = styled("p", {
-  base: {
-    display: "inline-flex",
-    alignSelf: "flex-start",
-    px: "2",
-    py: "0.5",
-    borderWidth: "2px",
-    borderColor: "seal.500",
-    borderRadius: "l2",
-    color: "seal.600",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "800",
-    letterSpacing: "0.08em",
-  },
-});
-
-const Layout = styled("div", {
-  base: {
-    display: "grid",
-    gap: "3",
-    alignItems: "start",
-    lg: { gridTemplateColumns: "minmax(0, 1.25fr) minmax(18rem, 0.75fr)" },
-  },
-});
-
-const Side = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "3", minW: "0" },
-});
-
-const DrawerHead = styled("div", {
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "2",
-  },
-});
-
-const BookList = styled("ul", {
-  base: { display: "flex", flexDirection: "column", gap: "1", m: "0", p: "0", listStyle: "none" },
-});
-
-const BookLine = styled("li", {
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "2",
-    borderBottomWidth: "1px",
-    borderColor: "paper.300",
-    py: "1",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-  },
-});
-
-const BookTitle = styled("span", { base: { fontWeight: "600", wordBreak: "keep-all" } });
-const BookMeta = styled("span", { base: { color: "fg.muted" } });
-
-const Quantity = styled("span", {
-  base: {
-    flexShrink: "0",
-    px: "2",
-    borderRadius: "l2",
-    bg: "paper.100",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-  },
-});
-
-const Others = styled("section", {
-  base: { display: "flex", flexDirection: "column", gap: "2" },
-});
-
-const OtherList = styled("div", {
-  base: { display: "grid", gap: "2", md: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" } },
-});
-
-const OtherDetails = styled("details", {
-  base: { borderTopWidth: "1px", borderColor: "paper.300", pt: "2" },
-});
-
-const OtherSummary = styled("summary", {
-  base: {
-    cursor: "pointer",
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    _focusVisible: { outline: "3px solid", outlineColor: "ink.900", outlineOffset: "2px" },
-  },
-});
-
-const Notice = styled("p", {
-  base: {
-    p: "3",
-    borderWidth: "2px",
-    borderColor: "pine.500",
-    borderRadius: "l2",
-    bg: "surface",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-  },
-});
 
 const quantityLabel = (quantity: number): string => (quantity === 0 ? "없음" : `${quantity}권`);
 
@@ -160,16 +36,26 @@ function OwnerBookList({ books }: { books: readonly OwnerBookView[] }) {
   }
 
   return (
-    <BookList>
+    <List gap="1">
       {books.map((book) => (
-        <BookLine key={book.bookId}>
+        <ListItem
+          key={book.bookId}
+          align="baseline"
+          py="1"
+          pb="1"
+          borderBottomWidth="1px"
+          borderColor="paper.300"
+          fontFamily="body"
+          fontSize="kiosk-caption"
+        >
           <span>
-            <BookTitle>{book.title}</BookTitle> <BookMeta>{book.author}</BookMeta>
+            <InlineText weight="strong">{book.title}</InlineText>{" "}
+            <InlineText tone="muted">{book.author}</InlineText>
           </span>
-          <Quantity aria-label={`${book.title} 수량`}>{quantityLabel(book.quantity)}</Quantity>
-        </BookLine>
+          <Badge aria-label={`${book.title} 수량`}>{quantityLabel(book.quantity)}</Badge>
+        </ListItem>
       ))}
-    </BookList>
+    </List>
   );
 }
 
@@ -203,30 +89,39 @@ export function OwnerCheckScreen({
   );
 
   return (
-    <OwnerScreen tone="owner" aria-label="주인 확인">
-      <Header>
-        <HeaderText>
-          <OwnerLabel>주인 모드</OwnerLabel>
+    <Screen
+      tone="owner"
+      aria-label="주인 확인"
+      display="flex"
+      flexDirection="column"
+      gap="1"
+      px="page"
+      py="1"
+      textAlign="left"
+    >
+      <PageHeader divider={false} align="center" gap="3">
+        <Stack gap="1">
+          <Badge tone="seal">주인 모드</Badge>
           <PageTitle fontSize="1.6rem">열쇠를 건넬 서랍을 골라 주세요</PageTitle>
-        </HeaderText>
+        </Stack>
         <Button tone="link" onClick={onCancel}>
           손님 화면으로
         </Button>
-      </Header>
+      </PageHeader>
 
       {notice === null ? null : (
-        <Notice role="status" aria-label="주인 확인 안내">
+        <InfoBox role="status" aria-label="주인 확인 안내">
           {notice}
-        </Notice>
+        </InfoBox>
       )}
 
-      <Layout>
+      <Split gap="3">
         <Card tone="owner" gap="2" p="3" aria-labelledby="owner-recommended-name">
           <Eyebrow>추천 서랍</Eyebrow>
-          <DrawerHead>
+          <CardHeader>
             <CardTitle id="owner-recommended-name">{view.recommended.name}</CardTitle>
             {view.recommended.mark === null ? null : <MarkText>{view.recommended.mark}</MarkText>}
-          </DrawerHead>
+          </CardHeader>
           <ReasonText>{view.recommended.statement}</ReasonText>
           <OwnerBookList books={view.recommended.books} />
           <BelowMinimum drawer={view.recommended} />
@@ -241,15 +136,15 @@ export function OwnerCheckScreen({
           </Button>
         </Card>
 
-        <Side>
+        <Stack gap="3">
           <Card tone="flat" p="3" aria-labelledby="owner-second-name">
             <Eyebrow>2순위 서랍</Eyebrow>
-            <DrawerHead>
+            <CardHeader>
               <SectionTitle id="owner-second-name">{view.second.name}</SectionTitle>
               {view.second.mark === null ? null : (
                 <MarkText fontSize="1.25rem">{view.second.mark}</MarkText>
               )}
-            </DrawerHead>
+            </CardHeader>
             <BodyText>{view.second.statement}</BodyText>
             <OwnerBookList books={view.second.books} />
             <BelowMinimum drawer={view.second} />
@@ -272,29 +167,29 @@ export function OwnerCheckScreen({
               아직 채우지 못한 서랍이 있어요: {view.gate.lacking.map(({ name }) => name).join(", ")}
             </WarningText>
           )}
-        </Side>
-      </Layout>
+        </Stack>
+      </Split>
 
       {others.length === 0 ? null : (
-        <Others aria-label="다른 서랍">
+        <Section aria-label="다른 서랍" gap="2">
           <Eyebrow>다른 서랍</Eyebrow>
-          <OtherList>
+          <Grid columns="two" gap="2">
             {others.map((drawer) => (
               <Card key={drawer.drawer} tone="flat" padding="sm">
-                <DrawerHead>
+                <CardHeader>
                   <SectionTitle>{drawer.name}</SectionTitle>
                   {drawer.mark === null ? null : (
                     <MarkText fontSize="1.25rem">{drawer.mark}</MarkText>
                   )}
-                </DrawerHead>
+                </CardHeader>
                 <BelowMinimum drawer={drawer} />
-                <OtherDetails>
-                  <OtherSummary>
+                <Disclosure>
+                  <DisclosureSummary>
                     책 {drawer.books.length}종 ·{" "}
                     {drawer.books.reduce((sum, book) => sum + book.quantity, 0)}권 보기
-                  </OtherSummary>
+                  </DisclosureSummary>
                   <OwnerBookList books={drawer.books} />
-                </OtherDetails>
+                </Disclosure>
                 <Button
                   type="button"
                   tone="outline"
@@ -305,9 +200,9 @@ export function OwnerCheckScreen({
                 </Button>
               </Card>
             ))}
-          </OtherList>
-        </Others>
+          </Grid>
+        </Section>
       )}
-    </OwnerScreen>
+    </Screen>
   );
 }

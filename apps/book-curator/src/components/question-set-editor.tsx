@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import * as v from "valibot";
-import { styled } from "styled-system/jsx";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 import type { QuestionSetDraftDto } from "../admin-dto.ts";
@@ -14,14 +13,24 @@ import {
   type QuestionSet,
 } from "../domain/question-set.ts";
 import {
+  AutoGrid,
   Card,
+  CardHeader,
   CheckboxField,
+  Disclosure,
   Hint,
+  InlineText,
   Label,
+  List,
+  ListItem,
+  MutedText,
   NumberField,
+  PageHeader,
+  Row,
   SectionTitle as CardTitle,
   Select,
   SimpleForm,
+  Stack,
   StatusText as Status,
   SubmitButton,
   TextareaField,
@@ -50,127 +59,6 @@ interface EditorValues {
   citationItem: string;
   citationChoice: string;
 }
-
-const EditorHeader = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: "4",
-    flexWrap: "wrap",
-  },
-});
-
-const NameField = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "1", minW: "18rem", flex: "1" },
-});
-
-const Note = styled("p", {
-  base: { color: "fg.muted", fontFamily: "body", fontSize: "kiosk-caption" },
-});
-
-const Grid = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(22rem, 1fr))",
-    gap: "4",
-    alignItems: "start",
-  },
-});
-
-const CardHeader = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "2",
-    pb: "2",
-    borderBottomWidth: "1px",
-    borderColor: "paper.300",
-  },
-});
-
-const Count = styled("span", {
-  base: {
-    flexShrink: "0",
-    color: "pine.700",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    whiteSpace: "nowrap",
-  },
-});
-
-const ItemList = styled("ul", {
-  base: { display: "flex", flexDirection: "column", gap: "2", m: "0", p: "0", listStyle: "none" },
-});
-
-const ItemRow = styled("li", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) auto auto",
-    alignItems: "center",
-    gap: "2",
-  },
-});
-
-const SettingsGrid = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(12rem, 1fr))",
-    gap: "3",
-    pt: "3",
-    borderTopWidth: "1px",
-    borderColor: "paper.300",
-  },
-});
-
-const WideField = styled("div", { base: { gridColumn: "1 / -1" } });
-
-const PreviewGrid = styled("div", {
-  base: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(20rem, 1fr))",
-    gap: "4",
-    alignItems: "start",
-  },
-});
-
-const PreviewPicker = styled("div", {
-  base: {
-    display: "flex",
-    alignItems: "center",
-    gap: "3",
-    flexWrap: "wrap",
-    p: "4",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "surface",
-  },
-});
-
-const Baseline = styled("details", {
-  base: {
-    p: "4",
-    borderWidth: "1px",
-    borderColor: "paper.300",
-    borderRadius: "l2",
-    bg: "surface",
-  },
-});
-
-const BaselineList = styled("ul", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1",
-    mt: "2",
-    m: "0",
-    p: "0",
-    listStyle: "none",
-  },
-});
 
 const splitKeywords = (value: string): string[] =>
   value
@@ -342,30 +230,32 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
 
   return (
     <>
-      <EditorHeader>
-        <NameField>
+      <PageHeader divider={false} align="end">
+        <Stack gap="1" minW="18rem" flex="1">
           <TextField name="name" label="초안 이름" size="sm" />
-        </NameField>
+        </Stack>
         <div>
-          <Note>
+          <MutedText>
             {questions.length}문항 · 서랍 {drawers.length}개 · 저장은 초안에만 해요
-          </Note>
+          </MutedText>
           <SubmitButton>초안 저장</SubmitButton>
         </div>
-      </EditorHeader>
+      </PageHeader>
 
       {choiceCount === 0 ? null : (
-        <Note>
+        <MutedText>
           선택형 질문 {choiceCount}개는 이 화면에서 고치지 않고 그대로 둬요. 문항형만 편집할 수
           있어요.
-        </Note>
+        </MutedText>
       )}
       {structureChanged ? (
-        <Note>문항 구조를 바꿔서 저장할 때 기준 응답은 비워져요. 기준 응답은 읽기 전용이에요.</Note>
+        <MutedText>
+          문항 구조를 바꿔서 저장할 때 기준 응답은 비워져요. 기준 응답은 읽기 전용이에요.
+        </MutedText>
       ) : null}
       {message === null ? null : <Status role="status">{message}</Status>}
 
-      <Grid>
+      <AutoGrid min="lg">
         {drawerFields.map((field, drawerIndex) => {
           const drawer = drawers[drawerIndex];
           if (drawer === undefined) return null;
@@ -375,15 +265,24 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
 
           return (
             <Card key={field.id} aria-labelledby={`${field.id}-title`}>
-              <CardHeader>
+              <CardHeader divider>
                 <CardTitle id={`${field.id}-title`}>{drawer.name}</CardTitle>
-                <Count>문항 {items.length}개</Count>
+                <InlineText tone="pine" weight="strong" flexShrink="0" whiteSpace="nowrap">
+                  문항 {items.length}개
+                </InlineText>
               </CardHeader>
 
-              {items.length === 0 ? <Note>아직 문항이 없어요. 문항을 더해 주세요.</Note> : null}
-              <ItemList>
+              {items.length === 0 ? (
+                <MutedText>아직 문항이 없어요. 문항을 더해 주세요.</MutedText>
+              ) : null}
+              <List gap="2">
                 {items.map(({ item, index }, itemIndex) => (
-                  <ItemRow key={item.id}>
+                  <ListItem
+                    key={item.id}
+                    display="grid"
+                    gridTemplateColumns="minmax(0, 1fr) auto auto"
+                    gap="2"
+                  >
                     <TextField
                       name={`questions.${index}.text`}
                       label={`${drawer.name} ${itemIndex + 1}번 문항`}
@@ -403,9 +302,9 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
                     >
                       빼기
                     </UiButton>
-                  </ItemRow>
+                  </ListItem>
                 ))}
-              </ItemList>
+              </List>
               <div>
                 <UiButton
                   size="sm"
@@ -417,7 +316,7 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
                 </UiButton>
               </div>
 
-              <SettingsGrid>
+              <AutoGrid min="sm" gap="3" pt="3" borderTopWidth="1px" borderColor="paper.300">
                 <TextField name={`drawers.${drawerIndex}.name`} label="서랍 이름" size="sm" />
                 <TextField name={`drawers.${drawerIndex}.keywords`} label="핵심 단어" size="sm" />
                 <TextField name={`drawers.${drawerIndex}.mark`} label="서랍 표시" size="sm" />
@@ -428,40 +327,50 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
                   step={1}
                   size="sm"
                 />
-                <WideField>
+                <Stack gridColumn="1 / -1" gap="2">
                   <TextareaField name={`drawers.${drawerIndex}.reason`} label="권하는 이유" />
-                </WideField>
-                <WideField>
+                </Stack>
+                <Stack gridColumn="1 / -1" gap="2">
                   <TextField
                     name={`drawers.${drawerIndex}.statement`}
                     label="서랍별 상태 문장"
                     placeholder="비우면 공통 문장을 써요"
                   />
-                </WideField>
-              </SettingsGrid>
+                </Stack>
+              </AutoGrid>
             </Card>
           );
         })}
-      </Grid>
+      </AutoGrid>
 
       <Card>
-        <CardHeader>
+        <CardHeader divider>
           <CardTitle>공통 문장 틀</CardTitle>
-          <Count>표시와 인용</Count>
+          <InlineText tone="pine" weight="strong" flexShrink="0" whiteSpace="nowrap">
+            표시와 인용
+          </InlineText>
         </CardHeader>
-        <SettingsGrid>
-          <WideField>
+        <AutoGrid min="sm" gap="3" pt="3" borderTopWidth="1px" borderColor="paper.300">
+          <Stack gridColumn="1 / -1" gap="2">
             <TextField name="statementTemplate" label="첫 상태 문장 틀" />
-          </WideField>
-          <WideField>
+          </Stack>
+          <Stack gridColumn="1 / -1" gap="2">
             <TextField name="secondStatementTemplate" label="둘째 상태 문장 틀" />
-          </WideField>
+          </Stack>
           <TextField name="citationItem" label="문항 인용 문형" size="sm" />
           <TextField name="citationChoice" label="선택 인용 문형" size="sm" />
-        </SettingsGrid>
+        </AutoGrid>
       </Card>
 
-      <PreviewPicker>
+      <Row
+        gap="3"
+        flexWrap="wrap"
+        p="4"
+        borderWidth="2px"
+        borderColor="border"
+        borderRadius="l2"
+        bg="surface"
+      >
         <Label size="sm" htmlFor="preview-drawer">
           미리보기 서랍
         </Label>
@@ -477,10 +386,10 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
           ))}
         </Select>
         <Hint>별명 “토끼”와 지금 고른 서랍 이름으로 문장과 조사를 확인해요.</Hint>
-      </PreviewPicker>
+      </Row>
 
       {selectedDrawer === undefined ? null : (
-        <PreviewGrid>
+        <AutoGrid min="lg">
           <StatementPreview
             drawerName={selectedDrawer.name}
             nickname="토끼"
@@ -509,15 +418,15 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
             }
             total={questions.length}
           />
-        </PreviewGrid>
+        </AutoGrid>
       )}
 
-      <Baseline>
+      <Disclosure boxed>
         <summary>기준 응답 (읽기 전용)</summary>
         {draft.questionSet.baselines.length === 0 ? (
-          <Note>이 초안에는 기준 응답이 없어요.</Note>
+          <MutedText>이 초안에는 기준 응답이 없어요.</MutedText>
         ) : (
-          <BaselineList>
+          <List gap="1" mt="2">
             {draft.questionSet.baselines.map((baseline) => {
               const names = new Map(
                 drawers.map(({ code, name: drawerName }) => [code, drawerName]),
@@ -531,9 +440,9 @@ function EditorFields({ draft, message }: { draft: QuestionSetDraftDto; message:
                 </li>
               );
             })}
-          </BaselineList>
+          </List>
         )}
-      </Baseline>
+      </Disclosure>
     </>
   );
 }

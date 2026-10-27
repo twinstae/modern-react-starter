@@ -1,10 +1,7 @@
 import * as v from "valibot";
-import { styled } from "styled-system/jsx";
 
 import { OWNER_PIN_MAX_LENGTH, OWNER_PIN_MIN_LENGTH } from "../domain/owner-pin.ts";
-import { Hint, SimpleForm, SubmitButton, TextField } from "../ui/index.ts";
-
-const NarrowForm = styled("div", { base: { width: "full", maxW: "24rem" } });
+import { Hint, SimpleForm, Stack, SubmitButton, TextField } from "../ui/index.ts";
 
 const PinSchema = v.object({
   pin: v.pipe(
@@ -33,7 +30,7 @@ export function PinEntry({
   initialError?: string | null;
 }) {
   return (
-    <NarrowForm>
+    <Stack width="full" maxW="24rem">
       <SimpleForm
         schema={PinSchema}
         defaultValues={{ pin: "" }}
@@ -58,6 +55,6 @@ export function PinEntry({
           {submitLabel}
         </SubmitButton>
       </SimpleForm>
-    </NarrowForm>
+    </Stack>
   );
 }

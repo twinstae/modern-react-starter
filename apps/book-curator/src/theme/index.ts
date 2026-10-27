@@ -49,7 +49,7 @@ export const bookCuratorTheme = {
         "kiosk-caption": { value: "1rem" },
         "kiosk-body": { value: "1.25rem" },
         "kiosk-question": { value: "clamp(2.25rem, 3.8vw, 3rem)" },
-        "kiosk-result": { value: "clamp(2rem, 3.4vw, 3rem)" },
+        "kiosk-result": { value: "clamp(2.5rem, 5vw, 4rem)" },
         "kiosk-title": { value: "clamp(2.25rem, 4vw, 3.5rem)" },
         "kiosk-scale": { value: "1.25rem" },
         "kiosk-scale-number": { value: "2.25rem" },

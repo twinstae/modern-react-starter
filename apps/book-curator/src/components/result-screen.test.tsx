@@ -8,7 +8,7 @@ describe("ResultScreen", () => {
   it("손님에게 지금 필요한 서랍 두 개와 추천 서랍을 보여 준다", async () => {
     await runSiheom(
       given.render(<ResultScreen {...Stories.resultScreenArgs.seoyun} />),
-      assertions.visible(query.heading("토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요")),
+      assertions.visible(query.heading("토끼 님은 지금, 바꾸고 싶은 마음이 먼저 움직이고 있어요.")),
       assertions.a11ySnapshot(query.main("결과"), "result-screen.seoyun.snap"),
     );
   });

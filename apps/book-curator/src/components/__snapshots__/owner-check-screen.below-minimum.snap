@@ -1,7 +1,6 @@
 main: "주인 확인"
   banner:
-    paragraph:
-      "주인 모드"
+    "주인 모드"
     heading: "열쇠를 건넬 서랍을 골라 주세요"
       - properties: [level=1]
     button: "손님 화면으로"

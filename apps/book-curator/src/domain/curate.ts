@@ -74,12 +74,10 @@ export function curate(
   const firstDrawer = drawerOf(questionSet, ranking.first);
   const secondDrawer = drawerOf(questionSet, ranking.second);
   const first = statementFor(questionSet, firstDrawer, parsedNickname);
-  const second =
-    secondDrawer.statement ??
-    renderStatement(questionSet.secondStatementTemplate, {
-      drawerName: secondDrawer.name,
-      nickname: parsedNickname,
-    });
+  const second = renderStatement(secondDrawer.statement ?? questionSet.secondStatementTemplate, {
+    drawerName: secondDrawer.name,
+    nickname: parsedNickname,
+  });
   const citation = cite(questionSet, scores, ranking.first);
 
   return {

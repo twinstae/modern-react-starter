@@ -19,7 +19,7 @@
         "name": "삶의 방식을 바꾸는 책",
         "order": 0,
         "reason": "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 바꾸고 싶은 마음이 먼저 움직이고 있어요.",
       },
       {
         "code": "B1",
@@ -34,7 +34,7 @@
         "name": "나를 들여다보는 책",
         "order": 1,
         "reason": "나를 들여다보고 싶은 날에는 천천히 자신에게 말을 거는 책을 권해요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 나를 천천히 들여다볼 때예요.",
       },
       {
         "code": "B4",
@@ -49,7 +49,7 @@
         "name": "사회를 이해하는 책",
         "order": 2,
         "reason": "세상이 답답할 때는 그 구조를 함께 들여다보는 책이 좋아요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 세상의 구조를 함께 읽고 싶어 해요.",
       },
       {
         "code": "B2",
@@ -64,7 +64,7 @@
         "name": "관계를 다시 생각하는 책",
         "order": 3,
         "reason": "가까운 사람과의 거리가 고민될 때 관계를 다시 그려 보는 책이 도움이 돼요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 가까운 관계의 거리를 다시 재 볼 때예요.",
       },
       {
         "code": "B7",
@@ -78,7 +78,7 @@
         "name": "잠시 멈춰 생각하는 책",
         "order": 4,
         "reason": "잠시 멈추고 싶을 때는 곁에 오래 두고 읽는 책이 잘 어울려요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 잠시 멈춰 숨을 고를 때예요.",
       },
       {
         "code": "B3",
@@ -92,7 +92,7 @@
         "name": "다른 삶을 만나는 책",
         "order": 5,
         "reason": "다른 삶이 궁금할 때는 내가 모르던 사람의 하루를 만나는 책을 권해요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 다른 삶의 하루를 만나고 싶어 해요.",
       },
       {
         "code": "B5",
@@ -107,7 +107,7 @@
         "name": "세계를 넓혀 보는 책",
         "order": 6,
         "reason": "세계를 넓히고 싶을 때는 역사와 과학을 건너오는 책이 좋아요.",
-        "statement": null,
+        "statement": "{nickname} 님은 지금, 세계를 넓히는 이야기에 끌리고 있어요.",
       },
     ],
     "questions": [

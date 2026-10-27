@@ -1,23 +1,27 @@
 main: "결과"
+  - interaction: [focusable=true] [tabbable=true]
   region: "지금 필요한 서랍"
-    heading: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요"
+    heading: "토끼 님은 지금, 바꾸고 싶은 마음이 먼저 움직이고 있어요."
       - properties: [level=1]
     paragraph:
-      "나를 들여다보는 책이 함께 보이면 좋겠어요"
+      "토끼 님은 지금, 나를 천천히 들여다볼 때예요."
     paragraph:
       "두 서랍이 비슷하게 보여요. 주인과 함께 골라도 좋아요."
-  article: "삶의 방식을 바꾸는 책"
-    - relations:
-      labelledby: "삶의 방식을 바꾸는 책" (#recommended-drawer-name)
-    heading: "삶의 방식을 바꾸는 책"
+  region: "추천 서랍과 다음"
+    article: "삶의 방식을 바꾸는 책"
+      - relations:
+        labelledby: "삶의 방식을 바꾸는 책" (#recommended-drawer-name)
+      heading: "삶의 방식을 바꾸는 책"
+        - properties: [level=2]
+      paragraph:
+        "1번 · 열쇠 1"
+      blockquote:
+        "‘요즘 생활에서 뭔가를 바꾸고 싶다’라고 하셨죠"
+      paragraph:
+        "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요."
+    heading: "이제 책방 주인에게 보여 주세요"
       - properties: [level=2]
-    paragraph:
-      "1번 · 열쇠 1"
-    blockquote:
-      "‘요즘 생활에서 뭔가를 바꾸고 싶다’라고 하셨죠"
-    paragraph:
-      "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요."
-  button: "주인 확인"
-    - interaction: [focusable=true] [tabbable=true]
-  button: "다시 해 보기"
-    - interaction: [focusable=true] [tabbable=true]
+    button: "주인 확인"
+      - interaction: [focusable=true] [tabbable=true]
+    button: "다시 해 보기"
+      - interaction: [focusable=true] [tabbable=true]

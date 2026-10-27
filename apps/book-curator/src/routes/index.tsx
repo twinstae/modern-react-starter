@@ -1,7 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { styled } from "styled-system/jsx";
 
 import { api } from "../api-client.ts";
 import { createEventQueue } from "../application/event-queue.ts";
@@ -32,7 +31,7 @@ import type { DrawerCode, QuestionSet } from "../domain/question-set.ts";
 import type { DrawerStockEntry } from "../domain/shelf.ts";
 import { answer, back, endTurn, startTurn, type Turn } from "../domain/turn.ts";
 import { useWakeLock } from "../lib/use-wake-lock.ts";
-import { Button } from "../ui/index.ts";
+import { Button, MutedText, PageTitle, Screen, SectionTitle, Stack } from "../ui/index.ts";
 import { OwnerTokenExpiredError, postHandover, postPurchase, unlockOwner } from "../owner-api.ts";
 import { kioskQueries } from "../queries.ts";
 import { unwrap } from "../unwrap.ts";
@@ -102,61 +101,6 @@ export const Route = createFileRoute("/")({
   // 처음 화면에 들어올 때마다 새 묶음을 받는다. 차례가 시작되면 그 묶음을 메모리에 고정한다.
   loader: ({ context }) => context.queryClient.query({ ...kioskQueries.current(), staleTime: 0 }),
   component: Kiosk,
-});
-
-const Screen = styled("main", {
-  base: {
-    minH: "100dvh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "6",
-    px: "page",
-    py: "12",
-    bg: "canvas",
-    color: "fg.default",
-    textAlign: "center",
-  },
-});
-
-const Title = styled("h1", {
-  base: { fontFamily: "heading", fontSize: "kiosk-title", fontWeight: "600" },
-});
-
-const Body = styled("p", { base: { color: "fg.muted", fontSize: "kiosk-body" } });
-
-const PromptLayer = styled("div", {
-  base: {
-    position: "fixed",
-    inset: "0",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    bg: "rgba(33, 28, 23, 0.45)",
-    zIndex: "modal",
-  },
-});
-
-const PromptCard = styled("div", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4",
-    maxW: "xl",
-    mx: "6",
-    px: "8",
-    py: "10",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    textAlign: "center",
-    boxShadow: "lg",
-  },
-});
-
-const PromptTitle = styled("h2", {
-  base: { fontFamily: "heading", fontSize: "kiosk-question", fontWeight: "600" },
 });
 
 /**
@@ -479,11 +423,20 @@ function Kiosk() {
 
   if (data.status === "preparing") {
     return (
-      <Screen>
-        <Title>지금, 어떤 책이 필요한가</Title>
-        <Body role="status" aria-label="준비 상태">
+      <Screen
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        gap="6"
+        px="page"
+        py="12"
+        textAlign="center"
+      >
+        <PageTitle>지금, 어떤 책이 필요한가</PageTitle>
+        <MutedText fontSize="kiosk-body" role="status" aria-label="준비 상태">
           질문을 준비하고 있어요. 잠시만 기다려 주세요.
-        </Body>
+        </MutedText>
       </Screen>
     );
   }
@@ -515,9 +468,18 @@ function Kiosk() {
   if (question === undefined) {
     if (curation === null) {
       content = (
-        <Screen>
-          <Title>결과를 만들지 못했어요</Title>
-          <Body>다시 답하면 결과를 만들 수 있어요.</Body>
+        <Screen
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          gap="6"
+          px="page"
+          py="12"
+          textAlign="center"
+        >
+          <PageTitle>결과를 만들지 못했어요</PageTitle>
+          <MutedText fontSize="kiosk-body">다시 답하면 결과를 만들 수 있어요.</MutedText>
           <Button tone="quiet" size="md" type="button" onClick={() => resetToStart("manual")}>
             다시 하기
           </Button>
@@ -562,9 +524,20 @@ function Kiosk() {
     }
   } else if (question.type === "choice") {
     content = (
-      <Screen>
-        <Title>이 질문은 아직 준비 중이에요</Title>
-        <Body>문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요.</Body>
+      <Screen
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        gap="6"
+        px="page"
+        py="12"
+        textAlign="center"
+      >
+        <PageTitle>이 질문은 아직 준비 중이에요</PageTitle>
+        <MutedText fontSize="kiosk-body">
+          문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요.
+        </MutedText>
         <Button tone="quiet" size="md" type="button" onClick={() => resetToStart("manual")}>
           처음으로
         </Button>
@@ -587,18 +560,42 @@ function Kiosk() {
     <>
       {content}
       {promptVisible ? (
-        <PromptLayer>
-          <PromptCard role="alertdialog" aria-modal="true" aria-labelledby="idle-prompt-title">
-            <PromptTitle id="idle-prompt-title">계속하시겠어요?</PromptTitle>
-            <Body>잠시 응답이 없어요. 이대로 두면 처음 화면으로 돌아갑니다.</Body>
+        <Stack
+          position="fixed"
+          inset="0"
+          alignItems="center"
+          justifyContent="center"
+          bg="rgba(33, 28, 23, 0.45)"
+          zIndex="modal"
+        >
+          <Stack
+            gap="4"
+            maxW="xl"
+            mx="6"
+            px="8"
+            py="10"
+            borderRadius="l2"
+            bg="paper.50"
+            textAlign="center"
+            boxShadow="lg"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="idle-prompt-title"
+          >
+            <SectionTitle fontSize="kiosk-question" id="idle-prompt-title">
+              계속하시겠어요?
+            </SectionTitle>
+            <MutedText fontSize="kiosk-body">
+              잠시 응답이 없어요. 이대로 두면 처음 화면으로 돌아갑니다.
+            </MutedText>
             <Button tone="quiet" size="md" type="button" onClick={touch}>
               계속하기
             </Button>
             <Button tone="quiet" size="md" type="button" onClick={() => resetToStart("manual")}>
               처음으로
             </Button>
-          </PromptCard>
-        </PromptLayer>
+          </Stack>
+        </Stack>
       ) : null}
     </>
   );
