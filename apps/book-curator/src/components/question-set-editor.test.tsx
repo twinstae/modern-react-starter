@@ -5,11 +5,8 @@ import type { QuestionSet } from "../domain/question-set.ts";
 import { QuestionSetEditor } from "./question-set-editor.tsx";
 import * as Stories from "./question-set-editor.stories.tsx";
 
-const itemCount = (set: QuestionSet, drawer: string): number =>
-  set.questions.filter((question) => question.type === "item" && question.drawer === drawer).length;
-
 describe("QuestionSetEditor", () => {
-  it("문항을 더하고 빼면 서랍별 문항 수가 바뀐 질문 세트를 저장한다", async () => {
+  it("문항을 더하고 빼면 바뀐 질문 세트로 초안을 저장한다", async () => {
     let saved: { name: string; questionSet: QuestionSet } | undefined;
 
     await runSiheom(
@@ -27,10 +24,6 @@ describe("QuestionSetEditor", () => {
       actions.click(query.button("초안 저장")),
     );
 
-    expect(saved?.name).toBe("11월 질문 세트");
-    expect(saved?.questionSet.questions).toHaveLength(14);
-    expect(itemCount(saved?.questionSet as QuestionSet, "B4")).toBe(3);
-    expect(itemCount(saved?.questionSet as QuestionSet, "B6")).toBe(1);
-    expect(saved?.questionSet.baselines).toStrictEqual([]);
+    await expect(saved).toMatchFileSnapshot("__snapshots__/question-set-editor.saved.json");
   });
 });
