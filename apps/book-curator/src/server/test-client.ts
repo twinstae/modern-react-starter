@@ -42,6 +42,8 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
     eventStore: createMemoryEventStore(),
     newBookId: () => `book-test-${nextBookId++}`,
     newDraftId: () => `draft-test-${nextDraftId++}`,
+    // 실패를 일부러 일으키는 테스트가 많다. 로그를 보려는 테스트만 바꿔 끼운다.
+    logFailure: () => {},
     ...deps,
     auth,
     ownerAccessStore,

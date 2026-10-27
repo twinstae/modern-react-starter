@@ -20,3 +20,13 @@ function decodeOnce(value: string): string {
     return value;
   }
 }
+
+/** 로그에 남길 연결 설명. 비밀번호는 빼고 사용자·호스트·DB 이름만 남긴다. */
+export function describeConnection(url: string): string {
+  try {
+    const { username, host, pathname } = new URL(encodeConnectionPassword(url));
+    return `Postgres ${username}@${host}${pathname}`;
+  } catch {
+    return "Postgres (URL을 읽지 못함)";
+  }
+}

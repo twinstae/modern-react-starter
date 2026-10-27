@@ -63,6 +63,7 @@ import {
 } from "../domain/question-set.ts";
 import { DrawerQuantitySchema } from "../domain/shelf.ts";
 import { createAuthGuard } from "./auth-guard.ts";
+import type { LogFailure } from "./failure-log.ts";
 import type { AppAuth } from "./auth.ts";
 import { createOwnerGuard } from "./owner-guard.ts";
 
@@ -91,6 +92,8 @@ export interface AppDeps {
   newBookId: () => string;
   /** 새 질문 세트 초안 id를 만든다. */
   newDraftId: () => string;
+  /** 서버 실패를 남긴다. 운영은 콘솔, 테스트는 배열에 모은다. */
+  logFailure: LogFailure;
 }
 
 const OwnerPinBodySchema = v.strictObject({ pin: OwnerPinSchema });
@@ -138,6 +141,7 @@ export function createApp({
   questionSetDraftStore,
   newBookId,
   newDraftId,
+  logFailure,
 }: AppDeps) {
   const shelfSource = async () => ({
     stock: await stockStore.list(),
@@ -180,6 +184,13 @@ export function createApp({
   };
 
   return new Elysia({ prefix: "/api" })
+    .onError(({ code, error, request }) => {
+      // 요청 본문·경로가 틀린 것은 손님·운영자의 실수라 남기지 않는다. 응답 스키마가 어긋난 것은 서버 탓이다.
+      if (code === "NOT_FOUND" || code === "PARSE") return;
+      if (code === "VALIDATION" && error.type !== "response") return;
+      const { pathname } = new URL(request.url);
+      logFailure({ stage: "요청 처리", detail: `${request.method} ${pathname}`, error });
+    })
     .mount(auth.handler)
     .use(createAuthGuard(auth))
     .use(createOwnerGuard(ownerAccessStore, now))
