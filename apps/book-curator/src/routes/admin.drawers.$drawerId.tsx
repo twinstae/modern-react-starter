@@ -13,10 +13,9 @@ import {
   MutedText,
   Row,
   Section,
-  SaveState,
+  SaveActions,
   SectionTitle,
   SimpleForm,
-  SubmitButton,
   TextField,
   WarningText,
 } from "../ui/index.ts";
@@ -86,8 +85,7 @@ function DrawerPage() {
       >
         <Row alignItems="flex-end" flexWrap="wrap">
           <TextField name="name" label="서랍 이름" />
-          <SubmitButton tone="outline">이름 저장</SubmitButton>
-          <SaveState label="이름 저장 상태" />
+          <SaveActions submitLabel="이름 저장" />
         </Row>
       </SimpleForm>
 

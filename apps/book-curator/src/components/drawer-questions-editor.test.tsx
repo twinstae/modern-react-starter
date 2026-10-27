@@ -18,16 +18,28 @@ describe("DrawerQuestionsEditor", () => {
           }}
         />,
       ),
+      assertions.disabled(query.button("문항 저장")),
       actions.click(query.button("문항 더하기")),
       actions.fill(query.textbox("문항 3"), "  요즘 일하는 방식을 바꾸고 싶다  "),
       actions.click(query.button("문항 1 빼기")),
-      assertions.textContent(query.status("문항 저장 상태"), "아직 저장하지 않았어요"),
       actions.click(query.button("문항 저장")),
-      assertions.textContent(query.status("문항 저장 상태"), "저장했어요"),
+      assertions.disabled(query.button("문항 저장")),
     );
 
     expect(saved).toStrictEqual([
       ["읽은 책을 삶에 써 보고 싶다", "요즘 일하는 방식을 바꾸고 싶다"],
     ]);
+  });
+});
+
+describe("DrawerQuestionsEditor 되돌리기", () => {
+  it("고친 문항을 되돌리면 저장한 문항으로 돌아가고 저장할 것이 없다", async () => {
+    await runSiheom(
+      given.render(<DrawerQuestionsEditor {...Stories.drawerQuestionsEditorArgs} />),
+      actions.click(query.button("문항 1 빼기")),
+      actions.click(query.button("되돌리기")),
+      assertions.value(query.textbox("문항 1"), "요즘 생활에서 뭔가를 바꾸고 싶다"),
+      assertions.disabled(query.button("문항 저장")),
+    );
   });
 });

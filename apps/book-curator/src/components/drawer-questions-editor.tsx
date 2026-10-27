@@ -1,16 +1,7 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import * as v from "valibot";
 
-import {
-  Button,
-  MutedText,
-  Row,
-  SaveState,
-  SimpleForm,
-  Stack,
-  SubmitButton,
-  TextField,
-} from "../ui/index.ts";
+import { Button, MutedText, Row, SaveActions, SimpleForm, Stack, TextField } from "../ui/index.ts";
 
 const QuestionsSchema = v.object({
   questions: v.array(
@@ -76,10 +67,7 @@ export function DrawerQuestionsEditor({
         서랍마다 2~3개를 권해요.
       </MutedText>
       <QuestionFields />
-      <Row>
-        <SubmitButton>문항 저장</SubmitButton>
-        <SaveState label="문항 저장 상태" />
-      </Row>
+      <SaveActions submitLabel="문항 저장" />
     </SimpleForm>
   );
 }

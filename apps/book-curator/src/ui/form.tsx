@@ -6,7 +6,7 @@ import { css } from "styled-system/css";
 import { styled } from "styled-system/jsx";
 
 import { Button } from "./button.tsx";
-import { StatusText, WarningText } from "./text.tsx";
+import { Row } from "./layout.tsx";
 
 export const Field = styled("div", {
   base: { display: "flex", flexDirection: "column", gap: "2" },
@@ -505,11 +505,10 @@ export function SubmitButton({ disabled, ...props }: Omit<ComponentProps<typeof 
 }
 
 /**
- * 폼 안에서 저장 상태를 알린다. 고친 뒤 저장하지 않았으면 "아직 저장하지 않았어요",
- * 저장에 성공하면 그 값을 새 기준으로 삼고 "저장했어요"를 보인다. 저장이 실패하면
- * 폼 오류가 보이고 "아직 저장하지 않았어요"가 남는다.
+ * 저장·되돌리기 버튼. 고친 것이 없으면 둘 다 꺼져 있어, 버튼이 켜진 것 자체가
+ * "아직 저장하지 않았다"는 표시다. 저장에 성공하면 그 값을 새 기준으로 삼아 다시 꺼진다.
  */
-export function SaveState({ label }: { label: string }) {
+export function SaveActions({ submitLabel }: { submitLabel: string }) {
   const {
     formState: { isDirty, isSubmitSuccessful },
     reset,
@@ -517,22 +516,15 @@ export function SaveState({ label }: { label: string }) {
   } = useFormContext();
 
   useEffect(() => {
-    if (isSubmitSuccessful) reset(getValues(), { keepIsSubmitSuccessful: true });
+    if (isSubmitSuccessful) reset(getValues());
   }, [isSubmitSuccessful, reset, getValues]);
 
-  if (isDirty) {
-    return (
-      <WarningText role="status" aria-label={label}>
-        아직 저장하지 않았어요
-      </WarningText>
-    );
-  }
-  if (isSubmitSuccessful) {
-    return (
-      <StatusText role="status" aria-label={label}>
-        저장했어요
-      </StatusText>
-    );
-  }
-  return null;
+  return (
+    <Row>
+      <SubmitButton disabled={!isDirty}>{submitLabel}</SubmitButton>
+      <Button type="button" tone="outline" disabled={!isDirty} onClick={() => reset()}>
+        되돌리기
+      </Button>
+    </Row>
+  );
 }
