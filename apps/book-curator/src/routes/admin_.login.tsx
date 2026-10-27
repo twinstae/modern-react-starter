@@ -8,7 +8,8 @@ import { adminQueries } from "../queries.ts";
 /** 운영자 로그인. 이미 로그인했으면 운영자 화면으로 보낸다. */
 export const Route = createFileRoute("/admin_/login")({
   beforeLoad: async ({ context }) => {
-    const me = await context.queryClient.ensureQueryData(adminQueries.me());
+    // 세션을 읽지 못해도 로그인 화면은 연다. 로그인이 실패하면 폼이 까닭을 알린다.
+    const me = await context.queryClient.ensureQueryData(adminQueries.me()).catch(() => null);
     if (me !== null) throw redirect({ to: "/admin/shelf" });
   },
   component: AdminLoginPage,
