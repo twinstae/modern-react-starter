@@ -11,7 +11,17 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminDrawersRouteImport } from './routes/admin.drawers'
+import { Route as AdminPinRouteImport } from './routes/admin.pin'
+import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
+import { Route as AdminShelfRouteImport } from './routes/admin.shelf'
+import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as AdminQuestionsIndexRouteImport } from './routes/admin.questions.index'
+import { Route as AdminQuestionsDraftIdRouteImport } from './routes/admin.questions.$draftId'
+import { Route as AdminShelfBookIdRouteImport } from './routes/admin.shelf.$bookId'
+import { Route as AdminShelfNewRouteImport } from './routes/admin.shelf.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,39 +33,156 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDrawersRoute = AdminDrawersRouteImport.update({
+  id: '/drawers',
+  path: '/drawers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPinRoute = AdminPinRouteImport.update({
+  id: '/pin',
+  path: '/pin',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQuestionsRoute = AdminQuestionsRouteImport.update({
+  id: '/questions',
+  path: '/questions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminShelfRoute = AdminShelfRouteImport.update({
+  id: '/shelf',
+  path: '/shelf',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin_/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminQuestionsIndexRoute = AdminQuestionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminQuestionsRoute,
+} as any)
+const AdminQuestionsDraftIdRoute = AdminQuestionsDraftIdRouteImport.update({
+  id: '/$draftId',
+  path: '/$draftId',
+  getParentRoute: () => AdminQuestionsRoute,
+} as any)
+const AdminShelfBookIdRoute = AdminShelfBookIdRouteImport.update({
+  id: '/$bookId',
+  path: '/$bookId',
+  getParentRoute: () => AdminShelfRoute,
+} as any)
+const AdminShelfNewRoute = AdminShelfNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminShelfRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/drawers': typeof AdminDrawersRoute
+  '/admin/pin': typeof AdminPinRoute
+  '/admin/questions': typeof AdminQuestionsRouteWithChildren
+  '/admin/shelf': typeof AdminShelfRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
+  '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
+  '/admin/shelf/new': typeof AdminShelfNewRoute
+  '/admin/questions/': typeof AdminQuestionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin/drawers': typeof AdminDrawersRoute
+  '/admin/pin': typeof AdminPinRoute
+  '/admin/shelf': typeof AdminShelfRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
+  '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
+  '/admin/shelf/new': typeof AdminShelfNewRoute
+  '/admin/questions': typeof AdminQuestionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/drawers': typeof AdminDrawersRoute
+  '/admin/pin': typeof AdminPinRoute
+  '/admin/questions': typeof AdminQuestionsRouteWithChildren
+  '/admin/shelf': typeof AdminShelfRouteWithChildren
+  '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
+  '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
+  '/admin/shelf/new': typeof AdminShelfNewRoute
+  '/admin/questions/': typeof AdminQuestionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/api/$'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/admin/drawers'
+    | '/admin/pin'
+    | '/admin/questions'
+    | '/admin/shelf'
+    | '/admin/login'
+    | '/api/$'
+    | '/admin/'
+    | '/admin/questions/$draftId'
+    | '/admin/shelf/$bookId'
+    | '/admin/shelf/new'
+    | '/admin/questions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/api/$'
-  id: '__root__' | '/' | '/admin' | '/api/$'
+  to:
+    | '/'
+    | '/admin/drawers'
+    | '/admin/pin'
+    | '/admin/shelf'
+    | '/admin/login'
+    | '/api/$'
+    | '/admin'
+    | '/admin/questions/$draftId'
+    | '/admin/shelf/$bookId'
+    | '/admin/shelf/new'
+    | '/admin/questions'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/admin/drawers'
+    | '/admin/pin'
+    | '/admin/questions'
+    | '/admin/shelf'
+    | '/admin_/login'
+    | '/api/$'
+    | '/admin/'
+    | '/admin/questions/$draftId'
+    | '/admin/shelf/$bookId'
+    | '/admin/shelf/new'
+    | '/admin/questions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
 }
 
@@ -75,6 +202,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/drawers': {
+      id: '/admin/drawers'
+      path: '/drawers'
+      fullPath: '/admin/drawers'
+      preLoaderRoute: typeof AdminDrawersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pin': {
+      id: '/admin/pin'
+      path: '/pin'
+      fullPath: '/admin/pin'
+      preLoaderRoute: typeof AdminPinRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/questions': {
+      id: '/admin/questions'
+      path: '/questions'
+      fullPath: '/admin/questions'
+      preLoaderRoute: typeof AdminQuestionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/shelf': {
+      id: '/admin/shelf'
+      path: '/shelf'
+      fullPath: '/admin/shelf'
+      preLoaderRoute: typeof AdminShelfRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin_/login': {
+      id: '/admin_/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -82,12 +251,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/questions/': {
+      id: '/admin/questions/'
+      path: '/'
+      fullPath: '/admin/questions/'
+      preLoaderRoute: typeof AdminQuestionsIndexRouteImport
+      parentRoute: typeof AdminQuestionsRoute
+    }
+    '/admin/questions/$draftId': {
+      id: '/admin/questions/$draftId'
+      path: '/$draftId'
+      fullPath: '/admin/questions/$draftId'
+      preLoaderRoute: typeof AdminQuestionsDraftIdRouteImport
+      parentRoute: typeof AdminQuestionsRoute
+    }
+    '/admin/shelf/$bookId': {
+      id: '/admin/shelf/$bookId'
+      path: '/$bookId'
+      fullPath: '/admin/shelf/$bookId'
+      preLoaderRoute: typeof AdminShelfBookIdRouteImport
+      parentRoute: typeof AdminShelfRoute
+    }
+    '/admin/shelf/new': {
+      id: '/admin/shelf/new'
+      path: '/new'
+      fullPath: '/admin/shelf/new'
+      preLoaderRoute: typeof AdminShelfNewRouteImport
+      parentRoute: typeof AdminShelfRoute
+    }
   }
 }
 
+interface AdminQuestionsRouteChildren {
+  AdminQuestionsDraftIdRoute: typeof AdminQuestionsDraftIdRoute
+  AdminQuestionsIndexRoute: typeof AdminQuestionsIndexRoute
+}
+
+const AdminQuestionsRouteChildren: AdminQuestionsRouteChildren = {
+  AdminQuestionsDraftIdRoute: AdminQuestionsDraftIdRoute,
+  AdminQuestionsIndexRoute: AdminQuestionsIndexRoute,
+}
+
+const AdminQuestionsRouteWithChildren = AdminQuestionsRoute._addFileChildren(
+  AdminQuestionsRouteChildren,
+)
+
+interface AdminShelfRouteChildren {
+  AdminShelfBookIdRoute: typeof AdminShelfBookIdRoute
+  AdminShelfNewRoute: typeof AdminShelfNewRoute
+}
+
+const AdminShelfRouteChildren: AdminShelfRouteChildren = {
+  AdminShelfBookIdRoute: AdminShelfBookIdRoute,
+  AdminShelfNewRoute: AdminShelfNewRoute,
+}
+
+const AdminShelfRouteWithChildren = AdminShelfRoute._addFileChildren(
+  AdminShelfRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminDrawersRoute: typeof AdminDrawersRoute
+  AdminPinRoute: typeof AdminPinRoute
+  AdminQuestionsRoute: typeof AdminQuestionsRouteWithChildren
+  AdminShelfRoute: typeof AdminShelfRouteWithChildren
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminDrawersRoute: AdminDrawersRoute,
+  AdminPinRoute: AdminPinRoute,
+  AdminQuestionsRoute: AdminQuestionsRouteWithChildren,
+  AdminShelfRoute: AdminShelfRouteWithChildren,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
   ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport

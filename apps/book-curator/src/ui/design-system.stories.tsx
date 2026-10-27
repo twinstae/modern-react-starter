@@ -101,10 +101,12 @@ export function DesignSystemGallery() {
 
       <SectionTitle mt="10">탭</SectionTitle>
       <TabList>
-        <Tab aria-selected="true">서가</Tab>
-        <Tab>서랍</Tab>
-        <Tab>질문 세트</Tab>
-        <Tab>주인 PIN</Tab>
+        <Tab href="#shelf" aria-current="page">
+          서가
+        </Tab>
+        <Tab href="#drawers">서랍</Tab>
+        <Tab href="#questions">질문 세트</Tab>
+        <Tab href="#pin">주인 PIN</Tab>
       </TabList>
     </Page>
   );

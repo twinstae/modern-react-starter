@@ -1,7 +1,9 @@
 import { forwardRef, type ComponentProps } from "react";
+import { cva } from "styled-system/css";
 import { styled } from "styled-system/jsx";
 
-const BaseButton = styled("button", {
+/** 버튼과 버튼 모양 링크가 함께 쓰는 모양. */
+const buttonRecipe = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
@@ -13,6 +15,7 @@ const BaseButton = styled("button", {
     fontWeight: "700",
     lineHeight: "1.2",
     whiteSpace: "nowrap",
+    textDecoration: "none",
     cursor: "pointer",
     transition:
       "background-color 120ms, border-color 120ms, color 120ms, translate 120ms, box-shadow 120ms",
@@ -80,6 +83,8 @@ const BaseButton = styled("button", {
   defaultVariants: { tone: "primary", size: "md" },
 });
 
+const BaseButton = styled("button", buttonRecipe);
+
 type ButtonProps = ComponentProps<typeof BaseButton>;
 
 /** 공통 버튼. type을 생략하면 form 안에서 의도치 않게 submit되지 않도록 button으로 둔다. */
@@ -89,3 +94,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   return <BaseButton ref={ref} type={type} {...props} />;
 });
+
+/**
+ * 다른 페이지로 가는 버튼 모양 링크. 라우터 링크는 `createLink(ButtonAnchor)`로 만든다.
+ * 버튼이 아니라 링크이므로 화면 낭독자에게도 링크로 읽힌다.
+ */
+export const ButtonAnchor = styled("a", buttonRecipe);

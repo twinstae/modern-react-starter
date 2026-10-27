@@ -1,4 +1,4 @@
-export { Button } from "./button.tsx";
+export { Button, ButtonAnchor } from "./button.tsx";
 export { Card } from "./card.tsx";
 export {
   Checkbox,
