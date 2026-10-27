@@ -1,47 +1,26 @@
 import { describe, expect, it } from "vite-plus/test";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
-import type { DrawerCode } from "../domain/question-set.ts";
 import { OwnerCheckScreen } from "./owner-check-screen.tsx";
 import * as Stories from "./owner-check-screen.stories.tsx";
 
-const bodyText = (): string => document.body.textContent ?? "";
-
 describe("OwnerCheckScreen", () => {
-  it("주인 모드 머리말과 추천·2순위 서랍, 표시, 상태 문장, 책과 수량을 보여 준다", async () => {
-    const args = Stories.ownerCheckArgs.normal;
-
+  it("주인에게 추천 서랍과 2순위 서랍, 그 서랍의 책과 수량을 보여 준다", async () => {
     await runSiheom(
-      given.render(<OwnerCheckScreen {...args} />),
-      assertions.visible(query.main("주인 확인")),
-      assertions.visible(query.heading(args.view.recommended.name)),
-      assertions.visible(query.heading(args.view.second.name)),
+      given.render(<OwnerCheckScreen {...Stories.ownerCheckArgs.normal} />),
+      assertions.visible(query.heading("삶의 방식을 바꾸는 책")),
+      assertions.visible(query.heading("나를 들여다보는 책")),
+      assertions.a11ySnapshot(query.main("주인 확인"), "owner-check-screen.normal.snap"),
     );
-
-    const text = bodyText();
-    expect(text).toContain("주인 모드");
-    expect(text).toContain("추천 서랍");
-    expect(text).toContain("2순위 서랍");
-    expect(text).toContain(args.view.recommended.statement);
-    expect(text).toContain(args.view.second.statement);
-    expect(text).toContain("1번 · 열쇠 1");
-    for (const book of args.view.recommended.books) {
-      expect(text).toContain(book.title);
-    }
-    expect(text).toContain("2권");
-    expect(text).toContain("없음");
-    expect(text).not.toMatch(/\bB[1-7]\b/);
-    expect(text).not.toMatch(/점수|1순위|2순위 점수/);
   });
 
-  it("추천 서랍 버튼은 그 서랍 코드로, 다른 서랍 버튼은 그 서랍 코드로 onHandover를 부른다", async () => {
-    const args = Stories.ownerCheckArgs.normal;
-    const handed: DrawerCode[] = [];
+  it("추천 서랍과 다른 서랍의 열쇠 건넴을 누르면 그 서랍을 건넨 것으로 남긴다", async () => {
+    const handed: string[] = [];
 
     await runSiheom(
       given.render(
         <OwnerCheckScreen
-          {...args}
+          {...Stories.ownerCheckArgs.normal}
           onHandover={(drawer) => {
             handed.push(drawer);
           }}
@@ -55,23 +34,22 @@ describe("OwnerCheckScreen", () => {
     expect(handed).toStrictEqual(["B6", "B1", "B2"]);
   });
 
-  it("3종 미만 경고와 비슷함을 보여 준다(I-7)", async () => {
-    const below = Stories.ownerCheckArgs.belowMinimum;
-    const similar = Stories.ownerCheckArgs.similar;
-
+  it("책이 모자란 서랍은 열쇠를 건네기 전에 알려 준다", async () => {
     await runSiheom(
-      given.render(<OwnerCheckScreen {...below} />),
-      assertions.visible(query.status("서가 게이트")),
+      given.render(<OwnerCheckScreen {...Stories.ownerCheckArgs.belowMinimum} />),
+      assertions.visible(query.status("삶의 방식을 바꾸는 책 3종 미만 경고")),
+      assertions.a11ySnapshot(query.main("주인 확인"), "owner-check-screen.below-minimum.snap"),
     );
-    expect(similar.view.similar).toBe(true);
-    expect(bodyText()).toContain("3종이 안 돼요");
-    expect(bodyText()).toContain("지금 2종이에요");
-
-    await runSiheom(given.render(<OwnerCheckScreen {...similar} />));
-    expect(bodyText()).toContain("두 서랍이 비슷하게 보여요. 손님과 함께 골라도 좋아요.");
   });
 
-  it("손님 화면으로 돌아가는 버튼이 onCancel을 부른다", async () => {
+  it("두 서랍이 비슷하면 주인에게 함께 골라도 좋다고 알려 준다", async () => {
+    await runSiheom(
+      given.render(<OwnerCheckScreen {...Stories.ownerCheckArgs.similar} />),
+      assertions.a11ySnapshot(query.main("주인 확인"), "owner-check-screen.similar.snap"),
+    );
+  });
+
+  it("손님 화면으로 돌아가면 주인 확인을 닫는다", async () => {
     let cancelled = false;
 
     await runSiheom(

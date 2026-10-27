@@ -176,7 +176,7 @@ function OwnerBookList({ books }: { books: readonly OwnerBookView[] }) {
 function BelowMinimum({ drawer }: { drawer: OwnerDrawerView }) {
   if (!drawer.belowMinimum) return null;
   return (
-    <WarningText role="status">
+    <WarningText role="status" aria-label={`${drawer.name} 3종 미만 경고`}>
       3종이 안 돼요. 지금 {drawer.kinds}종이에요. 책을 더 채우면 열쇠를 건넬 수 있어요.
     </WarningText>
   );

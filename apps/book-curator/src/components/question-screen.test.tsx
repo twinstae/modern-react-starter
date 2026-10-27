@@ -5,7 +5,7 @@ import { QuestionScreen, type ItemScaleValue } from "./question-screen.tsx";
 import * as Stories from "./question-screen.stories.tsx";
 
 describe("QuestionScreen", () => {
-  it("문항을 그룹 이름으로 보여 주고 척도 다섯 칸이 1~5를 바로 넘긴다", async () => {
+  it("문항과 척도 다섯 칸을 보여 주고, 고른 답을 차례에 남긴다", async () => {
     const answered: ItemScaleValue[] = [];
     const args = Stories.questionScreenArgs.first;
 

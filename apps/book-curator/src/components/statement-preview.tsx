@@ -56,12 +56,12 @@ export function StatementPreview({
     <Card tone="paper" aria-labelledby="statement-preview-title">
       <Title id="statement-preview-title">상태 문장 미리보기</Title>
       <Eyebrow>첫 문장</Eyebrow>
-      <ReasonText aria-label="첫 상태 문장">{first}</ReasonText>
+      <ReasonText>{first}</ReasonText>
       <Eyebrow>둘째 문장</Eyebrow>
-      <ReasonText aria-label="둘째 상태 문장">{second}</ReasonText>
-      <MutedText aria-label="조사 확인">서랍 이름에 붙는 조사: {josa}</MutedText>
+      <ReasonText>{second}</ReasonText>
+      <MutedText>서랍 이름에 붙는 조사: {josa}</MutedText>
       <Eyebrow>인용</Eyebrow>
-      <Citation aria-label="인용 미리보기">{citation}</Citation>
+      <Citation>{citation}</Citation>
       <MutedText>별명 “{nickname}”과 지금 고른 서랍 이름으로 계산했어요.</MutedText>
       {first === "문형을 확인해 주세요" || second === "문형을 확인해 주세요" ? (
         <WarningText role="alert">문장 틀의 자리표시와 조사를 확인해 주세요.</WarningText>

@@ -113,6 +113,7 @@ export function ResultScreen({
 }) {
   return (
     <Screen
+      aria-label="결과"
       display="flex"
       flexDirection="column"
       justifyContent="center"
