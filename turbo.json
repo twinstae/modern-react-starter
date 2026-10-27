@@ -19,7 +19,8 @@
     },
     "build": {
       "dependsOn": ["codegen", "lib"],
-      "outputs": [".output/**"]
+      "env": ["VERCEL", "VERCEL_ENV"],
+      "outputs": [".output/**", ".vercel/output/**"]
     },
     "dev": {
       "dependsOn": ["codegen", "lib"],
