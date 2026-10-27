@@ -6,13 +6,11 @@ import {
   Button,
   Card,
   CardTitle,
-  Eyebrow,
   MarkText,
   MutedText,
   ReasonText,
   ResultTitle,
   Screen,
-  SecondaryTitle,
   StatusText,
 } from "../ui/index.ts";
 
@@ -23,20 +21,6 @@ const Statements = styled("section", {
     alignItems: "center",
     gap: "4",
     textAlign: "center",
-  },
-});
-
-const SecondGroup = styled("div", {
-  base: { display: "flex", flexDirection: "column", gap: "1", maxW: "44rem" },
-});
-
-const SecondLabel = styled("h2", {
-  base: {
-    color: "seal.600",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-    fontWeight: "700",
-    letterSpacing: "0.08em",
   },
 });
 
@@ -91,8 +75,6 @@ const Actions = styled("div", {
   },
 });
 
-const OwnerPrompt = styled(BodyText, { base: { fontWeight: "600" } });
-
 /**
  * 결과 화면. 손님 view model만 받아 상태 문장 두 개와 추천 서랍을 그린다.
  * 점수·서랍 코드·서랍 속 책은 받지도 보여 주지도 않는다(I-9, C-2).
@@ -124,17 +106,13 @@ export function ResultScreen({
     >
       <Statements aria-label="지금 필요한 서랍">
         <ResultTitle>{customer.firstStatement}</ResultTitle>
-        <SecondGroup>
-          <SecondLabel>함께 보면 좋은 책</SecondLabel>
-          <SecondaryTitle>{customer.secondStatement}</SecondaryTitle>
-        </SecondGroup>
+        <BodyText color="fg.muted">{customer.secondStatement}</BodyText>
         {similar ? (
           <SimilarLine>두 서랍이 비슷하게 보여요. 주인과 함께 골라도 좋아요.</SimilarLine>
         ) : null}
       </Statements>
       <Lower>
         <Card tone="paper" aria-labelledby="recommended-drawer-name">
-          <Eyebrow>큐레이터가 고른 서랍</Eyebrow>
           <CardHeader>
             <CardTitle id="recommended-drawer-name">{customer.recommendedDrawerName}</CardTitle>
             {customer.recommendedMark === null ? null : (
@@ -147,7 +125,6 @@ export function ResultScreen({
           )}
         </Card>
         <Actions>
-          <OwnerPrompt>책방 주인에게 보여 주세요</OwnerPrompt>
           {ownerCheckNotice === null ? null : (
             <StatusText role="status" aria-label="주인 확인 안내">
               {ownerCheckNotice}

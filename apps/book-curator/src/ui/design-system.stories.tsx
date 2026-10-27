@@ -85,7 +85,7 @@ export function DesignSystemGallery() {
       <SectionTitle mt="10">입력</SectionTitle>
       <Grid mt="3">
         <Field>
-          <Label>별명</Label>
+          <Label>어떻게 불러 드릴까요?</Label>
           <Input placeholder="예: 토끼" />
         </Field>
         <Field>

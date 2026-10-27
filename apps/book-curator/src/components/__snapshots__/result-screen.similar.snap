@@ -2,17 +2,13 @@ main: "결과"
   region: "지금 필요한 서랍"
     heading: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요"
       - properties: [level=1]
-    heading: "함께 보면 좋은 책"
-      - properties: [level=2]
-    heading: "나를 들여다보는 책이 함께 보이면 좋겠어요"
-      - properties: [level=2]
+    paragraph:
+      "나를 들여다보는 책이 함께 보이면 좋겠어요"
     paragraph:
       "두 서랍이 비슷하게 보여요. 주인과 함께 골라도 좋아요."
   article: "삶의 방식을 바꾸는 책"
     - relations:
       labelledby: "삶의 방식을 바꾸는 책" (#recommended-drawer-name)
-    paragraph:
-      "큐레이터가 고른 서랍"
     heading: "삶의 방식을 바꾸는 책"
       - properties: [level=2]
     paragraph:
@@ -21,8 +17,6 @@ main: "결과"
       "‘요즘 생활에서 뭔가를 바꾸고 싶다’라고 하셨죠"
     paragraph:
       "바꾸고 싶은 마음에는 작은 습관부터 건드리는 책이 잘 맞아요."
-  paragraph:
-    "책방 주인에게 보여 주세요"
   button: "주인 확인"
     - interaction: [focusable=true] [tabbable=true]
   button: "다시 해 보기"

@@ -9,7 +9,6 @@ describe("ResultScreen", () => {
     await runSiheom(
       given.render(<ResultScreen {...Stories.resultScreenArgs.seoyun} />),
       assertions.visible(query.heading("토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요")),
-      assertions.visible(query.heading("함께 보면 좋은 책")),
       assertions.a11ySnapshot(query.main("결과"), "result-screen.seoyun.snap"),
     );
   });

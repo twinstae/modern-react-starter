@@ -105,7 +105,7 @@ export function NicknameStart({
           >
             <TextField
               name="nickname"
-              label="별명"
+              label="어떻게 불러 드릴까요?"
               size="lg"
               placeholder="예: 토끼"
               autoComplete="off"

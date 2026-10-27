@@ -17,7 +17,7 @@ describe("NicknameStart", () => {
           }}
         />,
       ),
-      actions.fill(query.textbox("별명"), "  토끼  "),
+      actions.fill(query.textbox("어떻게 불러 드릴까요?"), "  토끼  "),
       actions.click(query.button("시작하기")),
     );
 
@@ -37,7 +37,7 @@ describe("NicknameStart", () => {
         />,
       ),
       actions.click(query.button("시작하기")),
-      assertions.errormessage(query.textbox("별명"), "별명을 적어 주세요"),
+      assertions.errormessage(query.textbox("어떻게 불러 드릴까요?"), "별명을 적어 주세요"),
     );
 
     expect(started).toBeUndefined();
