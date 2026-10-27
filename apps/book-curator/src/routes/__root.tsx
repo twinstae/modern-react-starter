@@ -2,10 +2,12 @@ import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { PageRoot } from "@repo/ui";
 
+import type { Kiosk } from "../kiosk-store.ts";
 import appCss from "../styles.css?url";
 
 interface RouterContext {
   queryClient: QueryClient;
+  kiosk: Kiosk;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({

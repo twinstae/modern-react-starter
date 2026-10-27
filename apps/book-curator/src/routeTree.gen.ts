@@ -10,7 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TurnRouteImport } from './routes/_turn'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as TurnOwnerRouteImport } from './routes/_turn.owner'
+import { Route as TurnQuestionRouteImport } from './routes/_turn.question'
+import { Route as TurnResultRouteImport } from './routes/_turn.result'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminDrawersRouteImport } from './routes/admin.drawers'
 import { Route as AdminPinRouteImport } from './routes/admin.pin'
@@ -18,6 +22,9 @@ import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
 import { Route as AdminShelfRouteImport } from './routes/admin.shelf'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
+import { Route as TurnOwnerBooksRouteImport } from './routes/_turn.owner.books'
+import { Route as TurnOwnerCheckRouteImport } from './routes/_turn.owner.check'
+import { Route as TurnOwnerPinRouteImport } from './routes/_turn.owner.pin'
 import { Route as AdminQuestionsIndexRouteImport } from './routes/admin.questions.index'
 import { Route as AdminQuestionsDraftIdRouteImport } from './routes/admin.questions.$draftId'
 import { Route as AdminShelfBookIdRouteImport } from './routes/admin.shelf.$bookId'
@@ -28,10 +35,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TurnRoute = TurnRouteImport.update({
+  id: '/_turn',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TurnOwnerRoute = TurnOwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => TurnRoute,
+} as any)
+const TurnQuestionRoute = TurnQuestionRouteImport.update({
+  id: '/question',
+  path: '/question',
+  getParentRoute: () => TurnRoute,
+} as any)
+const TurnResultRoute = TurnResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => TurnRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -68,6 +94,21 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TurnOwnerBooksRoute = TurnOwnerBooksRouteImport.update({
+  id: '/books',
+  path: '/books',
+  getParentRoute: () => TurnOwnerRoute,
+} as any)
+const TurnOwnerCheckRoute = TurnOwnerCheckRouteImport.update({
+  id: '/check',
+  path: '/check',
+  getParentRoute: () => TurnOwnerRoute,
+} as any)
+const TurnOwnerPinRoute = TurnOwnerPinRouteImport.update({
+  id: '/pin',
+  path: '/pin',
+  getParentRoute: () => TurnOwnerRoute,
+} as any)
 const AdminQuestionsIndexRoute = AdminQuestionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -92,6 +133,9 @@ const AdminShelfNewRoute = AdminShelfNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/owner': typeof TurnOwnerRouteWithChildren
+  '/question': typeof TurnQuestionRoute
+  '/result': typeof TurnResultRoute
   '/admin/drawers': typeof AdminDrawersRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin/questions': typeof AdminQuestionsRouteWithChildren
@@ -99,6 +143,9 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/admin/': typeof AdminIndexRoute
+  '/owner/books': typeof TurnOwnerBooksRoute
+  '/owner/check': typeof TurnOwnerCheckRoute
+  '/owner/pin': typeof TurnOwnerPinRoute
   '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
   '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
   '/admin/shelf/new': typeof AdminShelfNewRoute
@@ -106,12 +153,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/owner': typeof TurnOwnerRouteWithChildren
+  '/question': typeof TurnQuestionRoute
+  '/result': typeof TurnResultRoute
   '/admin/drawers': typeof AdminDrawersRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin/shelf': typeof AdminShelfRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/admin': typeof AdminIndexRoute
+  '/owner/books': typeof TurnOwnerBooksRoute
+  '/owner/check': typeof TurnOwnerCheckRoute
+  '/owner/pin': typeof TurnOwnerPinRoute
   '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
   '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
   '/admin/shelf/new': typeof AdminShelfNewRoute
@@ -120,7 +173,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_turn': typeof TurnRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/_turn/owner': typeof TurnOwnerRouteWithChildren
+  '/_turn/question': typeof TurnQuestionRoute
+  '/_turn/result': typeof TurnResultRoute
   '/admin/drawers': typeof AdminDrawersRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin/questions': typeof AdminQuestionsRouteWithChildren
@@ -128,6 +185,9 @@ export interface FileRoutesById {
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
   '/admin/': typeof AdminIndexRoute
+  '/_turn/owner/books': typeof TurnOwnerBooksRoute
+  '/_turn/owner/check': typeof TurnOwnerCheckRoute
+  '/_turn/owner/pin': typeof TurnOwnerPinRoute
   '/admin/questions/$draftId': typeof AdminQuestionsDraftIdRoute
   '/admin/shelf/$bookId': typeof AdminShelfBookIdRoute
   '/admin/shelf/new': typeof AdminShelfNewRoute
@@ -138,6 +198,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/owner'
+    | '/question'
+    | '/result'
     | '/admin/drawers'
     | '/admin/pin'
     | '/admin/questions'
@@ -145,6 +208,9 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/api/$'
     | '/admin/'
+    | '/owner/books'
+    | '/owner/check'
+    | '/owner/pin'
     | '/admin/questions/$draftId'
     | '/admin/shelf/$bookId'
     | '/admin/shelf/new'
@@ -152,12 +218,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/owner'
+    | '/question'
+    | '/result'
     | '/admin/drawers'
     | '/admin/pin'
     | '/admin/shelf'
     | '/admin/login'
     | '/api/$'
     | '/admin'
+    | '/owner/books'
+    | '/owner/check'
+    | '/owner/pin'
     | '/admin/questions/$draftId'
     | '/admin/shelf/$bookId'
     | '/admin/shelf/new'
@@ -165,7 +237,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_turn'
     | '/admin'
+    | '/_turn/owner'
+    | '/_turn/question'
+    | '/_turn/result'
     | '/admin/drawers'
     | '/admin/pin'
     | '/admin/questions'
@@ -173,6 +249,9 @@ export interface FileRouteTypes {
     | '/admin_/login'
     | '/api/$'
     | '/admin/'
+    | '/_turn/owner/books'
+    | '/_turn/owner/check'
+    | '/_turn/owner/pin'
     | '/admin/questions/$draftId'
     | '/admin/shelf/$bookId'
     | '/admin/shelf/new'
@@ -181,6 +260,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  TurnRoute: typeof TurnRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   ApiSplatRoute: typeof ApiSplatRoute
@@ -195,12 +275,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_turn': {
+      id: '/_turn'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TurnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_turn/owner': {
+      id: '/_turn/owner'
+      path: '/owner'
+      fullPath: '/owner'
+      preLoaderRoute: typeof TurnOwnerRouteImport
+      parentRoute: typeof TurnRoute
+    }
+    '/_turn/question': {
+      id: '/_turn/question'
+      path: '/question'
+      fullPath: '/question'
+      preLoaderRoute: typeof TurnQuestionRouteImport
+      parentRoute: typeof TurnRoute
+    }
+    '/_turn/result': {
+      id: '/_turn/result'
+      path: '/result'
+      fullPath: '/result'
+      preLoaderRoute: typeof TurnResultRouteImport
+      parentRoute: typeof TurnRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -251,6 +359,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_turn/owner/books': {
+      id: '/_turn/owner/books'
+      path: '/books'
+      fullPath: '/owner/books'
+      preLoaderRoute: typeof TurnOwnerBooksRouteImport
+      parentRoute: typeof TurnOwnerRoute
+    }
+    '/_turn/owner/check': {
+      id: '/_turn/owner/check'
+      path: '/check'
+      fullPath: '/owner/check'
+      preLoaderRoute: typeof TurnOwnerCheckRouteImport
+      parentRoute: typeof TurnOwnerRoute
+    }
+    '/_turn/owner/pin': {
+      id: '/_turn/owner/pin'
+      path: '/pin'
+      fullPath: '/owner/pin'
+      preLoaderRoute: typeof TurnOwnerPinRouteImport
+      parentRoute: typeof TurnOwnerRoute
+    }
     '/admin/questions/': {
       id: '/admin/questions/'
       path: '/'
@@ -281,6 +410,36 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface TurnOwnerRouteChildren {
+  TurnOwnerBooksRoute: typeof TurnOwnerBooksRoute
+  TurnOwnerCheckRoute: typeof TurnOwnerCheckRoute
+  TurnOwnerPinRoute: typeof TurnOwnerPinRoute
+}
+
+const TurnOwnerRouteChildren: TurnOwnerRouteChildren = {
+  TurnOwnerBooksRoute: TurnOwnerBooksRoute,
+  TurnOwnerCheckRoute: TurnOwnerCheckRoute,
+  TurnOwnerPinRoute: TurnOwnerPinRoute,
+}
+
+const TurnOwnerRouteWithChildren = TurnOwnerRoute._addFileChildren(
+  TurnOwnerRouteChildren,
+)
+
+interface TurnRouteChildren {
+  TurnOwnerRoute: typeof TurnOwnerRouteWithChildren
+  TurnQuestionRoute: typeof TurnQuestionRoute
+  TurnResultRoute: typeof TurnResultRoute
+}
+
+const TurnRouteChildren: TurnRouteChildren = {
+  TurnOwnerRoute: TurnOwnerRouteWithChildren,
+  TurnQuestionRoute: TurnQuestionRoute,
+  TurnResultRoute: TurnResultRoute,
+}
+
+const TurnRouteWithChildren = TurnRoute._addFileChildren(TurnRouteChildren)
 
 interface AdminQuestionsRouteChildren {
   AdminQuestionsDraftIdRoute: typeof AdminQuestionsDraftIdRoute
@@ -330,6 +489,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  TurnRoute: TurnRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   ApiSplatRoute: ApiSplatRoute,

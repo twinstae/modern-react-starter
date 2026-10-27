@@ -28,6 +28,7 @@
         "better-auth": "catalog:",
         "drizzle-orm": "catalog:",
         "elysia": "catalog:",
+        "jotai": "^3.0.1",
         "nitro": "catalog:",
         "postgres": "catalog:",
         "react": "catalog:",
