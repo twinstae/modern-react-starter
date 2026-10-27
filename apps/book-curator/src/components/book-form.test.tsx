@@ -6,7 +6,7 @@ import { BookForm } from "./book-form.tsx";
 import * as Stories from "./book-form.stories.tsx";
 
 describe("BookForm", () => {
-  it("부록 C 항목을 관련도 일곱 칸과 함께 onSubmit에 넘긴다", async () => {
+  it("책 정보를 적어 저장하면 서가에 넣을 책이 만들어진다", async () => {
     let submitted: BookInput | undefined;
 
     await runSiheom(
@@ -39,7 +39,7 @@ describe("BookForm", () => {
     });
   });
 
-  it("0~5 정수가 아닌 관련도는 이유를 보여 주고 보내지 않는다", async () => {
+  it("관련도를 0~5 밖으로 적으면 그 칸에 이유를 보여 주고 저장하지 않는다", async () => {
     let submitted: BookInput | undefined;
 
     await runSiheom(

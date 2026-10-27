@@ -1,18 +1,19 @@
-import { useId, useState } from "react";
+import { useId, useMemo } from "react";
+import * as v from "valibot";
 import { styled } from "styled-system/jsx";
 
-import { parseBookInput, type Book, type BookInput, type BookRelevance } from "../domain/book.ts";
+import { BookInputSchema, type Book, type BookInput } from "../domain/book.ts";
 import { DRAWER_CODES, type DrawerCode } from "../domain/question-set.ts";
 import {
   Button,
   Card,
-  Field,
-  FieldError,
   Hint,
-  Input,
-  Label,
+  NumberField,
   SectionTitle,
-  Textarea,
+  SimpleForm,
+  SubmitButton,
+  TextareaField,
+  TextField,
 } from "../ui/index.ts";
 
 export interface BookFormDrawer {
@@ -20,25 +21,7 @@ export interface BookFormDrawer {
   readonly name: string;
 }
 
-interface BookTextValues {
-  title: string;
-  author: string;
-  keywords: string;
-  reason: string;
-  question: string;
-}
-
-type TextField = keyof BookTextValues;
-type RelevanceField = `relevance:${DrawerCode}`;
-type BookFormErrorField = TextField | RelevanceField | "form";
-
-type BookFormErrors = Partial<Record<BookFormErrorField, string>>;
-
-const Form = styled("form", {
-  base: { display: "flex", flexDirection: "column", gap: "4", width: "full" },
-});
-
-const Fieldset = styled("fieldset", {
+const FormSection = styled("fieldset", {
   base: {
     display: "flex",
     flexDirection: "column",
@@ -74,7 +57,22 @@ const Actions = styled("div", {
   },
 });
 
-const textFrom = (book: Book | undefined): BookTextValues => ({
+const splitKeywords = (value: string): string[] =>
+  value
+    .split(",")
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keyword !== "");
+
+const SplitKeywordsSchema = v.pipe(
+  v.string(),
+  v.check((value) => splitKeywords(value).length > 0, "핵심 단어를 쉼표로 하나 이상 넣어 주세요"),
+  v.check(
+    (value) => new Set(splitKeywords(value)).size === splitKeywords(value).length,
+    "같은 핵심 단어를 두 번 넣을 수 없어요",
+  ),
+);
+
+const textFrom = (book: Book | undefined) => ({
   title: book?.title ?? "",
   author: book?.author ?? "",
   keywords: book?.keywords.join(", ") ?? "",
@@ -82,17 +80,56 @@ const textFrom = (book: Book | undefined): BookTextValues => ({
   question: book?.question ?? "",
 });
 
-const relevanceFrom = (book: Book | undefined): Record<DrawerCode, string> =>
-  Object.fromEntries(
-    DRAWER_CODES.map((code) => [code, String(book?.relevance[code] ?? 0)]),
-  ) as Record<DrawerCode, string>;
+const relevanceFrom = (book: Book | undefined): Record<DrawerCode, number> =>
+  Object.fromEntries(DRAWER_CODES.map((code) => [code, book?.relevance[code] ?? 0])) as Record<
+    DrawerCode,
+    number
+  >;
 
-const required = (value: string, message: string): string | undefined =>
-  value.trim() === "" ? message : undefined;
+const requiredText = (message: string) => v.pipe(v.string(), v.trim(), v.minLength(1, message));
+
+const relevanceValue = (name: string) =>
+  v.pipe(
+    v.number(`${name} 관련도는 0~5 정수로 넣어 주세요`),
+    v.integer(`${name} 관련도는 0~5 정수로 넣어 주세요`),
+    v.minValue(0, `${name} 관련도는 0~5 정수로 넣어 주세요`),
+    v.maxValue(5, `${name} 관련도는 0~5 정수로 넣어 주세요`),
+  );
+
+const bookFormSchema = (drawers: readonly BookFormDrawer[]) =>
+  v.pipe(
+    v.object({
+      title: requiredText("제목을 넣어 주세요"),
+      author: requiredText("저자를 넣어 주세요"),
+      keywords: SplitKeywordsSchema,
+      reason: requiredText("권하는 이유를 넣어 주세요"),
+      question: requiredText("함께 생각해 볼 질문을 넣어 주세요"),
+      relevance: v.object(
+        Object.fromEntries(
+          DRAWER_CODES.map((code) => [
+            code,
+            relevanceValue(drawers.find((drawer) => drawer.code === code)?.name ?? code),
+          ]),
+        ) as Record<DrawerCode, ReturnType<typeof relevanceValue>>,
+      ),
+    }),
+    v.transform(
+      (values) =>
+        ({
+          title: values.title,
+          author: values.author,
+          keywords: splitKeywords(values.keywords),
+          reason: values.reason,
+          question: values.question,
+          relevance: values.relevance,
+        }) satisfies BookInput,
+    ),
+    BookInputSchema,
+  );
 
 /**
  * 부록 C의 책 입력. 관련도 칸의 이름은 서랍 코드가 아니라 지금 공개된 서랍 이름이다.
- * 형식은 여기서 막고, 저장 실패는 콜백이 돌려준 문구를 그대로 보여 준다.
+ * 형식은 스키마가 막고, 저장 실패는 콜백이 돌려준 문구를 그대로 보여 준다.
  */
 export function BookForm({
   drawers,
@@ -107,176 +144,42 @@ export function BookForm({
   onSubmit: (input: BookInput) => Promise<string | undefined>;
   onCancel?: () => void;
 }) {
-  const idPrefix = useId();
-  const [text, setText] = useState<BookTextValues>(() => textFrom(initial));
-  const [relevance, setRelevance] = useState<Record<DrawerCode, string>>(() =>
-    relevanceFrom(initial),
-  );
-  const [errors, setErrors] = useState<BookFormErrors>({});
-  const [pending, setPending] = useState(false);
-
-  const idFor = (name: string) => `${idPrefix}-${name}`;
-  const errorIdFor = (name: string) => `${idPrefix}-${name}-error`;
-
-  const updateText = (field: TextField, value: string) => {
-    setText((current) => ({ ...current, [field]: value }));
-    setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
-  };
-
-  const updateRelevance = (code: DrawerCode, value: string) => {
-    setRelevance((current) => ({ ...current, [code]: value }));
-    setErrors((current) => ({ ...current, [`relevance:${code}`]: undefined, form: undefined }));
-  };
-
-  const validate = (): { input?: BookInput; problems: BookFormErrors } => {
-    const problems: BookFormErrors = {};
-    const title = required(text.title, "제목을 넣어 주세요");
-    const author = required(text.author, "저자를 넣어 주세요");
-    const reason = required(text.reason, "권하는 이유를 넣어 주세요");
-    const question = required(text.question, "함께 생각해 볼 질문을 넣어 주세요");
-    if (title !== undefined) problems.title = title;
-    if (author !== undefined) problems.author = author;
-    if (reason !== undefined) problems.reason = reason;
-    if (question !== undefined) problems.question = question;
-
-    const keywords = text.keywords
-      .split(",")
-      .map((keyword) => keyword.trim())
-      .filter((keyword) => keyword !== "");
-    if (keywords.length === 0) {
-      problems.keywords = "핵심 단어를 쉼표로 하나 이상 넣어 주세요";
-    } else if (new Set(keywords).size !== keywords.length) {
-      problems.keywords = "같은 핵심 단어를 두 번 넣을 수 없어요";
-    }
-
-    const numbers = {} as Record<DrawerCode, number>;
-    for (const code of DRAWER_CODES) {
-      const raw = relevance[code].trim();
-      const value = raw === "" ? Number.NaN : Number(raw);
-      if (!Number.isInteger(value) || value < 0 || value > 5) {
-        const name = drawers.find((drawer) => drawer.code === code)?.name ?? code;
-        problems[`relevance:${code}`] = `${name} 관련도는 0~5 정수로 넣어 주세요`;
-      }
-      numbers[code] = value;
-    }
-
-    if (Object.keys(problems).length > 0) return { problems };
-
-    try {
-      return {
-        input: parseBookInput({
-          title: text.title,
-          author: text.author,
-          keywords,
-          reason: text.reason,
-          question: text.question,
-          relevance: numbers as BookRelevance,
-        }),
-        problems,
-      };
-    } catch {
-      return { problems: { form: "책 정보를 다시 확인해 주세요" } };
-    }
-  };
-
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { input, problems } = validate();
-    setErrors(problems);
-    if (input === undefined) return;
-
-    setPending(true);
-    try {
-      const failure = await onSubmit(input);
-      if (failure !== undefined) setErrors({ form: failure });
-    } catch {
-      setErrors({ form: "책을 저장하지 못했어요. 잠시 뒤 다시 해 주세요" });
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const textField = (
-    field: TextField,
-    label: string,
-    options: { multiline?: boolean; hint?: string } = {},
-  ) => {
-    const error = errors[field];
-    const inputProps = {
-      id: idFor(field),
-      name: field,
-      value: text[field],
-      "aria-invalid": error === undefined ? undefined : true,
-      "aria-errormessage": error === undefined ? undefined : errorIdFor(field),
-      onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-        updateText(field, event.target.value),
-    } as const;
-
-    return (
-      <Field>
-        <Label size="sm" htmlFor={idFor(field)}>
-          {label}
-        </Label>
-        {options.multiline === true ? (
-          <Textarea {...inputProps} />
-        ) : (
-          <Input {...inputProps} type="text" />
-        )}
-        {options.hint === undefined ? null : <Hint>{options.hint}</Hint>}
-        {error === undefined ? null : (
-          <FieldError id={errorIdFor(field)} role="alert">
-            {error}
-          </FieldError>
-        )}
-      </Field>
-    );
-  };
+  const schema = useMemo(() => bookFormSchema(drawers), [drawers]);
 
   return (
-    <Form onSubmit={submit} noValidate>
-      {textField("title", "제목")}
-      {textField("author", "저자")}
-      {textField("keywords", "핵심 단어", { hint: "쉼표로 나눠 적어 주세요. 예: 계급, 불평등" })}
-      {textField("reason", "권하는 이유", { multiline: true })}
-      {textField("question", "함께 생각해 볼 질문", { multiline: true })}
+    <SimpleForm
+      aria-label="책 입력"
+      schema={schema}
+      defaultValues={{ ...textFrom(initial), relevance: relevanceFrom(initial) }}
+      onSubmit={onSubmit}
+      noValidate
+    >
+      <TextField name="title" label="제목" />
+      <TextField name="author" label="저자" />
+      <TextField
+        name="keywords"
+        label="핵심 단어"
+        hint="쉼표로 나눠 적어 주세요. 예: 계급, 불평등"
+      />
+      <TextareaField name="reason" label="권하는 이유" />
+      <TextareaField name="question" label="함께 생각해 볼 질문" />
 
-      <Fieldset>
+      <FormSection>
         <Legend>서랍별 관련도</Legend>
         <Hint>0은 거의 관계없음, 5는 아주 잘 맞음이에요. 정수로 적어 주세요.</Hint>
         <RelevanceGrid>
-          {drawers.map((drawer) => {
-            const field = `relevance:${drawer.code}` as const;
-            const error = errors[field];
-            return (
-              <Field key={drawer.code}>
-                <Label size="sm" htmlFor={idFor(field)}>
-                  {drawer.name} 관련도
-                </Label>
-                <Input
-                  id={idFor(field)}
-                  name={field}
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={5}
-                  step={1}
-                  value={relevance[drawer.code]}
-                  aria-invalid={error === undefined ? undefined : true}
-                  aria-errormessage={error === undefined ? undefined : errorIdFor(field)}
-                  onChange={(event) => updateRelevance(drawer.code, event.target.value)}
-                />
-                {error === undefined ? null : (
-                  <FieldError id={errorIdFor(field)} role="alert">
-                    {error}
-                  </FieldError>
-                )}
-              </Field>
-            );
-          })}
+          {drawers.map((drawer) => (
+            <NumberField
+              key={drawer.code}
+              name={`relevance.${drawer.code}`}
+              label={`${drawer.name} 관련도`}
+              min={0}
+              max={5}
+              step={1}
+            />
+          ))}
         </RelevanceGrid>
-      </Fieldset>
-
-      {errors.form === undefined ? null : <FieldError role="alert">{errors.form}</FieldError>}
+      </FormSection>
 
       <Actions>
         {onCancel === undefined ? null : (
@@ -284,11 +187,9 @@ export function BookForm({
             취소
           </Button>
         )}
-        <Button type="submit" disabled={pending} aria-busy={pending || undefined}>
-          {submitLabel}
-        </Button>
+        <SubmitButton>{submitLabel}</SubmitButton>
       </Actions>
-    </Form>
+    </SimpleForm>
   );
 }
 
