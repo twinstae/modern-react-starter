@@ -17,8 +17,10 @@
       "dependencies": {
         "@electric-sql/pglite": "catalog:",
         "@elysiajs/eden": "catalog:",
+        "@hookform/resolvers": "catalog:",
         "@pandacss/vite": "catalog:",
         "@repo/ui": "workspace:*",
+        "@standard-schema/spec": "catalog:",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-router-ssr-query": "catalog:",
@@ -29,6 +31,7 @@
         "nitro": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
+        "react-hook-form": "catalog:",
         "valibot": "catalog:",
       },
       "devDependencies": {
@@ -291,6 +294,7 @@
   "catalog": {
     "@electric-sql/pglite": "^0.5.10",
     "@elysiajs/eden": "^1.4.9",
+    "@hookform/resolvers": "^5.9.1",
     "@pandacss/dev": "^2.2.0",
     "@pandacss/preset-base": "^2.2.0",
     "@pandacss/preset-panda": "^2.2.0",
@@ -324,6 +328,7 @@
     "playwright": "^1.16.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-hook-form": "^7.89.0",
     "storybook": "^10.6.2",
     "temporal-polyfill": "^1.0.6",
     "typescript": "^7.0.2",
@@ -1017,7 +1022,7 @@
 
     "@storybook/addon-docs": ["@storybook/addon-docs@10.6.3", "", { "dependencies": { "@mdx-js/react": "^3.0.0", "@storybook/icons": "^2.0.2", "@storybook/react-dom-shim": "10.6.3", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "ts-dedent": "^2.0.0", "unplugin": "^2.3.5" }, "peerDependencies": { "@types/react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "storybook": "^10.6.3" }, "optionalPeers": ["@types/react"] }, "sha512-365f712au4w/xvFqEKY6TIvTeGGAY7FKRB8zP4CFa3VSv9oyxHaq/ublFg4YDbCeRagppwl1PZ6k4+PoUor3+A=="],
 
-    "@storybook/addon-mcp": ["@storybook/addon-mcp@10.6.3", "", { "dependencies": { "@tmcp/adapter-valibot": "^0.1.5", "@tmcp/transport-http": "^0.8.5", "tmcp": "^1.19.4", "valibot": "^1.4.0" }, "peerDependencies": { "@storybook/addon-vitest": "^10.6.3", "storybook": "^10.6.3" }, "optionalPeers": ["@storybook/addon-vitest"] }, "sha512-xGAVHLmbjNfCTsiEfkgWDK7jnX1ajwnE8rcG/Y251oQcmd0P+RqSSRViy+ZziRLx4MTwxVlRLLYFecwm1Gz4Jg=="],
+    "@storybook/addon-mcp": ["@storybook/addon-mcp@10.6.4", "", { "dependencies": { "@tmcp/adapter-valibot": "^0.1.5", "@tmcp/transport-http": "^0.8.5", "tmcp": "^1.19.4", "valibot": "^1.4.0" }, "peerDependencies": { "@storybook/addon-vitest": "^10.6.4", "storybook": "^10.6.4" }, "optionalPeers": ["@storybook/addon-vitest"] }, "sha512-CfG+plcQz7vb9nzEA/4z6+daVx2LpoD+NJkLRP5i7Z3MqIZUE5HKv8AcOieVMfcbDWyUum7mbos5xLX9uxSguw=="],
 
     "@storybook/addon-vitest": ["@storybook/addon-vitest@10.6.3", "", { "dependencies": { "@storybook/global": "^5.0.0", "@storybook/icons": "^2.0.2" }, "peerDependencies": { "@vitest/browser": "^4.0.0 || ^5.0.0", "@vitest/browser-playwright": "^4.0.0 || ^5.0.0", "storybook": "^10.6.3", "vitest": "^4.0.0 || ^5.0.0" }, "optionalPeers": ["@vitest/browser", "@vitest/browser-playwright", "vitest"] }, "sha512-ANz0SHAi9OTtrZt+YmcQvP7tcUZrTSm8Gq/nI7p9ZRyHAUOTdGoCex2cPyLc3mEqZTCBnaYXR6ZhURlpGsh9dQ=="],
 

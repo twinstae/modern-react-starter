@@ -3,7 +3,7 @@ import { styled } from "styled-system/jsx";
 
 import type { DrawerCode } from "../domain/question-set.ts";
 import { MINIMUM_SHELF_KINDS } from "../domain/shelf.ts";
-import { Button, Card, Input, MutedText, WarningBox } from "../ui/index.ts";
+import { Button, Card, Input, MutedText, Select, WarningBox } from "../ui/index.ts";
 
 export interface DrawerBoardBook {
   readonly bookId: string;
@@ -103,21 +103,6 @@ const AddRow = styled("div", {
     pt: "2",
     borderTopWidth: "1px",
     borderColor: "paper.300",
-  },
-});
-
-const Select = styled("select", {
-  base: {
-    width: "full",
-    minH: "9",
-    px: "2",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
   },
 });
 

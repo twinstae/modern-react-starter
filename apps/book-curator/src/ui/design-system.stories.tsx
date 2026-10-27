@@ -9,7 +9,6 @@ import {
   Eyebrow,
   Field,
   FieldError,
-  Hint,
   Input,
   Label,
   MarkText,
@@ -88,7 +87,6 @@ export function DesignSystemGallery() {
         <Field>
           <Label>별명</Label>
           <Input placeholder="예: 토끼" />
-          <Hint>실명이 아니어도 괜찮아요.</Hint>
         </Field>
         <Field>
           <Label>잘못된 값</Label>

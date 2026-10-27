@@ -69,10 +69,11 @@ export class TemplateSyntaxError extends Error {
 export const NicknameSchema = v.pipe(
   v.string(),
   v.trim(),
-  v.check((nickname) => {
-    const length = Array.from(nickname).length;
-    return length >= 1 && length <= NICKNAME_MAX_LENGTH;
-  }, `별명은 1~${NICKNAME_MAX_LENGTH}자여야 합니다`),
+  v.check((nickname) => Array.from(nickname).length >= 1, "별명을 적어 주세요"),
+  v.check(
+    (nickname) => Array.from(nickname).length <= NICKNAME_MAX_LENGTH,
+    `별명은 ${NICKNAME_MAX_LENGTH}자까지 쓸 수 있어요`,
+  ),
 );
 
 export type Nickname = v.InferOutput<typeof NicknameSchema>;

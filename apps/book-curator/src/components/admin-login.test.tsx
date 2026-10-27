@@ -6,7 +6,7 @@ import { AdminLogin } from "./admin-login.tsx";
 import * as Stories from "./admin-login.stories.tsx";
 
 describe("AdminLogin", () => {
-  it("이메일과 비밀번호를 onSubmit에 넘기고, 성공하면 onSuccess를 부른다", async () => {
+  it("이메일과 비밀번호를 넣으면 운영자 화면으로 들어간다", async () => {
     let submitted: AdminCredentials | undefined;
     let succeeded = false;
 
@@ -35,7 +35,7 @@ describe("AdminLogin", () => {
     expect(succeeded).toBe(true);
   });
 
-  it("로그인 실패 문구를 보여 준다", async () => {
+  it("이메일이나 비밀번호가 맞지 않으면 그 이유를 보여 준다", async () => {
     await runSiheom(
       given.render(
         <AdminLogin
@@ -46,7 +46,7 @@ describe("AdminLogin", () => {
       actions.fill(query.label("이메일"), "owner@example.com"),
       actions.fill(query.label("비밀번호"), "wrong-password"),
       actions.click(query.button("로그인")),
-      assertions.errormessage(query.label("비밀번호"), "이메일이나 비밀번호가 맞지 않아요"),
+      assertions.visible(query.alert("이메일이나 비밀번호가 맞지 않아요")),
     );
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as v from "valibot";
 import { styled } from "styled-system/jsx";
 
 import type { QuestionSetDraftSummaryDto } from "../admin-dto.ts";
@@ -6,10 +6,13 @@ import {
   Button,
   Card as Bar,
   Field,
-  Input as Control,
   Label,
   MutedText,
+  Select,
+  SimpleForm,
   StatusText,
+  SubmitButton,
+  TextField,
   WarningText,
 } from "../ui/index.ts";
 
@@ -17,19 +20,8 @@ const Row = styled("div", {
   base: { display: "flex", alignItems: "flex-end", gap: "3", flexWrap: "wrap" },
 });
 
-const Select = styled("select", {
-  base: {
-    width: "full",
-    minH: "11",
-    px: "3",
-    borderWidth: "2px",
-    borderColor: "border",
-    borderRadius: "l2",
-    bg: "paper.50",
-    color: "fg.default",
-    fontFamily: "body",
-    fontSize: "kiosk-caption",
-  },
+const DraftNameSchema = v.object({
+  name: v.pipe(v.string(), v.trim(), v.minLength(1, "초안 이름을 넣어 주세요")),
 });
 
 /** 초안 고르기·만들기·복제. 본문 편집은 아래 편집기가 맡는다. */
@@ -52,8 +44,6 @@ export function QuestionSetDraftBar({
   message?: string | null;
   error?: string | null;
 }) {
-  const [name, setName] = useState("");
-
   return (
     <Bar aria-label="질문 세트 초안 고르기">
       <Row>
@@ -79,28 +69,21 @@ export function QuestionSetDraftBar({
         </Button>
       </Row>
 
-      <Row>
-        <Field>
-          <Label htmlFor="question-set-draft-name">새 초안 이름</Label>
-          <Control
-            id="question-set-draft-name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="예: 11월 질문 세트"
-          />
-        </Field>
-        <Button
-          type="button"
-          disabled={busy || name.trim() === ""}
-          onClick={() => {
-            onCreate(name.trim());
-            setName("");
-          }}
-        >
-          초안 만들기
-        </Button>
-      </Row>
+      <SimpleForm
+        aria-label="새 질문 세트 초안"
+        schema={DraftNameSchema}
+        defaultValues={{ name: "" }}
+        resetOnSuccess={["name"]}
+        onSubmit={async ({ name }) => {
+          onCreate(name);
+          return undefined;
+        }}
+      >
+        <Row>
+          <TextField name="name" label="새 초안 이름" placeholder="예: 11월 질문 세트" />
+          <SubmitButton disabled={busy}>초안 만들기</SubmitButton>
+        </Row>
+      </SimpleForm>
 
       <MutedText>
         새 초안은 시드 질문 세트에서 시작해요. 공개 중인 질문 세트를 고치려면 복제하세요.

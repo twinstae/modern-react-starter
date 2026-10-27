@@ -20,8 +20,10 @@
   "dependencies": {
     "@electric-sql/pglite": "catalog:",
     "@elysiajs/eden": "catalog:",
+    "@hookform/resolvers": "catalog:",
     "@pandacss/vite": "catalog:",
     "@repo/ui": "workspace:*",
+    "@standard-schema/spec": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
@@ -32,6 +34,7 @@
     "nitro": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
     "valibot": "catalog:"
   },
   "devDependencies": {

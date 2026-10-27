@@ -22,6 +22,8 @@ interface SimpleFormProps<Input, Output> extends Omit<React.ComponentProps<"form
   /** 제출에 성공하면 기본값으로 되돌릴 필드. 나머지 필드는 그대로 둔다. */
   resetOnSuccess?: string[];
   reValidateMode?: "onBlur" | "onSubmit";
+  /** 폼 수준 오류를 자식 앞에 둘지 뒤에 둘지. 기본은 뒤. */
+  rootErrorPlacement?: "before" | "after";
 }
 
 export function SimpleForm<Output>({
@@ -30,6 +32,7 @@ export function SimpleForm<Output>({
   defaultValues,
   reValidateMode,
   resetOnSuccess,
+  rootErrorPlacement = "after",
   ...props
 }: SimpleFormProps<FieldValues, Output>) {
   const methods = useForm({
@@ -59,8 +62,13 @@ export function SimpleForm<Output>({
         }}
         {...props}
       >
+        {rootError && rootErrorPlacement === "before" && (
+          <Field.ErrorText role="alert" aria-label={rootError}>
+            {rootError}
+          </Field.ErrorText>
+        )}
         {props.children}
-        {rootError && (
+        {rootError && rootErrorPlacement === "after" && (
           <Field.ErrorText role="alert" aria-label={rootError}>
             {rootError}
           </Field.ErrorText>

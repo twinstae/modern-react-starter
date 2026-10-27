@@ -33,6 +33,7 @@
   "catalog": {
     "@electric-sql/pglite": "^0.5.10",
     "@elysiajs/eden": "^1.4.9",
+    "@hookform/resolvers": "^5.9.1",
     "@pandacss/dev": "^2.2.0",
     "@pandacss/preset-base": "^2.2.0",
     "@pandacss/preset-panda": "^2.2.0",
@@ -66,6 +67,7 @@
     "playwright": "^1.16.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-hook-form": "^7.89.0",
     "storybook": "^10.6.2",
     "temporal-polyfill": "^1.0.6",
     "typescript": "^7.0.2",
