@@ -1,13 +1,16 @@
 #!/bin/sh
-# book-curator 파일이 스테이징되면 앱 게이트를 커밋 전에 돌린다.
+# book-curator 파일이 스테이징되면 앱 정적 검사와, 스테이징된 파일에 관련된 테스트만 돌린다.
 # 활성화: git config core.hooksPath .githooks
 set -e
 
-staged=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/book-curator/' || true)
+staged=$(git diff --cached --name-only --diff-filter=ACM -- apps/book-curator | sed 's#^apps/book-curator/##')
 if [ -z "$staged" ]; then
   exit 0
 fi
 
-echo "book-curator: 변경이 있어 bun run check를 돌립니다..."
 cd apps/book-curator
-bun run check
+echo "book-curator: 정적 검사를 돌립니다..."
+bun run check:static
+echo "book-curator: 스테이징된 파일에 관련된 테스트를 돌립니다..."
+# shellcheck disable=SC2086
+bunx vp test related --run --passWithNoTests $staged

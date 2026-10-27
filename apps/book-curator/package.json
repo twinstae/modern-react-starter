@@ -14,7 +14,8 @@
     "db:migrate": "bun scripts/migrate.ts",
     "seed:published": "bun scripts/seed-published.ts",
     "seed:operator": "bun scripts/seed-operator.ts",
-    "check": "bun run check:design && vp lint && vp fmt --check && tsc --noEmit && vp test run",
+    "check": "bun run check:static && vp test run",
+    "check:static": "bun run check:design && vp lint && vp fmt --check && tsc --noEmit",
     "check:design": "bun scripts/check-design.ts",
     "check:layout": "bun scripts/check-layout.ts"
   },
