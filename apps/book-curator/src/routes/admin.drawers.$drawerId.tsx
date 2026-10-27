@@ -4,12 +4,12 @@ import * as v from "valibot";
 
 import { addBooks, deleteDrawer, removeBook, updateBook, updateDrawer } from "../admin-api.ts";
 import { BookCsvUpload } from "../components/book-csv-upload.tsx";
+import { DeleteDrawerButton } from "../components/delete-drawer-button.tsx";
 import { DrawerBooksTable } from "../components/drawer-books-table.tsx";
 import { DrawerQuestionsEditor } from "../components/drawer-questions-editor.tsx";
 import { DrawerSchema } from "../domain/drawer.ts";
 import { adminQueries } from "../queries.ts";
 import {
-  Button,
   MutedText,
   Row,
   Section,
@@ -107,28 +107,15 @@ function DrawerPage() {
         <BookCsvUpload onUpload={(books) => attempt(() => addBooks(drawerId, books))} />
       </Section>
 
-      <Section gap="2" aria-labelledby="drawer-delete-title">
-        <SectionTitle id="drawer-delete-title">서랍 지우기</SectionTitle>
-        <MutedText>
-          서랍을 지우면 그 안의 책도 함께 지워져요. 공개한 버전은 그대로 남아요.
-        </MutedText>
-        {removeDrawer.isError ? (
-          <WarningText role="alert">{messageOf(removeDrawer.error)}</WarningText>
-        ) : null}
-        <Button
-          type="button"
-          tone="outline"
-          alignSelf="flex-start"
-          disabled={removeDrawer.isPending}
-          onClick={() => {
-            if (window.confirm(`“${drawer.name}” 서랍과 책 ${drawer.books.length}권을 지울까요?`)) {
-              removeDrawer.mutate();
-            }
-          }}
-        >
-          이 서랍 지우기
-        </Button>
-      </Section>
+      {removeDrawer.isError ? (
+        <WarningText role="alert">{messageOf(removeDrawer.error)}</WarningText>
+      ) : null}
+      <DeleteDrawerButton
+        drawerName={drawer.name}
+        bookCount={drawer.books.length}
+        deleting={removeDrawer.isPending}
+        onDelete={() => removeDrawer.mutate()}
+      />
     </Section>
   );
 }

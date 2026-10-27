@@ -1,0 +1,13 @@
+alertdialog: "“삶의 방식을 바꾸는 책” 서랍을 지울까요?" [description="서랍 속 책 3권도 함께 지워져요. 이미 손님 화면에 공개한 버전은 다시 공개할 때까지 그대로예요."]
+  - states: [modal=true]
+  - interaction: [focusable=true]
+  - relations:
+    labelledby: "“삶의 방식을 바꾸는 책” 서랍을 지울까요?" (#dialog:_r_0_:title)
+  heading: "“삶의 방식을 바꾸는 책” 서랍을 지울까요?"
+    - properties: [level=2]
+  "서랍 속 책 3권도 함께 지워져요."
+  "이미 손님 화면에 공개한 버전은 다시 공개할 때까지 그대로예요."
+  button: "그만두기"
+    - interaction: [focusable=true] [tabbable=true] [focused=true]
+  button: "지우기"
+    - interaction: [focusable=true] [tabbable=true]
