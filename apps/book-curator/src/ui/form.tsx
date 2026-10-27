@@ -6,6 +6,7 @@ import { css } from "styled-system/css";
 import { styled } from "styled-system/jsx";
 
 import { Button } from "./button.tsx";
+import { StatusText, WarningText } from "./text.tsx";
 
 export const Field = styled("div", {
   base: { display: "flex", flexDirection: "column", gap: "2" },
@@ -501,4 +502,37 @@ export function SubmitButton({ disabled, ...props }: Omit<ComponentProps<typeof 
       aria-busy={formState.isSubmitting || undefined}
     />
   );
+}
+
+/**
+ * 폼 안에서 저장 상태를 알린다. 고친 뒤 저장하지 않았으면 "아직 저장하지 않았어요",
+ * 저장에 성공하면 그 값을 새 기준으로 삼고 "저장했어요"를 보인다. 저장이 실패하면
+ * 폼 오류가 보이고 "아직 저장하지 않았어요"가 남는다.
+ */
+export function SaveState({ label }: { label: string }) {
+  const {
+    formState: { isDirty, isSubmitSuccessful },
+    reset,
+    getValues,
+  } = useFormContext();
+
+  useEffect(() => {
+    if (isSubmitSuccessful) reset(getValues(), { keepIsSubmitSuccessful: true });
+  }, [isSubmitSuccessful, reset, getValues]);
+
+  if (isDirty) {
+    return (
+      <WarningText role="status" aria-label={label}>
+        아직 저장하지 않았어요
+      </WarningText>
+    );
+  }
+  if (isSubmitSuccessful) {
+    return (
+      <StatusText role="status" aria-label={label}>
+        저장했어요
+      </StatusText>
+    );
+  }
+  return null;
 }

@@ -13,6 +13,7 @@ import {
   MutedText,
   Row,
   Section,
+  SaveState,
   SectionTitle,
   SimpleForm,
   SubmitButton,
@@ -77,7 +78,7 @@ function DrawerPage() {
       <SectionTitle id="drawer-title">{drawer.name}</SectionTitle>
 
       <SimpleForm
-        key={drawer.name}
+        key={drawer.id}
         aria-label="서랍 이름"
         schema={NameSchema}
         defaultValues={{ name: drawer.name }}
@@ -86,11 +87,12 @@ function DrawerPage() {
         <Row alignItems="flex-end" flexWrap="wrap">
           <TextField name="name" label="서랍 이름" />
           <SubmitButton tone="outline">이름 저장</SubmitButton>
+          <SaveState label="이름 저장 상태" />
         </Row>
       </SimpleForm>
 
       <DrawerQuestionsEditor
-        key={drawer.questions.join("\n")}
+        key={drawer.id}
         questions={drawer.questions}
         onSave={(questions) => attempt(() => updateDrawer(drawerId, { questions }))}
       />
