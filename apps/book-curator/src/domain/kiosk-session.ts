@@ -178,10 +178,12 @@ function nextTurn(
         return unchanged(session);
       }
       const index = session.turn.answers.length;
+      const value = turn.answers[index];
+      if (value === undefined) return unchanged(session);
       const answered = funnel(session.funnel, {
         type: "answer",
         questionId: questionIdAt(index),
-        answer: turn.answers[index] ?? 0,
+        answer: value,
         questionIndex: index,
       });
       const next: TurnSession = {
@@ -317,6 +319,16 @@ export function allows(session: KioskSession, page: KioskPage): boolean {
     case "owner-check":
       return home === "result" && session.status === "turn" && session.owner.status === "unlocked";
   }
+}
+
+/**
+ * 이 세션으로 그 화면에 있을 수 없으면 대신 갈 화면, 있을 수 있으면 `null`이다.
+ * 주인 확인이 잠겼으면 결과가 아니라 PIN 화면으로 보내 다시 풀게 한다.
+ */
+export function redirectFor(session: KioskSession, page: KioskPage): KioskPage | null {
+  if (allows(session, page)) return null;
+  const home = homeOf(session);
+  return page === "owner-check" && home === "result" ? "owner-pin" : home;
 }
 
 interface OwnerShelf {

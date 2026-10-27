@@ -8,6 +8,7 @@ import {
   handedBooksOf,
   homeOf,
   nextKioskSession,
+  redirectFor,
   type KioskAction,
   type KioskSession,
 } from "./kiosk-session.ts";
@@ -102,7 +103,7 @@ describe("키오스크 차례", () => {
     expect(allows(unlocked, "owner-check")).toBe(true);
 
     const expired = run([{ type: "owner_expired" }], unlocked).session;
-    expect(allows(expired, "owner-check")).toBe(false);
+    expect(redirectFor(expired, "owner-check")).toBe("owner-pin");
     expect(expired.status === "turn" ? expired.owner : null).toStrictEqual({ status: "expired" });
   });
 
