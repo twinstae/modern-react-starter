@@ -101,10 +101,21 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 
 ## 5.1 이미 있는 코어 (다음 티켓이 다시 만들지 말 것)
 
-- `domain/question-set.ts`: `QuestionSetSchema`, `parseQuestionSet`, `toQuestionSetDto`,
-  `toQuestionSetJson`, `parseQuestionSetJson`, `drawerOrder`. 모르는 필드는 거부한다.
-  `statementTemplate`(공통), 서랍별 `statement`(없으면 `null`), `citationTemplates`
-  (item/choice)는 생략하면 기본 문형으로 정규화된다.
+> 10월 28일에 모델을 줄였다. 서랍 = 이름 + 문항 + 책(제목·저자·출판사)이다. 관련도·핵심
+> 단어·권하는 이유·서랍 표시·상태 문장 템플릿·서랍 순서·기준 응답·선택형·수량·초안을
+> 다시 만들지 않는다(`docs/OPEN-QUESTIONS.md` 첫 절).
+
+- `domain/drawer.ts`: `DrawerSchema`(id, 이름, 문항 문장 목록, 책), `BookInputSchema`
+  (제목·저자 필수, 출판사 빈 값 허용), `toDrawerDto`.
+- `domain/book-csv.ts`: `parseBookCsv`(머리줄 `제목,저자,출판사`, 줄 번호 있는 오류),
+  `decodeCsvFile`(UTF-8, 실패하면 EUC-KR).
+- `domain/question-set.ts`: `QuestionSetSchema`(서랍 `{ id, name }` 둘 이상, 문항
+  `{ drawer, text }`), `questionSetFrom(drawers)`(서랍마다 돌아가며 섞음), `drawerOrder`.
+- `domain/kiosk.ts`: `snapshotOf(drawers)` → 공개 버전 내용(질문 세트 + 서랍 속 책),
+  `toKioskCurrentDto`/`parseKioskCurrent`.
+- `domain/kiosk-session.ts`: 손님 차례의 순수 전이 `nextKioskSession`, 화면 guard용
+  `homeOf`/`allows`/`redirectFor`. 라우트는 `kiosk-store.ts`의 jotai atom으로 쓴다.
+- `application/drawer-admin.ts`: 서랍·책 유스케이스, `checkPublish`, `publish`.
 - `domain/josa.ts`: `attachJosa(word, pair)`. 이/가, 을/를, 은/는, 와/과, (으)로.
   한글 음절 받침과 ㄹ 받침을 보고, 한글이 아닌 끝은 받침 없음으로 본다.
 - `domain/statement.ts`: `NicknameSchema`/`parseNickname`(trim, 1~10 코드 포인트),
@@ -115,38 +126,23 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `domain/citation.ts`: `cite(set, scores, drawer)` → `{ question, drawer, answer, quote, text }`.
   긍정 기여가 가장 큰 답, 같으면 문항 순서가 빠른 답. 없으면 `NoCitationError`.
 - `domain/curate.ts`: `curate(set, answers, nickname)` → `{ drawers, scores, ranking,
-  statements: { first, second, recommended }, citation, customer }`. `customer`는
-  `firstStatement`, `secondStatement`, `recommendedDrawerName`, `recommendedStatement`,
-  `citation`만 가진 손님 view model이다(I-9). 주인 확인(TICKET-00005)은 내부 값을 쓴다.
-- `domain/book.ts`: `BookSchema`/`parseBook`, `BookRelevanceSchema`(B1~B7 모두 0~5 정수),
-  `toBookDto`/`toBookJson`/`parseBookJson`. 모르는 필드와 빠진 관련도를 거부한다.
-- `domain/shelf.ts`: `DrawerStockEntry`(서랍 코드, 책 id, 수량 0 이상), `parseDrawerStock`,
-  `shelfKinds`, `checkShelfGate(stock, drawers)` → `{ passed, lacking: [{ drawer, name,
-  kinds }] }`, `MissingBookError`. 서랍 이름은 질문 세트에서 인자로 받는다.
-- `domain/owner-view.ts`: `ownerView(curation, stock, books)` → 추천·2순위(상태 문장 포함),
-  비슷함, 모든 서랍의 책·수량·종류 수·3종 미만 경고, 게이트. `drawerBooksView(drawer,
-  stock, books)` → 건넨 서랍의 책만(제목, 저자, 이유, 질문, 수량).
-- `domain/shelf.fixture.ts`: B6 3종(게이트 통과), B1·B2 부족, 수량 0 책 예시.
-  `domain/shelf.arbitrary.ts`: 무작위 서가 + 큐레이션 가능한 답.
-- `application/shelf-ports.ts`: `BookStore`(`list`/`get`/`save`), `DrawerStockStore`
-  (`list`/`setQuantity`/`remove`). 구현은 `persistence/memory-shelf-store.ts`와
-  `persistence/drizzle-*.ts`, `persistence/database.ts`(PGlite + migrate). 계약은
-  `persistence/shelf-store.contract.ts` 하나를 메모리·PGlite 테스트가 함께 쓴다.
-- `domain/answer.ts`: `AnswerValueSchema`(1~5 정수 또는 선택지 id), `answerValueFor`,
-  `InvalidAnswerError`.
+  statements: { first, second }, citation, customer }`. `customer`는 `firstStatement`,
+  `secondStatement`, `recommendedDrawerName`, `citation`만 가진 손님 view model이다(I-9).
+- `domain/owner-view.ts`: `ownerView(curation, shelf)` → 추천·2순위(상태 문장 포함),
+  비슷함, 모든 서랍의 책.
+- `domain/answer.ts`: `AnswerValueSchema`(1~5 정수), `parseAnswer`, `InvalidAnswerError`.
 - `domain/turn.ts`: `startTurn(nickname)`, `answer(set, turn, value)`, `back(turn)`,
   `endTurn()`(→ `undefined`). 답 목록 하나가 진행 상태다.
-- `domain/scoring/`: `scoreItemMean`, `scoreChoiceWeight`, 공통 `DrawerScores`.
-  문항 없는 서랍은 점수 0으로 남는다. 동점의 "5의 수"는 반전 후 유효값 기준이다.
+- `domain/scoring/`: `scoreItemMean`, 공통 `DrawerScores`. 문항 없는 서랍은 점수 0으로 남는다.
 - `domain/rank.ts`: `rank(scores, order)` → `{ first, second, similar }`.
   `SIMILAR_SCORE_GAP = 0.5`는 표시일 뿐 순위를 바꾸지 않는다.
-- `domain/seoyun.fixture.ts`: 기준 응답 예시(B6 1순위, B1 2순위).
+- `domain/seoyun.fixture.ts`: 서윤 예시(B6 1순위, B1 2순위).
 - `domain/analyze.ts`: `analyze(set, rng, recorded?)` → `SetReport`. 표본
-  `SAMPLE_SIZE`(4,000), 서랍별 1순위 10~18% 게이트(`FIRST_RATE_MIN/MAX`), 구조·
-  기준 응답·실패/경고를 한 보고에 담는다. 같은 시드는 같은 보고를 낸다.
+  `SAMPLE_SIZE`(4,000), 쏠림 범위 `firstRateRange(서랍 수)`(1/N의 0.7~1.26배, 경고),
+  문항 없는 서랍(실패), 문항 수 차이(경고). 같은 시드는 같은 보고를 낸다.
 - `domain/random.ts`: `seededRng(seed)` 시드 고정 난수. 도메인에서 `Math.random` 대신 쓴다.
-- `domain/seed-question-set.ts`: MVP 시드 7서랍×2문항과 서윤 기준 응답. 상태 문장과
-  인용 문형도 데이터로 들어 있다. `SEED_RANDOM_SEED`(79)로 점검한다.
+- `domain/seed-question-set.ts`: `SEED_DRAWERS`(7서랍×2문항, 예시 책 3권)와
+  `SEED_QUESTION_SET`. `SEED_RANDOM_SEED`(79)로 점검한다.
 - `domain/funnel.ts`: 퍼널 이벤트 9종의 엄격 스키마, `openFunnel`, `funnel(state, action)`.
   별명 자리는 없다(I-12). `questionId`는 버전 안의 순서(`q1`…)이고, 단계에 맞지 않는
   동작은 이벤트 없이 상태를 그대로 둔다. `result_view`는 답·순위·서랍별 점수를 남긴다.
@@ -162,26 +158,19 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `application/owner-access.ts` + `server/owner-guard.ts`: PIN은 scrypt 해시, 주인
   토큰은 sha256 해시만 저장한다. `POST /api/owner/unlock`이 10분 토큰을 주고,
   `ownerToken: true` 매크로가 `Authorization: Bearer`를 확인한다. 토큰은 URL·쿠키·
-  localStorage에 두지 않는다. `POST /api/admin/owner-pin`은 로그인한 운영자만 부른다.
+  localStorage에 두지 않는다. `POST /api/admin/owner-pin`은 로그인한 운영자만 부르고,
+  PIN을 숫자 6자리로 생성해 한 번 돌려준다.
 - `scripts/seed-operator.ts`: `ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME`으로 계정 하나를
-  만든다. `/admin`은 로그인 화면과 PIN 설정을 제공한다.
-- `application/shelf-admin.ts` + `/api/admin/books`, `/api/admin/shelf`,
-  `/api/admin/drawers/:drawer/books/:bookId`: 책·수량·게이트. 모두 `auth: true`다.
-  UI는 `components/{book-list,book-form,drawer-board}.tsx`와 `/admin` 탭이 맡는다.
-- `application/question-set-admin.ts` + `question-set-draft-ports.ts` +
-  `/api/admin/question-sets/{drafts,versions}`: 초안 목록·만들기·복제·저장·점검 보고·공개.
-  공개는 화면 보고를 믿지 않고 서버가 `analyze`와 `checkShelfGate`를 다시 돈다. 실패는
-  422와 `PublishBlocker` 코드다. 초안 저장소는 메모리·PGlite가 같은 계약을 쓰고,
-  `Drawer.keywords`(부록 B 시드)는 초안·공개 버전·손님 묶음에 함께 실린다.
-  UI는 `components/question-set-{draft-bar,editor}.tsx`, `statement-preview.tsx`,
-  `question-preview.tsx`, `set-report-panel.tsx`와 `/admin` 질문 세트 탭이 맡는다.
-- 키오스크 묶음의 `shelf`는 질문 세트의 모든 서랍과 공개 책 필드를 담는다. 손님
-  컴포넌트에는 **건넨 서랍만** 넘긴다. T12의 `ownerView`/`drawerBooksView`가 그 경계다.
-- 서랍 표시(`mark`)는 공개 질문 세트 소유다(I-11). `/admin` 서가 화면에서 직접 고치지
-  않고, TICKET-00011의 새 버전 공개로 바꾼다.
-- `application/owner-records.ts` + `/api/owner/handover`, `/api/owner/purchases`:
-  주인 토큰이 있어야 하고, 추천·건넨 서랍·버전, 산 책·서랍·버전을 추가 전용으로 남긴다.
-  구매는 `DrawerStockStore.decrease`로 원자적으로 수량을 줄이며 0 밑으로 내리지 않는다.
+  만든다. `/admin`은 로그인 화면, 서랍, 주인 PIN 생성을 제공한다.
+- `/api/admin/drawers`(+`/:id`, `/:id/books`, `/:id/books/:bookId`),
+  `/api/admin/publish-check`, `/api/admin/publish`, `/api/admin/published-versions`:
+  서랍·문항·책과 공개. 모두 `auth: true`다. 공개는 서버가 `checkPublish`를 다시 돌고,
+  막히면 422 `PUBLISH_BLOCKED`다. UI는 `/admin/drawers`, `/admin/drawers/$drawerId`와
+  `components/{book-csv-upload,drawer-books-table,drawer-questions-editor,publish-panel}.tsx`.
+- 키오스크 묶음의 `shelf`는 공개한 순간의 모든 서랍의 책(제목·저자·출판사)이다.
+  주인 확인만 쓴다. 손님 화면에는 책을 보여 주지 않는다.
+- `application/owner-records.ts` + `/api/owner/handover`: 주인 토큰이 있어야 하고,
+  추천·건넨 서랍·버전을 추가 전용으로 남긴다. 산 책 기록은 없다.
 - `/` 라우트의 주인 흐름: 결과 → `OwnerPinScreen` → `OwnerCheckScreen` → `DrawerBooksScreen`.
   토큰은 라우트 메모리에만 두고, 만료되면 PIN으로 돌아가거나 산 책 기록만 잠근다.
   `ShelfBook`(id/title/author/reason/question)로 공개 서가에서 view를 만들고,
