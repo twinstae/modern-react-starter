@@ -4,10 +4,13 @@ import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 
 import * as schema from "./schema.ts";
 
 const migrationsFolder = fileURLToPath(new URL("./migrations", import.meta.url));
+
+export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 /** PGlite DB를 열고 마이그레이션한다. dataDir를 주지 않으면 메모리 DB다. */
 export async function openDatabase(dataDir?: string) {
@@ -18,4 +21,4 @@ export async function openDatabase(dataDir?: string) {
   return db;
 }
 
-export type Database = Awaited<ReturnType<typeof openDatabase>>;
+export type LocalDatabase = Awaited<ReturnType<typeof openDatabase>>;
