@@ -1,0 +1,30 @@
+{
+  "bundler": "vite",
+  "projectName": "simple-event",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": true,
+  "tailwind": true,
+  "projectPreset": "default",
+  "routerOnly": false,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "sqlite"
+    }
+  },
+  "git": false,
+  "install": false,
+  "intent": true,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "cloudflare",
+    "drizzle",
+    "table",
+    "better-auth",
+    "tanstack-query",
+    "storybook",
+    "events"
+  ]
+}
