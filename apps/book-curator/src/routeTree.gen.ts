@@ -17,6 +17,7 @@ import { Route as TurnOwnerRouteImport } from './routes/_turn.owner'
 import { Route as TurnQuestionRouteImport } from './routes/_turn.question'
 import { Route as TurnResultRouteImport } from './routes/_turn.result'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminDrawersRouteImport } from './routes/admin.drawers'
 import { Route as AdminPinRouteImport } from './routes/admin.pin'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
@@ -64,6 +65,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDrawersRoute = AdminDrawersRouteImport.update({
+  id: '/drawers',
+  path: '/drawers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPinRoute = AdminPinRouteImport.update({
   id: '/pin',
   path: '/pin',
@@ -90,14 +96,14 @@ const TurnOwnerPinRoute = TurnOwnerPinRouteImport.update({
   getParentRoute: () => TurnOwnerRoute,
 } as any)
 const AdminDrawersIndexRoute = AdminDrawersIndexRouteImport.update({
-  id: '/drawers/',
-  path: '/drawers/',
-  getParentRoute: () => AdminRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminDrawersRoute,
 } as any)
 const AdminDrawersDrawerIdRoute = AdminDrawersDrawerIdRouteImport.update({
-  id: '/drawers/$drawerId',
-  path: '/drawers/$drawerId',
-  getParentRoute: () => AdminRoute,
+  id: '/$drawerId',
+  path: '/$drawerId',
+  getParentRoute: () => AdminDrawersRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/owner': typeof TurnOwnerRouteWithChildren
   '/question': typeof TurnQuestionRoute
   '/result': typeof TurnResultRoute
+  '/admin/drawers': typeof AdminDrawersRouteWithChildren
   '/admin/pin': typeof AdminPinRoute
   '/admin/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
@@ -140,6 +147,7 @@ export interface FileRoutesById {
   '/_turn/owner': typeof TurnOwnerRouteWithChildren
   '/_turn/question': typeof TurnQuestionRoute
   '/_turn/result': typeof TurnResultRoute
+  '/admin/drawers': typeof AdminDrawersRouteWithChildren
   '/admin/pin': typeof AdminPinRoute
   '/admin_/login': typeof AdminLoginRoute
   '/api/$': typeof ApiSplatRoute
@@ -158,6 +166,7 @@ export interface FileRouteTypes {
     | '/owner'
     | '/question'
     | '/result'
+    | '/admin/drawers'
     | '/admin/pin'
     | '/admin/login'
     | '/api/$'
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/_turn/owner'
     | '/_turn/question'
     | '/_turn/result'
+    | '/admin/drawers'
     | '/admin/pin'
     | '/admin_/login'
     | '/api/$'
@@ -266,6 +276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/drawers': {
+      id: '/admin/drawers'
+      path: '/drawers'
+      fullPath: '/admin/drawers'
+      preLoaderRoute: typeof AdminDrawersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/pin': {
       id: '/admin/pin'
       path: '/pin'
@@ -303,17 +320,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/drawers/': {
       id: '/admin/drawers/'
-      path: '/drawers'
+      path: '/'
       fullPath: '/admin/drawers/'
       preLoaderRoute: typeof AdminDrawersIndexRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof AdminDrawersRoute
     }
     '/admin/drawers/$drawerId': {
       id: '/admin/drawers/$drawerId'
-      path: '/drawers/$drawerId'
+      path: '/$drawerId'
       fullPath: '/admin/drawers/$drawerId'
       preLoaderRoute: typeof AdminDrawersDrawerIdRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof AdminDrawersRoute
     }
   }
 }
@@ -348,18 +365,30 @@ const TurnRouteChildren: TurnRouteChildren = {
 
 const TurnRouteWithChildren = TurnRoute._addFileChildren(TurnRouteChildren)
 
-interface AdminRouteChildren {
-  AdminPinRoute: typeof AdminPinRoute
-  AdminIndexRoute: typeof AdminIndexRoute
+interface AdminDrawersRouteChildren {
   AdminDrawersDrawerIdRoute: typeof AdminDrawersDrawerIdRoute
   AdminDrawersIndexRoute: typeof AdminDrawersIndexRoute
 }
 
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminPinRoute: AdminPinRoute,
-  AdminIndexRoute: AdminIndexRoute,
+const AdminDrawersRouteChildren: AdminDrawersRouteChildren = {
   AdminDrawersDrawerIdRoute: AdminDrawersDrawerIdRoute,
   AdminDrawersIndexRoute: AdminDrawersIndexRoute,
+}
+
+const AdminDrawersRouteWithChildren = AdminDrawersRoute._addFileChildren(
+  AdminDrawersRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminDrawersRoute: typeof AdminDrawersRouteWithChildren
+  AdminPinRoute: typeof AdminPinRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminDrawersRoute: AdminDrawersRouteWithChildren,
+  AdminPinRoute: AdminPinRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

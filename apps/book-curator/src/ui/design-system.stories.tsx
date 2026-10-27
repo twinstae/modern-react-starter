@@ -15,6 +15,9 @@ import {
   PageTitle,
   ReasonText,
   SectionTitle,
+  SideNav,
+  SideNavItem,
+  SideNavMeta,
   Tab,
   TabList,
 } from "./index.ts";
@@ -101,13 +104,25 @@ export function DesignSystemGallery() {
 
       <SectionTitle mt="10">탭</SectionTitle>
       <TabList>
-        <Tab href="#shelf" aria-current="page">
-          서가
+        <Tab href="#drawers" aria-current="page">
+          서랍
         </Tab>
-        <Tab href="#drawers">서랍</Tab>
-        <Tab href="#questions">질문 세트</Tab>
         <Tab href="#pin">주인 PIN</Tab>
       </TabList>
+
+      <SectionTitle mt="10">왼쪽 목록</SectionTitle>
+      <SideNav aria-label="서랍" maxW="17rem">
+        <SideNavItem href="#a" aria-current="page">
+          <span>
+            삶의 방식을 바꾸는 책<SideNavMeta>문항 2 · 책 3</SideNavMeta>
+          </span>
+        </SideNavItem>
+        <SideNavItem href="#b">
+          <span>
+            나를 들여다보는 책<SideNavMeta>문항 0 · 책 0</SideNavMeta>
+          </span>
+        </SideNavItem>
+      </SideNav>
     </Page>
   );
 }

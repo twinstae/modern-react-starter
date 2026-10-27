@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
 import * as v from "valibot";
 
 import { addBooks, deleteDrawer, removeBook, updateBook, updateDrawer } from "../admin-api.ts";
@@ -23,15 +23,13 @@ import { LoadError, messageOf, pendingText } from "./-admin/view.tsx";
 
 const NameSchema = v.object({ name: DrawerSchema.entries.name });
 
-/** 서랍 하나. 이름·문항·책을 이 페이지에서 바로 고친다. */
+/** 왼쪽에서 고른 서랍 하나. 이름·문항·책을 이 페이지에서 바로 고친다. */
 export const Route = createFileRoute("/admin/drawers/$drawerId")({
   loader: ({ context }) => context.queryClient.ensureQueryData(adminQueries.drawers()),
   pendingComponent: pendingText("서랍을 읽고 있어요."),
   errorComponent: LoadError,
   notFoundComponent: () => (
-    <MutedText role="status">
-      없는 서랍이에요. <Link to="/admin/drawers">서랍 목록으로</Link>
-    </MutedText>
+    <MutedText role="status">없는 서랍이에요. 왼쪽에서 서랍을 골라 주세요.</MutedText>
   ),
   component: DrawerPage,
 });
@@ -75,11 +73,8 @@ function DrawerPage() {
   if (drawer === undefined) throw notFound();
 
   return (
-    <Section mt="6" gap="5" aria-labelledby="drawer-title">
-      <Row justifyContent="space-between" flexWrap="wrap" gap="3">
-        <SectionTitle id="drawer-title">{drawer.name}</SectionTitle>
-        <Link to="/admin/drawers">서랍 목록으로</Link>
-      </Row>
+    <Section gap="5" aria-labelledby="drawer-title">
+      <SectionTitle id="drawer-title">{drawer.name}</SectionTitle>
 
       <SimpleForm
         key={drawer.name}
