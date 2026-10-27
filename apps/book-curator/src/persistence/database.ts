@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 
+import { encodeConnectionPassword } from "./connection-url.ts";
 import * as schema from "./schema.ts";
 
 const migrationsFolder = fileURLToPath(new URL("./migrations", import.meta.url));
@@ -27,8 +28,8 @@ export type LocalDatabase = Awaited<ReturnType<typeof openDatabase>>;
 export async function connectDatabase(url: string, { migrateFirst = false } = {}) {
   const { default: postgres } = await import("postgres");
   const { drizzle: drizzlePostgres } = await import("drizzle-orm/postgres-js");
-  // Supabase 트랜잭션 풀러는 prepared statement를 이어 쓰지 못한다.
-  const client = postgres(url, { prepare: false });
+  // Supabase는 SSL을 강제하고, 트랜잭션 풀러는 prepared statement를 이어 쓰지 못한다.
+  const client = postgres(encodeConnectionPassword(url), { ssl: "require", prepare: false });
   const db = drizzlePostgres({ client, schema });
   if (migrateFirst) {
     const { migrate: migratePostgres } = await import("drizzle-orm/postgres-js/migrator");
