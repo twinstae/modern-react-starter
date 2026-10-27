@@ -5,7 +5,7 @@ import { DrawerQuestionsEditor } from "./drawer-questions-editor.tsx";
 import * as Stories from "./drawer-questions-editor.stories.tsx";
 
 describe("DrawerQuestionsEditor", () => {
-  it("한 줄에 하나씩 쓴 문항을 빈 줄 없이 저장한다", async () => {
+  it("문항을 하나씩 더하고 빼서 저장하면 그 순서대로 남는다", async () => {
     const saved: string[][] = [];
 
     await runSiheom(
@@ -18,15 +18,14 @@ describe("DrawerQuestionsEditor", () => {
           }}
         />,
       ),
-      actions.fill(
-        query.textbox("문항"),
-        "요즘 생활에서 뭔가를 바꾸고 싶다\n\n  읽은 책을 삶에 써 보고 싶다  \n",
-      ),
+      actions.click(query.button("문항 더하기")),
+      actions.fill(query.textbox("문항 3"), "  요즘 일하는 방식을 바꾸고 싶다  "),
+      actions.click(query.button("문항 1 빼기")),
       actions.click(query.button("문항 저장")),
     );
 
     expect(saved).toStrictEqual([
-      ["요즘 생활에서 뭔가를 바꾸고 싶다", "읽은 책을 삶에 써 보고 싶다"],
+      ["읽은 책을 삶에 써 보고 싶다", "요즘 일하는 방식을 바꾸고 싶다"],
     ]);
   });
 });
