@@ -9,10 +9,11 @@ import {
 import type { BookInput } from "../domain/drawer.ts";
 import {
   Button,
+  ButtonAnchor,
   Card,
-  Field,
+  DropZone,
+  InlineText,
   Input,
-  Label,
   List,
   ListItem,
   MutedText,
@@ -25,9 +26,18 @@ import {
   WarningText,
 } from "../ui/index.ts";
 
-/** 내려받는 양식. 엑셀이 한글을 UTF-8로 읽도록 BOM을 붙인다. */
-const TEMPLATE_HREF = `data:text/csv;charset=utf-8,${encodeURIComponent(
-  `﻿${BOOK_CSV_HEADER.join(",")}\n아무튼 예시,김예시,예시출판\n`,
+/** 내려받아 그대로 올려 볼 수 있는 예시. 쉼표가 든 제목과 출판사를 비운 줄을 함께 둔다. */
+export const EXAMPLE_CSV = [
+  BOOK_CSV_HEADER.join(","),
+  "아몬드,손원평,창비",
+  "소년이 온다,한강,창비",
+  '"사피엔스, 유인원에서 사이보그까지",유발 하라리,김영사',
+  "출판사를 모르는 책,저자 이름,",
+].join("\n");
+
+/** 엑셀이 한글을 UTF-8로 읽도록 BOM을 붙인다. */
+export const EXAMPLE_CSV_HREF = `data:text/csv;charset=utf-8,${encodeURIComponent(
+  `\uFEFF${EXAMPLE_CSV}\n`,
 )}`;
 
 const PREVIEW_ROWS = 5;
@@ -52,6 +62,7 @@ export function BookCsvUpload({
 }) {
   const inputId = useId();
   const [state, setState] = useState<UploadState>({ status: "empty" });
+  const [dragging, setDragging] = useState(false);
 
   const read = async (file: File | undefined) => {
     if (file === undefined) return setState({ status: "empty" });
@@ -87,19 +98,39 @@ export function BookCsvUpload({
         </ListItem>
         <ListItem>올린 책은 이 서랍에 더해집니다. 이미 있는 책은 그대로 남습니다.</ListItem>
       </List>
-      <a href={TEMPLATE_HREF} download="책-양식.csv">
-        양식 내려받기
-      </a>
+      <ButtonAnchor
+        href={EXAMPLE_CSV_HREF}
+        download="책-예시.csv"
+        tone="outline"
+        size="md"
+        alignSelf="flex-start"
+      >
+        예시 CSV 내려받기
+      </ButtonAnchor>
 
-      <Field>
-        <Label htmlFor={inputId}>책 CSV 파일</Label>
+      <DropZone
+        data-dragging={dragging}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          void read(event.dataTransfer.files[0]);
+        }}
+      >
+        <InlineText weight="strong">CSV 파일을 여기에 끌어 놓으세요</InlineText>
+        <MutedText>또는 눌러서 파일을 고르세요</MutedText>
         <Input
-          id={inputId}
+          srOnly
           type="file"
           accept=".csv,text/csv"
+          aria-label="책 CSV 파일"
           onChange={(event) => void read(event.target.files?.[0])}
         />
-      </Field>
+      </DropZone>
 
       {state.status === "invalid" ? (
         <Stack gap="1" role="alert" aria-label="CSV 오류">

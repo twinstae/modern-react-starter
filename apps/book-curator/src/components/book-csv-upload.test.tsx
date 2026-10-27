@@ -2,7 +2,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { actions, assertions, given, query, runSiheom } from "@siheom/react";
 
 import type { BookInput } from "../domain/drawer.ts";
-import { BookCsvUpload } from "./book-csv-upload.tsx";
+import { parseBookCsv } from "../domain/book-csv.ts";
+import { BookCsvUpload, EXAMPLE_CSV, EXAMPLE_CSV_HREF } from "./book-csv-upload.tsx";
 import * as Stories from "./book-csv-upload.stories.tsx";
 
 const csvFile = (text: string) => new File([text], "책.csv", { type: "text/csv" });
@@ -35,6 +36,14 @@ describe("BookCsvUpload", () => {
         { title: "쉼표 없는 책", author: "박저자", publisher: "" },
       ],
     ]);
+  });
+
+  it("예시 CSV를 내려받아 그대로 올릴 수 있다", async () => {
+    await runSiheom(
+      given.render(<BookCsvUpload {...Stories.bookCsvUploadArgs} />),
+      assertions.href(query.link("예시 CSV 내려받기"), EXAMPLE_CSV_HREF),
+    );
+    expect(parseBookCsv(EXAMPLE_CSV)).toMatchObject({ ok: true });
   });
 
   it("틀린 줄이 있으면 몇 번째 줄인지 알려 주고 올리지 않는다", async () => {

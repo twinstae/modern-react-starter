@@ -41,6 +41,7 @@ export {
 export { ProgressBar } from "./progress.tsx";
 export { ScaleField, ScalePreview, type ScaleOption } from "./scale.tsx";
 export { Screen } from "./screen.tsx";
+export { DropZone } from "./drop-zone.tsx";
 export { SideLayout, SideNav, SideNavItem, SideNavMeta } from "./side-nav.tsx";
 export { Tab, TabList } from "./tabs.tsx";
 export { Table, Td, Th } from "./table.tsx";
