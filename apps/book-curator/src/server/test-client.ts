@@ -1,16 +1,9 @@
 import { createApiClient } from "../api-client.ts";
+import { createMemoryDrawerStore } from "../persistence/memory-drawer-store.ts";
 import { createMemoryEventStore } from "../persistence/memory-event-store.ts";
 import { createMemoryOwnerAccessStore } from "../persistence/memory-owner-access-store.ts";
-import {
-  createMemoryHandoverStore,
-  createMemoryPurchaseStore,
-} from "../persistence/memory-owner-record-store.ts";
-import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
-import { createMemoryQuestionSetDraftStore } from "../persistence/memory-question-set-draft-store.ts";
-import {
-  createMemoryBookStore,
-  createMemoryDrawerStockStore,
-} from "../persistence/memory-shelf-store.ts";
+import { createMemoryHandoverStore } from "../persistence/memory-owner-record-store.ts";
+import { createMemoryPublishedVersionStore } from "../persistence/memory-published-version-store.ts";
 import { createApp, type AppDeps } from "./app.ts";
 import { createMemoryAuth } from "./auth.ts";
 
@@ -30,28 +23,21 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
   const auth = deps.auth ?? createMemoryAuth();
   const ownerAccessStore = deps.ownerAccessStore ?? createMemoryOwnerAccessStore();
   const handoverStore = deps.handoverStore ?? createMemoryHandoverStore();
-  const purchaseStore = deps.purchaseStore ?? createMemoryPurchaseStore();
-  const bookStore = deps.bookStore ?? createMemoryBookStore();
-  const stockStore = deps.stockStore ?? createMemoryDrawerStockStore();
-  const questionSetDraftStore = deps.questionSetDraftStore ?? createMemoryQuestionSetDraftStore();
-  let nextBookId = 1;
-  let nextDraftId = 1;
+  const drawerStore = deps.drawerStore ?? createMemoryDrawerStore();
+  const publishedVersionStore = deps.publishedVersionStore ?? createMemoryPublishedVersionStore();
+  let nextId = 1;
   const app = createApp({
     now: () => TEST_NOW,
-    publishedQuestionSetStore: createMemoryPublishedQuestionSetStore(),
     eventStore: createMemoryEventStore(),
-    newBookId: () => `book-test-${nextBookId++}`,
-    newDraftId: () => `draft-test-${nextDraftId++}`,
+    newId: () => `id-${nextId++}`,
     // 실패를 일부러 일으키는 테스트가 많다. 로그를 보려는 테스트만 바꿔 끼운다.
     logFailure: () => {},
     ...deps,
     auth,
     ownerAccessStore,
     handoverStore,
-    purchaseStore,
-    bookStore,
-    stockStore,
-    questionSetDraftStore,
+    drawerStore,
+    publishedVersionStore,
   });
 
   return {
@@ -60,10 +46,8 @@ export function createTestServer(deps: Partial<AppDeps> = {}) {
     auth,
     ownerAccessStore,
     handoverStore,
-    purchaseStore,
-    bookStore,
-    stockStore,
-    questionSetDraftStore,
+    drawerStore,
+    publishedVersionStore,
   };
 }
 

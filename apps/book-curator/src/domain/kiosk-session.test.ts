@@ -1,27 +1,30 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import type { ReadyKioskBundle } from "./kiosk.ts";
-import { toPublicShelfDto } from "./kiosk.ts";
+import { snapshotOf, type ReadyKioskBundle } from "./kiosk.ts";
 import {
   allows,
   CLOSED,
-  handedBooksOf,
   homeOf,
   nextKioskSession,
   redirectFor,
   type KioskAction,
   type KioskSession,
 } from "./kiosk-session.ts";
-import { parseQuestionSet } from "./question-set.ts";
 import { SEOYUN_ANSWERS, SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
-import { SHELF_BOOKS, SHELF_STOCK } from "./shelf.fixture.ts";
 
-const questionSet = parseQuestionSet(SEOYUN_SET_INPUT);
 const BUNDLE: ReadyKioskBundle = {
   status: "ready",
   version: 3,
-  questionSet,
-  shelf: toPublicShelfDto(questionSet, { stock: SHELF_STOCK, books: SHELF_BOOKS }),
+  ...snapshotOf(
+    SEOYUN_SET_INPUT.drawers.map(({ id, name }) => ({
+      id,
+      name,
+      questions: SEOYUN_SET_INPUT.questions
+        .filter(({ drawer }) => drawer === id)
+        .map(({ text }) => text),
+      books: [],
+    })),
+  ),
 };
 const TOKEN = { token: "owner-token", expiresAt: "2026-10-28T00:10:00.000Z" };
 
@@ -107,30 +110,18 @@ describe("키오스크 차례", () => {
     expect(expired.status === "turn" ? expired.owner : null).toStrictEqual({ status: "expired" });
   });
 
-  it("서랍을 건네면 그 서랍의 책을 보여 주고, 산 책은 줄어든 수량으로 남는다", () => {
+  it("서랍을 건네면 서랍을 열어 보라는 화면으로 가고, 결과로 돌아가지 않는다", () => {
     const unlocked = run([
       opened,
       started,
       ...answeredAll,
       { type: "unlock", owner: TOKEN, now: 0 },
     ]).session;
-    const books = handedBooksOf(BUNDLE, "B6");
 
-    const handed = run([{ type: "hand_over", drawer: "B6", books, now: 0 }], unlocked);
-    expect(homeOf(handed.session)).toBe("owner-books");
+    const handed = run([{ type: "hand_over", drawer: "B1", now: 0 }], unlocked);
+    expect(homeOf(handed.session)).toBe("handed");
     expect(allows(handed.session, "result")).toBe(false);
-    expect(handed.events).toStrictEqual(["drawer_handover", ...books.map(() => "book_view")]);
-
-    const bought = run(
-      [{ type: "purchase", bookId: "book-b6-1", quantity: 1, now: 0 }],
-      handed.session,
-    );
-    expect(bought.session.status === "turn" ? bought.session.handover : null).toStrictEqual({
-      drawer: "B6",
-      books: books.map((book) => (book.bookId === "book-b6-1" ? { ...book, quantity: 1 } : book)),
-      recordedBookIds: ["book-b6-1"],
-    });
-    expect(bought.events).toStrictEqual(["purchase_record"]);
+    expect(handed.events).toStrictEqual(["drawer_handover"]);
   });
 
   it("처음으로 돌아가면 별명·답이 남지 않고, 다시 눌러도 reset은 한 번만 남는다", () => {

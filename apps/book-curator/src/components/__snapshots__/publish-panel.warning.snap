@@ -1,0 +1,14 @@
+article: "손님 화면에 공개"
+  - relations:
+    labelledby: "손님 화면에 공개" (#publish-title)
+  heading: "손님 화면에 공개"
+    - properties: [level=2]
+  paragraph:
+    "지금 태블릿에는 2번 버전이 나가요. 서랍을 고쳐도 다시 공개해야 반영돼요."
+  list:
+    listitem:
+      paragraph:
+        "책이 3권보다 적은 서랍이 있어요"
+        ": 삶의 방식을 바꾸는 책"
+  button: "지금 서랍으로 공개"
+    - interaction: [focusable=true] [tabbable=true]

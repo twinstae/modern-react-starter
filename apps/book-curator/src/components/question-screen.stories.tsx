@@ -1,13 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 
-import type { ItemQuestion } from "../domain/question-set.ts";
+import type { Question } from "../domain/question-set.ts";
 import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
 import { QuestionScreen } from "./question-screen.tsx";
 
-const ITEM_QUESTIONS = SEED_QUESTION_SET.questions.filter(
-  (question): question is ItemQuestion => question.type === "item",
-);
+const ITEM_QUESTIONS = SEED_QUESTION_SET.questions;
 
 const first = ITEM_QUESTIONS[0];
 const last = ITEM_QUESTIONS[ITEM_QUESTIONS.length - 1];
@@ -16,12 +14,12 @@ const longest = ITEM_QUESTIONS.reduce((long, question) =>
 );
 
 if (first === undefined || last === undefined) {
-  throw new Error("시드 질문 세트에 문항형 질문이 없습니다");
+  throw new Error("시드 질문 세트에 문항이 없습니다");
 }
 
 const noop = () => {};
 
-const argsFor = (question: ItemQuestion) => ({
+const argsFor = (question: Question) => ({
   questionText: question.text,
   index: SEED_QUESTION_SET.questions.indexOf(question),
   total: SEED_QUESTION_SET.questions.length,

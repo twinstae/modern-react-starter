@@ -1,15 +1,15 @@
 import type { AnswerValue } from "./answer.ts";
-import type { DrawerCode, QuestionSet } from "./question-set.ts";
+import type { DrawerId, QuestionSet } from "./question-set.ts";
 import type { Contribution, DrawerScores } from "./scoring/index.ts";
-import { renderCitation } from "./statement.ts";
+import { CITATION_TEMPLATE, renderCitation } from "./statement.ts";
 
 /**
- * 추천 서랍에 실제로 기여한 답 하나를 가리킨다. `quote`는 문항 문장이거나
- * 선택지 문장이고, `text`는 질문 세트의 인용 문형에 `quote`를 넣은 문장이다.
+ * 추천 서랍에 실제로 기여한 답 하나를 가리킨다. `quote`는 문항 문장이고,
+ * `text`는 인용 문형에 `quote`를 넣은 문장이다.
  */
 export interface Citation {
   readonly question: number;
-  readonly drawer: DrawerCode;
+  readonly drawer: DrawerId;
   readonly answer: AnswerValue;
   readonly quote: string;
   readonly text: string;
@@ -17,7 +17,7 @@ export interface Citation {
 
 /** 추천 서랍에 인용할 만한 긍정 기여가 없을 때 던지는 이름 있는 오류. */
 export class NoCitationError extends Error {
-  constructor(drawer: DrawerCode) {
+  constructor(drawer: DrawerId) {
     super(`추천 서랍에 인용할 답이 없습니다: ${drawer}`);
     this.name = "NoCitationError";
   }
@@ -43,24 +43,11 @@ export function chooseContribution(
     );
 }
 
-function quoteOf(questionSet: QuestionSet, contribution: Contribution): string {
-  const question = questionSet.questions[contribution.question];
-  if (question === undefined) {
-    throw new NoCitationError(contribution.drawer);
-  }
-
-  if (question.type === "item") return question.text;
-
-  const option = question.options.find(({ id }) => id === contribution.answer);
-  if (option === undefined) throw new NoCitationError(contribution.drawer);
-  return option.text;
-}
-
 /**
  * 추천 서랍의 인용을 고른다. 점수에 실제로 남은 답 중 긍정 기여가 가장 큰 것을 쓰고,
- * 문항형·선택형에 맞는 인용 문형으로 감싼다. 인용할 답이 없으면 만들지 않고 실패한다(I-8).
+ * 인용 문형으로 감싼다. 인용할 답이 없으면 만들지 않고 실패한다(I-8).
  */
-export function cite(questionSet: QuestionSet, scores: DrawerScores, drawer: DrawerCode): Citation {
+export function cite(questionSet: QuestionSet, scores: DrawerScores, drawer: DrawerId): Citation {
   const drawerScore = scores.drawers.find((entry) => entry.drawer === drawer);
   if (drawerScore === undefined) throw new NoCitationError(drawer);
 
@@ -70,17 +57,11 @@ export function cite(questionSet: QuestionSet, scores: DrawerScores, drawer: Dra
   const question = questionSet.questions[contribution.question];
   if (question === undefined) throw new NoCitationError(drawer);
 
-  const quote = quoteOf(questionSet, contribution);
-  const template =
-    question.type === "item"
-      ? questionSet.citationTemplates.item
-      : questionSet.citationTemplates.choice;
-
   return {
     question: contribution.question,
     drawer,
     answer: contribution.answer,
-    quote,
-    text: renderCitation(template, { quote }),
+    quote: question.text,
+    text: renderCitation(CITATION_TEMPLATE, { quote: question.text }),
   };
 }

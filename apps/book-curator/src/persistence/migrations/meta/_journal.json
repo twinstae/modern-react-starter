@@ -43,6 +43,13 @@
       "when": 1792928826581,
       "tag": "0005_tense_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793117447508,
+      "tag": "0006_drawers_and_published_versions",
+      "breakpoints": true
     }
   ]
 }

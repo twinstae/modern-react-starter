@@ -16,14 +16,13 @@ import { parseQuestionSet } from "./question-set.ts";
 
 const SET = parseQuestionSet({
   drawers: [
-    { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0 },
-    { code: "B1", name: "나를 들여다보는 책", order: 1 },
+    { id: "B6", name: "삶의 방식을 바꾸는 책" },
+    { id: "B1", name: "나를 들여다보는 책" },
   ],
   questions: [
-    { type: "item", drawer: "B6", reversed: false, text: "요즘 생활을 바꾸고 싶다" },
-    { type: "item", drawer: "B1", reversed: false, text: "나를 들여다보고 싶다" },
+    { drawer: "B6", text: "요즘 생활을 바꾸고 싶다" },
+    { drawer: "B1", text: "나를 들여다보고 싶다" },
   ],
-  scoring: { type: "item-mean" },
 });
 
 const SESSION = "session-1";

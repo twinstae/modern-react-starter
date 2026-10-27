@@ -4,9 +4,7 @@ import {
   parseHandoverRecord,
   type HandoverInput,
   type HandoverRecord,
-  type PurchaseInput,
 } from "./domain/owner-record.ts";
-import { DrawerQuantitySchema } from "./domain/shelf.ts";
 
 /** 주인 토큰이 만료됐을 때 던진다. 라우트는 이 오류를 조용한 안내로 바꾼다. */
 export class OwnerTokenExpiredError extends Error {
@@ -29,8 +27,6 @@ const OwnerUnlockSchema = v.strictObject({
   token: v.pipe(v.string(), v.minLength(1)),
   expiresAt: v.pipe(v.string(), v.minLength(1)),
 });
-
-const PurchaseResultSchema = v.strictObject({ quantity: DrawerQuantitySchema });
 
 const JSON_HEADERS = { "content-type": "application/json" };
 
@@ -71,16 +67,4 @@ export async function postHandover(token: string, input: HandoverInput): Promise
   if (response.status === 401) throw new OwnerTokenExpiredError();
   if (!response.ok) throw new Error(`열쇠 건넴 기록 오류 ${response.status}`);
   return parseHandoverRecord(await response.json());
-}
-
-/** 산 책을 남기고, 그 서랍에서 줄어든 남은 수량을 돌려준다. 0이어도 기록은 남는다(R-9). */
-export async function postPurchase(token: string, input: PurchaseInput): Promise<number> {
-  const response = await fetch("/api/owner/purchases", {
-    method: "POST",
-    headers: withToken(token),
-    body: JSON.stringify(input),
-  });
-  if (response.status === 401) throw new OwnerTokenExpiredError();
-  if (!response.ok) throw new Error(`산 책 기록 오류 ${response.status}`);
-  return v.parse(PurchaseResultSchema, await response.json()).quantity;
 }

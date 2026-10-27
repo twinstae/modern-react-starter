@@ -1,0 +1,14 @@
+article: "손님 화면에 공개"
+  - relations:
+    labelledby: "손님 화면에 공개" (#publish-title)
+  heading: "손님 화면에 공개"
+    - properties: [level=2]
+  paragraph:
+    "아직 공개한 적이 없어요. 공개하기 전까지 태블릿은 준비 중 화면이에요."
+  list:
+    listitem:
+      paragraph:
+        "문항이 없는 서랍이 있어요"
+        ": 나를 들여다보는 책"
+  button: "지금 서랍으로 공개"
+    - states: [disabled=true]

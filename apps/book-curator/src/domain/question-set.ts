@@ -1,280 +1,88 @@
 import * as v from "valibot";
 
-import { answerValueFor, AnswerValueSchema } from "./answer.ts";
-import {
-  assertCitationTemplate,
-  assertStatementTemplate,
-  DEFAULT_CITATION_TEMPLATES,
-  DEFAULT_SECOND_STATEMENT_TEMPLATE,
-  DEFAULT_STATEMENT_TEMPLATE,
-} from "./statement.ts";
-
-/** 서랍 코드. 질문 세트와 서가가 서로를 가리키는 유일한 값이고 이용자에게는 보이지 않는다. */
-export const DRAWER_CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const;
-
-export const DrawerCodeSchema = v.picklist(DRAWER_CODES);
-
-export type DrawerCode = v.InferOutput<typeof DrawerCodeSchema>;
+import type { Drawer } from "./drawer.ts";
 
 const unique = <T>(values: readonly T[]): boolean => new Set(values).size === values.length;
 
 export const TextSchema = v.pipe(v.string(), v.trim(), v.minLength(1));
 
-/**
- * 서랍 정의. `order`는 관리자가 정한 순서이고, 동점이 끝까지 갈 때만 쓰인다.
- * `statement`가 있으면 공통 상태 문장 템플릿 대신 그 문장을 쓴다. 없으면 `null`이다.
- * `mark`는 주인이 서랍을 알아보는 번호·열쇠 표시다. 없으면 `null`이다.
- * `reason`은 큐레이터가 이 서랍을 권하는 이유다. 없으면 `null`이다.
- * `keywords`는 관리자 화면에서 서랍을 설명하는 핵심 단어다. 없으면 빈 배열로 정규화한다.
- * 서랍 수는 데이터다. 코드가 B1~B7이어도 질문 세트가 2개만 가질 수 있다.
- */
-export const DrawerSchema = v.strictObject({
-  code: DrawerCodeSchema,
+/** 서랍 id. 질문과 서가가 서랍을 가리키는 값이고 이용자에게는 보이지 않는다. */
+export const DrawerIdSchema = TextSchema;
+
+export type DrawerId = v.InferOutput<typeof DrawerIdSchema>;
+
+/** 질문 세트 안의 서랍. 순서는 배열 순서이고, 동점이 끝까지 갈 때만 쓰인다. */
+export const QuestionSetDrawerSchema = v.strictObject({
+  id: DrawerIdSchema,
   name: TextSchema,
-  order: v.pipe(v.number(), v.integer(), v.minValue(0)),
-  statement: v.optional(v.nullable(TextSchema), null),
-  mark: v.optional(v.nullable(TextSchema), null),
-  reason: v.optional(v.nullable(TextSchema), null),
-  keywords: v.optional(
-    v.pipe(
-      v.array(TextSchema),
-      v.check((keywords) => unique(keywords), "핵심 단어는 겹치지 않아야 합니다"),
-    ),
-    [],
-  ),
 });
 
-export type Drawer = v.InferOutput<typeof DrawerSchema>;
+export type QuestionSetDrawer = v.InferOutput<typeof QuestionSetDrawerSchema>;
 
-/** 선택지가 특정 서랍에 주는 가중치. */
-export const DrawerWeightSchema = v.strictObject({
-  drawer: DrawerCodeSchema,
-  weight: v.number(),
-});
-
-export type DrawerWeight = v.InferOutput<typeof DrawerWeightSchema>;
-
-/** 선택형 질문의 선택지. 가중치가 비어 있으면 어느 서랍에도 기여하지 않는다. */
-export const ChoiceOptionSchema = v.strictObject({
-  id: TextSchema,
-  text: TextSchema,
-  weights: v.array(DrawerWeightSchema),
-});
-
-export type ChoiceOption = v.InferOutput<typeof ChoiceOptionSchema>;
-
-/** 문항형: 한 서랍에 속하고, 반대로 읽을 수 있다. */
-const ItemQuestionSchema = v.strictObject({
-  type: v.literal("item"),
-  drawer: DrawerCodeSchema,
-  reversed: v.boolean(),
+/** 문항. 한 서랍에 속하고 손님은 1(전혀 아니다)~5(매우 그렇다)로 답한다. */
+export const QuestionSchema = v.strictObject({
+  drawer: DrawerIdSchema,
   text: TextSchema,
 });
-
-export type ItemQuestion = v.InferOutput<typeof ItemQuestionSchema>;
-
-/** 선택형: 선택지마다 서랍별 가중치를 가진다. */
-const ChoiceQuestionSchema = v.strictObject({
-  type: v.literal("choice"),
-  text: TextSchema,
-  options: v.pipe(
-    v.array(ChoiceOptionSchema),
-    v.minLength(2),
-    v.check((options) => unique(options.map(({ id }) => id)), "선택지 id는 겹치지 않아야 합니다"),
-    v.check(
-      (options) => options.every(({ weights }) => unique(weights.map(({ drawer }) => drawer))),
-      "한 선택지에 같은 서랍 가중치를 두 번 둘 수 없습니다",
-    ),
-  ),
-});
-
-export type ChoiceQuestion = v.InferOutput<typeof ChoiceQuestionSchema>;
-
-export const QuestionSchema = v.variant("type", [ItemQuestionSchema, ChoiceQuestionSchema]);
 
 export type Question = v.InferOutput<typeof QuestionSchema>;
 
 /**
- * 질문 세트와 함께 저장하는 기준 응답. "이렇게 답하면 이 순위"라는 기대값이다.
- * `answers`는 모든 질문에 대한 답이고, `expected`는 그 답이 내야 하는 1·2순위다.
- * 실제 순위가 기대와 같은지는 공개 점검(`analyze`)이 본다.
- */
-export const BaselineAnswersSchema = v.strictObject({
-  name: TextSchema,
-  answers: v.array(AnswerValueSchema),
-  expected: v.strictObject({
-    first: DrawerCodeSchema,
-    second: DrawerCodeSchema,
-  }),
-});
-
-export type BaselineAnswers = v.InferOutput<typeof BaselineAnswersSchema>;
-
-/** 답을 서랍 점수로 바꾸는 방법. `learned`는 TICKET-00013에서 더한다. */
-export const ScoringSchema = v.variant("type", [
-  v.strictObject({ type: v.literal("item-mean") }),
-  v.strictObject({ type: v.literal("choice-weight") }),
-]);
-
-export type Scoring = v.InferOutput<typeof ScoringSchema>;
-
-/** 권하는 이유 앞에 붙이는 직접 인용 문형. 문항형과 선택형을 따로 둔다. */
-export const CitationTemplatesSchema = v.strictObject({
-  item: TextSchema,
-  choice: TextSchema,
-});
-
-export type CitationTemplates = v.InferOutput<typeof CitationTemplatesSchema>;
-
-const drawerCodes = (drawers: readonly Drawer[]) => new Set(drawers.map(({ code }) => code));
-
-/**
- * 질문 세트. 파싱에 성공한 값만 도메인 안으로 들어온다.
+ * 손님에게 묻는 질문 세트. 서랍들의 문항을 모은 것이다.
  *
- * - 서랍은 둘 이상이고 코드와 순서가 겹치지 않는다. 그래야 어떤 답 목록에도 1·2순위가
- *   서로 다른 서랍으로 정해진다(I-1).
- * - 질문이 가리키는 서랍은 정의에 있어야 한다. 점수가 붙을 곳 없는 답을 만들지 않는다.
- * - 질문 수와 형식은 데이터가 정한다(I-5).
+ * - 서랍은 둘 이상이고 id가 겹치지 않는다. 그래야 1·2순위가 서로 다른 서랍이다(I-1).
+ * - 문항이 가리키는 서랍은 세트에 있어야 한다.
  */
 export const QuestionSetSchema = v.pipe(
   v.strictObject({
     drawers: v.pipe(
-      v.array(DrawerSchema),
+      v.array(QuestionSetDrawerSchema),
       v.minLength(2),
-      v.check(
-        (drawers) => unique(drawers.map(({ code }) => code)),
-        "서랍 코드는 겹치지 않아야 합니다",
-      ),
-      v.check(
-        (drawers) => unique(drawers.map(({ order }) => order)),
-        "서랍 순서는 겹치지 않아야 합니다",
-      ),
+      v.check((drawers) => unique(drawers.map(({ id }) => id)), "서랍 id는 겹치지 않아야 합니다"),
     ),
     questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
-    scoring: ScoringSchema,
-    statementTemplate: v.optional(TextSchema, DEFAULT_STATEMENT_TEMPLATE),
-    secondStatementTemplate: v.optional(TextSchema, DEFAULT_SECOND_STATEMENT_TEMPLATE),
-    citationTemplates: v.optional(CitationTemplatesSchema, DEFAULT_CITATION_TEMPLATES),
-    baselines: v.optional(v.array(BaselineAnswersSchema), []),
   }),
   v.check((set) => {
-    const codes = drawerCodes(set.drawers);
-    return set.questions.every((question) =>
-      question.type === "item"
-        ? codes.has(question.drawer)
-        : question.options.every(({ weights }) => weights.every(({ drawer }) => codes.has(drawer))),
-    );
-  }, "질문이 정의에 없는 서랍을 가리킵니다"),
-  v.check(
-    (set) => set.baselines.every(({ answers }) => answers.length === set.questions.length),
-    "기준 응답은 모든 질문에 답해야 합니다",
-  ),
-  v.check(
-    (set) =>
-      set.baselines.every(({ answers }) =>
-        answers.every((answer, index) => {
-          const question = set.questions[index];
-          if (question === undefined) return false;
-          try {
-            answerValueFor(question, answer);
-            return true;
-          } catch {
-            return false;
-          }
-        }),
-      ),
-    "기준 응답이 질문 형식에 맞지 않습니다",
-  ),
-  v.check((set) => {
-    const codes = drawerCodes(set.drawers);
-    return set.baselines.every(
-      ({ expected }) =>
-        expected.first !== expected.second &&
-        codes.has(expected.first) &&
-        codes.has(expected.second),
-    );
-  }, "기준 응답의 기대 순위는 서로 다른 두 서랍이어야 합니다"),
+    const ids = new Set(set.drawers.map(({ id }) => id));
+    return set.questions.every(({ drawer }) => ids.has(drawer));
+  }, "문항이 세트에 없는 서랍을 가리킵니다"),
 );
 
 export type QuestionSet = v.InferOutput<typeof QuestionSetSchema>;
 
-function assertTemplates(set: QuestionSet): void {
-  assertStatementTemplate(set.statementTemplate);
-  assertStatementTemplate(set.secondStatementTemplate);
-  for (const drawer of set.drawers) {
-    if (drawer.statement !== null) assertStatementTemplate(drawer.statement);
-  }
-  assertCitationTemplate(set.citationTemplates.item);
-  assertCitationTemplate(set.citationTemplates.choice);
+export function parseQuestionSet(value: unknown): QuestionSet {
+  return v.parse(QuestionSetSchema, value);
 }
 
-/** 질문 세트 JSON의 모양. 직렬화는 이 모양으로만 옮긴다. */
-export type QuestionSetDto = v.InferOutput<typeof QuestionSetSchema>;
+/** 동점이 끝까지 갈 때 쓰는 서랍 순서. 운영 화면에 보이는 서랍 순서와 같다. */
+export function drawerOrder(set: QuestionSet): DrawerId[] {
+  return set.drawers.map(({ id }) => id);
+}
 
 /**
- * 질문 세트를 파싱하고 문장 템플릿의 자리표시까지 확인한다. 모르는 자리표시나 조사는
- * 이름 있는 오류로 거부한다. 템플릿이 빠지면 기본 문형으로 채운다.
+ * 서랍들의 문항으로 질문 세트를 만든다. 한 서랍의 문항이 몰리지 않게 서랍마다 첫 문항,
+ * 그다음 둘째 문항 … 순서로 섞는다. 공개 때 한 번 만들어 버전에 저장하므로, 이미
+ * 공개한 버전의 문항 순서는 바뀌지 않는다(I-11).
  */
-export function parseQuestionSet(value: unknown): QuestionSet {
-  const set = v.parse(QuestionSetSchema, value);
-  assertTemplates(set);
-  return set;
-}
-
-/** 관리자가 정한 서랍 순서. 동점이 끝까지 갈 때 rank가 쓴다. */
-export function drawerOrder(set: QuestionSet): DrawerCode[] {
-  return [...set.drawers].sort((a, b) => a.order - b.order).map(({ code }) => code);
+export function questionSetFrom(drawers: readonly Pick<Drawer, "id" | "name" | "questions">[]) {
+  const rounds = Math.max(0, ...drawers.map(({ questions }) => questions.length));
+  const questions: Question[] = [];
+  for (let round = 0; round < rounds; round += 1) {
+    for (const drawer of drawers) {
+      const text = drawer.questions[round];
+      if (text !== undefined) questions.push({ drawer: drawer.id, text });
+    }
+  }
+  return parseQuestionSet({
+    drawers: drawers.map(({ id, name }) => ({ id, name })),
+    questions,
+  });
 }
 
 /** 도메인 값을 화면·저장소와 주고받을 평범한 객체로 옮긴다. */
-export function toQuestionSetDto(set: QuestionSet): QuestionSetDto {
+export function toQuestionSetDto(set: QuestionSet): QuestionSet {
   return {
-    drawers: set.drawers.map(({ code, name, order, statement, mark, reason, keywords }) => ({
-      code,
-      name,
-      order,
-      statement,
-      mark,
-      reason,
-      keywords: [...keywords],
-    })),
-    questions: set.questions.map((question) =>
-      question.type === "item"
-        ? {
-            type: "item",
-            drawer: question.drawer,
-            reversed: question.reversed,
-            text: question.text,
-          }
-        : {
-            type: "choice",
-            text: question.text,
-            options: question.options.map(({ id, text, weights }) => ({
-              id,
-              text,
-              weights: weights.map(({ drawer, weight }) => ({ drawer, weight })),
-            })),
-          },
-    ),
-    scoring: { type: set.scoring.type },
-    statementTemplate: set.statementTemplate,
-    secondStatementTemplate: set.secondStatementTemplate,
-    citationTemplates: {
-      item: set.citationTemplates.item,
-      choice: set.citationTemplates.choice,
-    },
-    baselines: set.baselines.map(({ name, answers, expected }) => ({
-      name,
-      answers: [...answers],
-      expected: { first: expected.first, second: expected.second },
-    })),
+    drawers: set.drawers.map(({ id, name }) => ({ id, name })),
+    questions: set.questions.map(({ drawer, text }) => ({ drawer, text })),
   };
-}
-
-export function toQuestionSetJson(set: QuestionSet): string {
-  return JSON.stringify(toQuestionSetDto(set));
-}
-
-export function parseQuestionSetJson(json: string): QuestionSet {
-  return parseQuestionSet(JSON.parse(json));
 }

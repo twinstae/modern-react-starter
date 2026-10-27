@@ -3,37 +3,32 @@ import type { ComponentProps } from "react";
 
 import type { AnswerValue } from "../domain/answer.ts";
 import { curate, type CustomerCuration } from "../domain/curate.ts";
-import type { DrawerCode, Question } from "../domain/question-set.ts";
+import type { DrawerId, Question } from "../domain/question-set.ts";
 import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
 import { ResultScreen } from "./result-screen.tsx";
 
 const noop = () => {};
 
-const valueFor = (question: Question, drawer: DrawerCode): AnswerValue => {
-  if (question.type === "item") return question.drawer === drawer ? 5 : 1;
-  const option = question.options.at(0);
-  if (option === undefined) throw new Error("선택형 질문에 선택지가 없습니다");
-  return option.id;
-};
+const valueFor = (question: Question, drawer: DrawerId): AnswerValue =>
+  question.drawer === drawer ? 5 : 1;
 
 /** 서랍 하나가 1순위가 되도록 그 서랍의 문항만 5, 나머지는 1로 답한다. */
-const answersFirst = (drawer: DrawerCode): AnswerValue[] =>
+const answersFirst = (drawer: DrawerId): AnswerValue[] =>
   SEED_QUESTION_SET.questions.map((question) => valueFor(question, drawer));
 
 /** B6와 B1이 같은 점수로 1·2순위가 되어 "비슷함"이 켜지는 답. */
-const SIMILAR_ANSWERS: AnswerValue[] = SEED_QUESTION_SET.questions.map((question) => {
-  if (question.type !== "item") return valueFor(question, "B6");
-  return question.drawer === "B6" || question.drawer === "B1" ? 4 : 1;
-});
+const SIMILAR_ANSWERS: AnswerValue[] = SEED_QUESTION_SET.questions.map(({ drawer }) =>
+  drawer === "B6" || drawer === "B1" ? 4 : 1,
+);
 
-const curationFor = (drawer: DrawerCode) => curate(SEED_QUESTION_SET, answersFirst(drawer), "토끼");
+const curationFor = (drawer: DrawerId) => curate(SEED_QUESTION_SET, answersFirst(drawer), "토끼");
 
-const DRAWER_CURATIONS = SEED_QUESTION_SET.drawers.map(({ code }) => ({
-  drawer: code,
-  customer: curationFor(code).customer,
+const DRAWER_CURATIONS = SEED_QUESTION_SET.drawers.map(({ id }) => ({
+  drawer: id,
+  customer: curationFor(id).customer,
 }));
 
-const customerOf = (drawer: DrawerCode): CustomerCuration => {
+const customerOf = (drawer: DrawerId): CustomerCuration => {
   const found = DRAWER_CURATIONS.find((entry) => entry.drawer === drawer);
   if (found === undefined) throw new Error(`시드에 없는 서랍입니다: ${drawer}`);
   return found.customer;
@@ -48,22 +43,19 @@ const argsOf = (customer: CustomerCuration, similar = false) =>
     onRetake: noop,
   }) satisfies ComponentProps<typeof ResultScreen>;
 
-const seoyunBaseline = SEED_QUESTION_SET.baselines.find(({ name }) => name === "서윤");
-if (seoyunBaseline === undefined) {
-  throw new Error("시드 질문 세트에 서윤 기준 응답이 없습니다");
-}
+/** 서윤처럼 B6 문항을 가장 높게, B1 문항을 그다음으로 답한다. */
+const SEOYUN_ANSWERS: AnswerValue[] = SEED_QUESTION_SET.questions.map(({ drawer }) =>
+  drawer === "B6" ? 5 : drawer === "B1" ? 4 : 2,
+);
 
 const longest = DRAWER_CURATIONS.reduce((long, entry) =>
-  Array.from(entry.customer.firstStatement).length +
-    Array.from(entry.customer.recommendedReason ?? "").length >
-  Array.from(long.customer.firstStatement).length +
-    Array.from(long.customer.recommendedReason ?? "").length
+  Array.from(entry.customer.firstStatement).length > Array.from(long.customer.firstStatement).length
     ? entry
     : long,
 );
 
 export const resultScreenArgs = {
-  seoyun: argsOf(curate(SEED_QUESTION_SET, seoyunBaseline.answers, "토끼").customer),
+  seoyun: argsOf(curate(SEED_QUESTION_SET, SEOYUN_ANSWERS, "토끼").customer),
   similar: argsOf(curate(SEED_QUESTION_SET, SIMILAR_ANSWERS, "토끼").customer, true),
   longest: argsOf(longest.customer),
   drawerB6: argsOf(customerOf("B6")),

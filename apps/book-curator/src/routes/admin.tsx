@@ -28,7 +28,7 @@ import {
 const TabLink = createLink(Tab);
 
 /**
- * 운영자 화면의 틀. 로그인하지 않았으면 로그인 페이지로 보낸다. 서가·서랍·질문 세트·주인 PIN은
+ * 운영자 화면의 틀. 로그인하지 않았으면 로그인 페이지로 보낸다. 서랍과 주인 PIN은
  * 저마다 다른 페이지이고, 탭은 그 페이지로 가는 링크다.
  */
 export const Route = createFileRoute("/admin")({
@@ -75,9 +75,7 @@ function AdminLayout() {
         </PageHeader>
 
         <TabList as="nav" aria-label="운영자 화면">
-          <TabLink to="/admin/shelf">서가</TabLink>
           <TabLink to="/admin/drawers">서랍</TabLink>
-          <TabLink to="/admin/questions">질문 세트</TabLink>
           <TabLink to="/admin/pin">주인 PIN</TabLink>
         </TabList>
 

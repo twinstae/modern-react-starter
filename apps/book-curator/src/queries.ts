@@ -1,13 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import {
-  getAdminMe,
-  getAdminShelf,
-  getQuestionSetDraft,
-  getQuestionSetDraftReport,
-  listPublishedQuestionSetVersions,
-  listQuestionSetDrafts,
-} from "./admin-api.ts";
+import { getAdminMe, getPublishCheck, listDrawers, listPublishedVersions } from "./admin-api.ts";
 import { api } from "./api-client.ts";
 import { parseKioskCurrent } from "./domain/kiosk.ts";
 import { unwrap } from "./unwrap.ts";
@@ -39,46 +32,26 @@ export const adminQueries = {
       retry: false,
       staleTime: 0,
     }),
-  /**
-   * 서가의 책·서랍 속 책·서랍 이름·게이트를 한 번에 읽는 단일 query.
-   * 책이나 수량을 고친 뒤 이 query를 무효화해 두 탭이 같은 값을 본다.
-   */
-  shelf: () =>
+  /** 서랍·문항·책 전부. 서랍을 고친 뒤에는 이 query와 공개 점검을 무효화한다. */
+  drawers: () =>
     queryOptions({
-      queryKey: ["admin", "shelf"],
-      queryFn: getAdminShelf,
+      queryKey: ["admin", "drawers"],
+      queryFn: listDrawers,
       retry: false,
       staleTime: 0,
     }),
-  /**
-   * 질문 세트 초안 목록. 고른 초안의 본문과 점검은 아래 query가 따로 읽는다.
-   * 고친 뒤 같은 query key를 무효화해 목록의 이름·문항 수를 맞춘다.
-   */
-  questionSetDrafts: () =>
+  /** 지금 서랍들을 공개해도 되는지 보는 자동 점검. */
+  publishCheck: () =>
     queryOptions({
-      queryKey: ["admin", "question-set-drafts"],
-      queryFn: listQuestionSetDrafts,
-      retry: false,
-      staleTime: 0,
-    }),
-  questionSetDraft: (id: string) =>
-    queryOptions({
-      queryKey: ["admin", "question-set-draft", id],
-      queryFn: () => getQuestionSetDraft(id),
-      retry: false,
-      staleTime: 0,
-    }),
-  questionSetReport: (id: string) =>
-    queryOptions({
-      queryKey: ["admin", "question-set-report", id],
-      queryFn: () => getQuestionSetDraftReport(id),
+      queryKey: ["admin", "publish-check"],
+      queryFn: getPublishCheck,
       retry: false,
       staleTime: 0,
     }),
   publishedVersions: () =>
     queryOptions({
       queryKey: ["admin", "published-versions"],
-      queryFn: listPublishedQuestionSetVersions,
+      queryFn: listPublishedVersions,
       retry: false,
       staleTime: 0,
     }),

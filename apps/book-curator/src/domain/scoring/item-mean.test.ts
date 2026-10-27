@@ -48,41 +48,13 @@ describe("item-mean", () => {
     });
   });
 
-  it("반대 문항은 6에서 뺀 값으로 계산한다", () => {
-    const set = parseQuestionSet({
-      drawers: [
-        { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0 },
-        { code: "B1", name: "나를 들여다보는 책", order: 1 },
-      ],
-      questions: [
-        { type: "item", drawer: "B6", reversed: false, text: "바꾸고 싶다" },
-        { type: "item", drawer: "B6", reversed: true, text: "지금 그대로가 좋다" },
-        { type: "item", drawer: "B1", reversed: false, text: "나를 들여다본다" },
-      ],
-      scoring: { type: "item-mean" },
-    });
-
-    const scores = scoreItemMean(set, [3, 2, 1]);
-
-    expect(scores.drawers[0]).toStrictEqual({
-      drawer: "B6",
-      score: 3.5,
-      fives: 0,
-      contributions: [
-        { question: 0, drawer: "B6", answer: 3, value: 3 },
-        { question: 1, drawer: "B6", answer: 2, value: 4 },
-      ],
-    });
-  });
-
   it("문항이 없는 서랍도 점수 0으로 남고 NaN이 없다", () => {
     const set = parseQuestionSet({
       drawers: [
-        { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0 },
-        { code: "B1", name: "나를 들여다보는 책", order: 1 },
+        { id: "B6", name: "삶의 방식을 바꾸는 책" },
+        { id: "B1", name: "나를 들여다보는 책" },
       ],
-      questions: [{ type: "item", drawer: "B6", reversed: false, text: "바꾸고 싶다" }],
-      scoring: { type: "item-mean" },
+      questions: [{ drawer: "B6", text: "바꾸고 싶다" }],
     });
 
     const scores = scoreItemMean(set, [5]);
@@ -90,33 +62,5 @@ describe("item-mean", () => {
 
     expect(b1).toStrictEqual({ drawer: "B1", score: 0, fives: 0, contributions: [] });
     expect(scores.drawers.map(({ score }) => score).every(Number.isFinite)).toBe(true);
-  });
-
-  it("선택형 질문은 item-mean 점수에 섞지 않는다", () => {
-    const set = parseQuestionSet({
-      drawers: [
-        { code: "B6", name: "삶의 방식을 바꾸는 책", order: 0 },
-        { code: "B1", name: "나를 들여다보는 책", order: 1 },
-      ],
-      questions: [
-        { type: "item", drawer: "B6", reversed: false, text: "바꾸고 싶다" },
-        {
-          type: "choice",
-          text: "지금 끌리는 것",
-          options: [
-            { id: "look", text: "들여다보기", weights: [{ drawer: "B1", weight: 3 }] },
-            { id: "change", text: "바꾸기", weights: [{ drawer: "B6", weight: 3 }] },
-          ],
-        },
-      ],
-      scoring: { type: "item-mean" },
-    });
-
-    const scores = scoreItemMean(set, [4, "look"]);
-
-    expect(scores.drawers.map(({ drawer, score }) => [drawer, score])).toStrictEqual([
-      ["B6", 4],
-      ["B1", 0],
-    ]);
   });
 });

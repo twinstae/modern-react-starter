@@ -1,7 +1,7 @@
 import * as v from "valibot";
 
 import { AnswerValueSchema, type AnswerValue } from "./answer.ts";
-import { DrawerCodeSchema, TextSchema, type DrawerCode } from "./question-set.ts";
+import { DrawerIdSchema, TextSchema, type DrawerId } from "./question-set.ts";
 import type { Ranking } from "./rank.ts";
 import type { DrawerScores } from "./scoring/index.ts";
 
@@ -27,8 +27,8 @@ const QuestionIndexSchema = v.pipe(v.number(), v.integer(), v.minValue(0));
 
 /** 결과 화면에 보인 1·2순위와 비슷함 표시. */
 export const ResultRankingSchema = v.strictObject({
-  first: DrawerCodeSchema,
-  second: DrawerCodeSchema,
+  first: DrawerIdSchema,
+  second: DrawerIdSchema,
   similar: v.boolean(),
 });
 
@@ -36,7 +36,7 @@ export type ResultRanking = v.InferOutput<typeof ResultRankingSchema>;
 
 /** 결과 화면에 보인 서랍별 점수. 기여 목록은 이벤트에 남기지 않는다. */
 export const ResultScoreSchema = v.strictObject({
-  drawer: DrawerCodeSchema,
+  drawer: DrawerIdSchema,
   score: v.number(),
   fives: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
@@ -82,8 +82,8 @@ const ResultViewEventSchema = v.strictObject({
 const DrawerHandoverEventSchema = v.strictObject({
   ...commonFields,
   type: v.literal("drawer_handover"),
-  recommended: DrawerCodeSchema,
-  handed: DrawerCodeSchema,
+  recommended: DrawerIdSchema,
+  handed: DrawerIdSchema,
 });
 
 const BookViewEventSchema = v.strictObject({
@@ -96,7 +96,7 @@ const PurchaseRecordEventSchema = v.strictObject({
   ...commonFields,
   type: v.literal("purchase_record"),
   bookId: TextSchema,
-  drawer: DrawerCodeSchema,
+  drawer: DrawerIdSchema,
 });
 
 const ResetEventSchema = v.strictObject({
@@ -205,9 +205,9 @@ export type FunnelEventPayload =
       readonly ranking: ResultRanking;
       readonly scores: readonly ResultScore[];
     }
-  | { readonly recommended: DrawerCode; readonly handed: DrawerCode }
+  | { readonly recommended: DrawerId; readonly handed: DrawerId }
   | { readonly bookId: string }
-  | { readonly bookId: string; readonly drawer: DrawerCode }
+  | { readonly bookId: string; readonly drawer: DrawerId }
   | { readonly reason: ResetReason };
 
 export function toFunnelEventPayload(event: FunnelEvent): FunnelEventPayload {
@@ -305,9 +305,9 @@ export type FunnelAction =
     }
   | { readonly type: "back"; readonly questionId: QuestionId }
   | { readonly type: "view_result"; readonly ranking: Ranking; readonly scores: DrawerScores }
-  | { readonly type: "handover"; readonly recommended: DrawerCode; readonly handed: DrawerCode }
+  | { readonly type: "handover"; readonly recommended: DrawerId; readonly handed: DrawerId }
   | { readonly type: "book_view"; readonly bookId: string }
-  | { readonly type: "purchase"; readonly bookId: string; readonly drawer: DrawerCode }
+  | { readonly type: "purchase"; readonly bookId: string; readonly drawer: DrawerId }
   | { readonly type: "reset"; readonly reason: ResetReason };
 
 const commonOf = (state: FunnelState) => ({

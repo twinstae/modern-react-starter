@@ -3,7 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { NoCitationError } from "./citation.ts";
 import { curate, type CustomerCuration } from "./curate.ts";
-import type { DrawerCode } from "./question-set.ts";
 import { SEOYUN_ANSWERS, SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
 import { parseQuestionSet } from "./question-set.ts";
 
@@ -17,65 +16,8 @@ describe("curate", () => {
       firstStatement: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
       secondStatement: "나를 들여다보는 책이 함께 보이면 좋겠어요",
       recommendedDrawerName: "삶의 방식을 바꾸는 책",
-      recommendedStatement: "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
-      recommendedMark: null,
-      recommendedReason: null,
       citation: "‘요즘 생활에서 무언가를 바꾸고 싶다’라고 하셨죠",
     });
-  });
-
-  it("2순위 서랍에 고유 문장이 있으면 별명을 넣어 그 문장을 쓴다", () => {
-    const set = parseQuestionSet({
-      ...SEOYUN_SET_INPUT,
-      drawers: SEOYUN_SET_INPUT.drawers.map((drawer) =>
-        drawer.code === "B1"
-          ? { ...drawer, statement: "{nickname} 님은 지금, 나를 천천히 들여다볼 때예요." }
-          : drawer,
-      ),
-    });
-
-    const { customer } = curate(set, SEOYUN_ANSWERS, "토끼");
-
-    expect(customer.secondStatement).toBe("토끼 님은 지금, 나를 천천히 들여다볼 때예요.");
-  });
-
-  it("추천 서랍의 표시와 권하는 이유를 손님 view model에 옮긴다", () => {
-    const set = parseQuestionSet({
-      ...SEOYUN_SET_INPUT,
-      drawers: SEOYUN_SET_INPUT.drawers.map((drawer) =>
-        drawer.code === "B6"
-          ? {
-              ...drawer,
-              mark: "1번 · 열쇠 1",
-              reason: "이 서랍으로 이어집니다",
-            }
-          : drawer,
-      ),
-    });
-
-    const { customer } = curate(set, SEOYUN_ANSWERS, "토끼");
-
-    expect(customer.recommendedMark).toBe("1번 · 열쇠 1");
-    expect(customer.recommendedReason).toBe("이 서랍으로 이어집니다");
-  });
-
-  it("서랍별 고유 문장이 있으면 공통 템플릿 대신 쓴다", () => {
-    const set = parseQuestionSet({
-      ...SEOYUN_SET_INPUT,
-      statementTemplate: "{nickname} 님에게는 {drawer:이/가} 필요합니다",
-      drawers: SEOYUN_SET_INPUT.drawers.map((drawer) =>
-        drawer.code === "B6"
-          ? { ...drawer, statement: "{nickname} 님의 삶을 바꿀 {drawer:이/가} 여기 있습니다" }
-          : drawer,
-      ),
-    });
-
-    const curation = curate(set, SEOYUN_ANSWERS, " 토끼 ");
-
-    expect(curation.customer.firstStatement).toBe(
-      "토끼 님의 삶을 바꿀 삶의 방식을 바꾸는 책이 여기 있습니다",
-    );
-    expect(curation.customer.secondStatement).toBe("나를 들여다보는 책이 함께 보이면 좋겠어요");
   });
 
   it("같은 입력은 같은 결과를 내고 별명만 바꾸면 문장만 바뀐다", () => {
@@ -100,26 +42,14 @@ describe("curate", () => {
       "citation",
       "firstStatement",
       "recommendedDrawerName",
-      "recommendedMark",
-      "recommendedReason",
-      "recommendedStatement",
       "secondStatement",
     ]);
     expect(JSON.stringify(customer)).not.toMatch(/\bB[1-7]\b/);
     expect(JSON.stringify(customer)).not.toMatch(/score/i);
 
     expectTypeOf<keyof CustomerCuration>().toEqualTypeOf<
-      | "firstStatement"
-      | "secondStatement"
-      | "recommendedDrawerName"
-      | "recommendedStatement"
-      | "recommendedMark"
-      | "recommendedReason"
-      | "citation"
+      "firstStatement" | "secondStatement" | "recommendedDrawerName" | "citation"
     >();
-    expectTypeOf<
-      Extract<CustomerCuration[keyof CustomerCuration], DrawerCode>
-    >().toEqualTypeOf<never>();
     expectTypeOf<
       Extract<CustomerCuration[keyof CustomerCuration], number>
     >().toEqualTypeOf<never>();

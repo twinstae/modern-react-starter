@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { QuestionScreen } from "../components/question-screen.tsx";
 import { IdleGuard } from "./-kiosk/idle.tsx";
-import { KioskNotice } from "./-kiosk/notice.tsx";
 import { guard, useKiosk, useKioskPage } from "./-kiosk/session.tsx";
 
 /** 지금 질문. 몇 번째인지는 답한 수가 정한다. 마지막 답을 하면 세션이 결과로 옮긴다. */
@@ -20,18 +19,8 @@ function QuestionPage() {
   const index = session.turn.answers.length;
   const question = questions[index];
 
-  if (question === undefined || question.type === "choice") {
-    return (
-      <KioskNotice
-        title="이 질문은 아직 준비 중이에요"
-        body="문항형 질문만 보여 드릴 수 있어요. 처음으로 돌아가 주세요."
-        action={{
-          label: "처음으로",
-          onClick: () => kiosk.dispatch({ type: "reset", reason: "manual" }),
-        }}
-      />
-    );
-  }
+  // 답을 다 하면 세션이 결과로 옮긴다. 그사이 한 번 그려질 때는 아무것도 그리지 않는다.
+  if (question === undefined) return null;
 
   return (
     <>

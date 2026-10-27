@@ -5,7 +5,7 @@ import { OwnerCheckScreen } from "./owner-check-screen.tsx";
 import * as Stories from "./owner-check-screen.stories.tsx";
 
 describe("OwnerCheckScreen", () => {
-  it("주인에게 추천 서랍과 2순위 서랍, 그 서랍의 책과 수량을 보여 준다", async () => {
+  it("주인에게 추천 서랍과 2순위 서랍, 그 서랍의 책을 보여 준다", async () => {
     await runSiheom(
       given.render(<OwnerCheckScreen {...Stories.ownerCheckArgs.normal} />),
       assertions.visible(query.heading("삶의 방식을 바꾸는 책")),
@@ -32,14 +32,6 @@ describe("OwnerCheckScreen", () => {
     );
 
     expect(handed).toStrictEqual(["B6", "B1", "B2"]);
-  });
-
-  it("책이 모자란 서랍은 열쇠를 건네기 전에 알려 준다", async () => {
-    await runSiheom(
-      given.render(<OwnerCheckScreen {...Stories.ownerCheckArgs.belowMinimum} />),
-      assertions.visible(query.status("삶의 방식을 바꾸는 책 3종 미만 경고")),
-      assertions.a11ySnapshot(query.main("주인 확인"), "owner-check-screen.below-minimum.snap"),
-    );
   });
 
   it("두 서랍이 비슷하면 주인에게 함께 골라도 좋다고 알려 준다", async () => {

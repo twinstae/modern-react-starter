@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomInt, scrypt, timingSafeEqual } from "node:crypto";
 
 import { parseOwnerPin } from "../domain/owner-pin.ts";
 import type { OwnerAccessStore } from "./owner-access-ports.ts";
@@ -50,6 +50,22 @@ const hashOwnerToken = (token: string): string => createHash("sha256").update(to
 
 /** 주인 토큰 원문. 32바이트 난수라 추측할 수 없고, 저장소에는 해시만 남는다. */
 const createOwnerToken = (): string => randomBytes(32).toString("base64url");
+
+/** 새 주인 PIN. 숫자 6자리 난수다. */
+const createOwnerPin = (): string => randomInt(0, 1_000_000).toString().padStart(6, "0");
+
+/**
+ * 주인 PIN을 새로 만든다. 운영자가 정하지 않고 생성한 값을 한 번만 보여 준다.
+ * 저장소에는 해시만 남으므로 잊으면 다시 생성한다. 실패 횟수와 잠금도 함께 푼다.
+ */
+export async function generateOwnerPin(
+  store: OwnerAccessStore,
+  newPin: () => string = createOwnerPin,
+): Promise<string> {
+  const pin = newPin();
+  await setOwnerPin(store, pin);
+  return pin;
+}
 
 /** 운영자가 PIN을 정하거나 바꾼다. PIN을 바꾸면 실패 횟수와 잠금을 함께 푼다. */
 export async function setOwnerPin(store: OwnerAccessStore, pin: string): Promise<void> {

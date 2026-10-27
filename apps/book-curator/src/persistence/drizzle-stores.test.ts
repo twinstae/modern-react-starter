@@ -8,39 +8,30 @@ import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 import { createApiClient } from "../api-client.ts";
 import { setOwnerPin, unlockOwner, verifyOwnerToken } from "../application/owner-access.ts";
 import { sampleFunnelEvents } from "../domain/funnel.fixture.ts";
-import { SEED_QUESTION_SET } from "../domain/seed-question-set.ts";
-import { SHELF_BOOKS } from "../domain/shelf.fixture.ts";
+import { snapshotOf } from "../domain/kiosk.ts";
+import { SEED_DRAWERS } from "../domain/seed-question-set.ts";
 import { createAuth } from "../server/auth.ts";
 import { createTestServer, signInOperator, TEST_OPERATOR } from "../server/test-client.ts";
 import { openDatabase, type LocalDatabase } from "./database.ts";
-import { createDrizzleBookStore } from "./drizzle-book-store.ts";
-import { createDrizzleDrawerStockStore } from "./drizzle-drawer-stock-store.ts";
+import { drawerStoreContract } from "./drawer-store.contract.ts";
+import { createDrizzleDrawerStore } from "./drizzle-drawer-store.ts";
 import { createDrizzleEventStore } from "./drizzle-event-store.ts";
 import { createDrizzleOwnerAccessStore } from "./drizzle-owner-access-store.ts";
-import {
-  createDrizzleHandoverStore,
-  createDrizzlePurchaseStore,
-} from "./drizzle-owner-record-store.ts";
-import { createDrizzlePublishedQuestionSetStore } from "./drizzle-published-question-set-store.ts";
-import { createDrizzleQuestionSetDraftStore } from "./drizzle-question-set-draft-store.ts";
+import { createDrizzleHandoverStore } from "./drizzle-owner-record-store.ts";
+import { createDrizzlePublishedVersionStore } from "./drizzle-published-version-store.ts";
 import { eventStoreContract } from "./event-store.contract.ts";
 import { ownerAccessStoreContract } from "./owner-access-store.contract.ts";
 import { ownerRecordStoreContract } from "./owner-record-store.contract.ts";
-import { publishedQuestionSetStoreContract } from "./published-question-set-store.contract.ts";
-import { questionSetDraftStoreContract } from "./question-set-draft-store.contract.ts";
+import { publishedVersionStoreContract } from "./published-version-store.contract.ts";
 import {
-  books,
-  drawerStock,
+  drawers,
   funnelEvents,
   handovers,
   ownerAccess,
   ownerTokens,
-  publishedQuestionSetPointer,
   publishedQuestionSets,
-  purchases,
-  questionSetDrafts,
+  publishedVersions,
 } from "./schema.ts";
-import { shelfStoreContract } from "./shelf-store.contract.ts";
 
 // PGlite를 열고 마이그레이션하는 데 몇 초가 걸린다. 모든 계약이 DB 하나를 나눠 쓰고,
 // 각 계약은 자기 표만 비운다.
@@ -54,13 +45,9 @@ afterAll(async () => {
   await db.$client.close();
 });
 
-shelfStoreContract("PGlite", async () => {
-  await db.delete(drawerStock);
-  await db.delete(books);
-  return {
-    books: createDrizzleBookStore(db),
-    stock: createDrizzleDrawerStockStore(db),
-  };
+drawerStoreContract("PGlite", async () => {
+  await db.delete(drawers);
+  return createDrizzleDrawerStore(db);
 });
 
 eventStoreContract("PGlite", async () => {
@@ -68,24 +55,15 @@ eventStoreContract("PGlite", async () => {
   return createDrizzleEventStore(db);
 });
 
-publishedQuestionSetStoreContract("PGlite", async () => {
-  await db.delete(publishedQuestionSetPointer);
+publishedVersionStoreContract("PGlite", async () => {
+  await db.delete(publishedVersions);
   await db.delete(publishedQuestionSets);
-  return createDrizzlePublishedQuestionSetStore(db);
-});
-
-questionSetDraftStoreContract("PGlite", async () => {
-  await db.delete(questionSetDrafts);
-  return createDrizzleQuestionSetDraftStore(db);
+  return createDrizzlePublishedVersionStore(db);
 });
 
 ownerRecordStoreContract("PGlite", async () => {
   await db.delete(handovers);
-  await db.delete(purchases);
-  return {
-    handovers: createDrizzleHandoverStore(db),
-    purchases: createDrizzlePurchaseStore(db),
-  };
+  return { handovers: createDrizzleHandoverStore(db) };
 });
 
 describe("PGlite 주인 잠금 저장소", () => {
@@ -93,6 +71,20 @@ describe("PGlite 주인 잠금 저장소", () => {
     await db.delete(ownerTokens);
     await db.delete(ownerAccess);
     return createDrizzleOwnerAccessStore(db);
+  });
+});
+
+describe("PGlite 공개 버전 번호", () => {
+  it("예전 모델로 공개한 버전 번호 뒤를 이어, 이벤트의 버전이 겹치지 않는다(I-16)", async () => {
+    await db.delete(publishedVersions);
+    await db.delete(publishedQuestionSets);
+    await db.insert(publishedQuestionSets).values({ version: 4, questionSet: {} });
+
+    const published = await createDrizzlePublishedVersionStore(db).publish(
+      snapshotOf(SEED_DRAWERS),
+    );
+
+    expect(published.version).toBe(5);
   });
 });
 
@@ -114,17 +106,19 @@ describe("PGlite 파일 DB", () => {
   it("DB를 다시 열어도 모든 저장소의 행이 남는다", async () => {
     const dir = await mkdtemp(join(tmpdir(), "book-curator-"));
     const dataDir = join(dir, ".data", "pglite");
-    const book = SHELF_BOOKS[0];
-    if (book === undefined) throw new Error("서가 예시에 책이 없습니다");
     const events = sampleFunnelEvents("session-reopen");
     const now = "2026-10-25T00:00:00.000Z";
+    const snapshot = snapshotOf(SEED_DRAWERS);
 
     try {
       const first = await openDatabase(dataDir);
-      await createDrizzleBookStore(first).save(book);
-      await createDrizzleDrawerStockStore(first).setQuantity("B6", book.id, 2);
+      const firstDrawers = createDrizzleDrawerStore(first);
+      await firstDrawers.create({ id: "a", name: "가 서랍" });
+      await firstDrawers.addBooks("a", [
+        { id: "1", title: "첫 책", author: "저자", publisher: "" },
+      ]);
       await createDrizzleEventStore(first).append(events);
-      await createDrizzlePublishedQuestionSetStore(first).publish(SEED_QUESTION_SET);
+      await createDrizzlePublishedVersionStore(first).publish(snapshot);
       const firstAccess = createDrizzleOwnerAccessStore(first);
       await setOwnerPin(firstAccess, "4821");
       const unlocked = await unlockOwner(firstAccess, "4821", now, () => "reopen-token");
@@ -136,17 +130,19 @@ describe("PGlite 파일 DB", () => {
       await first.$client.close();
 
       const second = await openDatabase(dataDir);
-      expect(await createDrizzleBookStore(second).list()).toStrictEqual([book]);
-      expect(await createDrizzleDrawerStockStore(second).list()).toStrictEqual([
-        { drawer: "B6", bookId: book.id, quantity: 2 },
+      expect(await createDrizzleDrawerStore(second).list()).toStrictEqual([
+        {
+          id: "a",
+          name: "가 서랍",
+          questions: [],
+          books: [{ id: "1", title: "첫 책", author: "저자", publisher: "" }],
+        },
       ]);
       expect(await createDrizzleEventStore(second).list("session-reopen")).toStrictEqual(events);
-      const published = createDrizzlePublishedQuestionSetStore(second);
-      expect(await published.current()).toStrictEqual({
+      expect(await createDrizzlePublishedVersionStore(second).current()).toStrictEqual({
         version: 1,
-        questionSet: SEED_QUESTION_SET,
+        ...snapshot,
       });
-      expect(await published.get(1)).toStrictEqual({ version: 1, questionSet: SEED_QUESTION_SET });
       expect(
         await verifyOwnerToken(createDrizzleOwnerAccessStore(second), "reopen-token", now),
       ).toBe(true);

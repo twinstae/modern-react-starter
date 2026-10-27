@@ -9,9 +9,7 @@ import {
   CardHeader,
   CardTitle,
   Citation,
-  MarkText,
   MutedText,
-  ReasonText,
   ResultTitle,
   Screen,
   SectionTitle,
@@ -100,14 +98,8 @@ export function ResultScreen({
         >
           <CardHeader>
             <CardTitle id="recommended-drawer-name">{customer.recommendedDrawerName}</CardTitle>
-            {customer.recommendedMark === null ? null : (
-              <MarkText fontSize="1.5rem">{customer.recommendedMark}</MarkText>
-            )}
           </CardHeader>
           <Citation fontSize="1.5rem">{customer.citation}</Citation>
-          {customer.recommendedReason === null ? null : (
-            <ReasonText fontSize="1.5rem">{customer.recommendedReason}</ReasonText>
-          )}
         </Card>
 
         <SectionTitle>이제 책방 주인에게 보여 주세요</SectionTitle>

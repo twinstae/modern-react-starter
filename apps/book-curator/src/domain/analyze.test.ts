@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { FIRST_RATE_MAX, FIRST_RATE_MIN, SAMPLE_SIZE, analyze } from "./analyze.ts";
-import { parseQuestionSet, type DrawerCode } from "./question-set.ts";
+import { SAMPLE_SIZE, analyze, firstRateRange } from "./analyze.ts";
+import { parseQuestionSet, type DrawerId } from "./question-set.ts";
 import { seededRng } from "./random.ts";
-import { SEOYUN_ANSWERS, SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
+import { SEOYUN_SET_INPUT } from "./seoyun.fixture.ts";
 
-const CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const satisfies readonly DrawerCode[];
+const CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const satisfies readonly DrawerId[];
 
-const NAMES: Record<DrawerCode, string> = {
+const NAMES: Record<DrawerId, string> = {
   B1: "나를 들여다보는 책",
   B2: "관계를 다시 생각하는 책",
   B3: "다른 삶을 만나는 책",
@@ -19,13 +19,11 @@ const NAMES: Record<DrawerCode, string> = {
 
 const balancedSet = () =>
   parseQuestionSet({
-    drawers: CODES.map((code, index) => ({ code, name: NAMES[code], order: index })),
+    drawers: CODES.map((code) => ({ id: code, name: NAMES[code] })),
     questions: CODES.flatMap((code) => [
-      { type: "item", drawer: code, reversed: false, text: `${NAMES[code]} 1` },
-      { type: "item", drawer: code, reversed: false, text: `${NAMES[code]} 2` },
+      { drawer: code, text: `${NAMES[code]} 1` },
+      { drawer: code, text: `${NAMES[code]} 2` },
     ]),
-    scoring: { type: "item-mean" },
-    baselines: [],
   });
 
 describe("analyze 표본", () => {
@@ -55,8 +53,8 @@ describe("analyze 표본", () => {
     for (const { firstCount, firstRate, topTwoCount, topTwoRate } of report.sample.byDrawer) {
       expect(firstRate).toBe(firstCount / SAMPLE_SIZE);
       expect(topTwoRate).toBe(topTwoCount / SAMPLE_SIZE);
-      expect(firstRate).toBeGreaterThanOrEqual(FIRST_RATE_MIN);
-      expect(firstRate).toBeLessThanOrEqual(FIRST_RATE_MAX);
+      expect(firstRate).toBeGreaterThanOrEqual(firstRateRange(7).min);
+      expect(firstRate).toBeLessThanOrEqual(firstRateRange(7).max);
     }
 
     expect(report.sample.tieBrokenByOrderRate).toBe(
@@ -66,27 +64,28 @@ describe("analyze 표본", () => {
     expect(report.gate).toStrictEqual({ passed: true, failures: [], warnings: [] });
   });
 
-  it("서랍이 둘뿐이면 1순위가 쏠려 공개 점검을 통과하지 못한다", () => {
+  it("서랍마다 문항이 하나뿐이면 동점이 앞 서랍에 몰려 쏠림을 경고한다", () => {
     const report = analyze(
       parseQuestionSet({
         drawers: [
-          { code: "B1", name: NAMES.B1, order: 0 },
-          { code: "B2", name: NAMES.B2, order: 1 },
+          { id: "B1", name: NAMES.B1 },
+          { id: "B2", name: NAMES.B2 },
+          { id: "B3", name: NAMES.B3 },
         ],
         questions: [
-          { type: "item", drawer: "B1", reversed: false, text: "가" },
-          { type: "item", drawer: "B2", reversed: false, text: "나" },
+          { drawer: "B1", text: "가" },
+          { drawer: "B2", text: "나" },
+          { drawer: "B3", text: "다" },
         ],
-        scoring: { type: "item-mean" },
-        baselines: [],
       }),
       seededRng(79),
     );
 
-    expect(report.gate.passed).toBe(false);
-    expect(report.gate.failures).toStrictEqual([
-      { code: "sample-skew", drawers: ["B1", "B2"], baselines: [] },
-    ]);
+    expect(report.gate).toStrictEqual({
+      passed: true,
+      failures: [],
+      warnings: [{ code: "sample-skew", drawers: ["B1"] }],
+    });
   });
 });
 
@@ -95,16 +94,14 @@ describe("analyze 구조", () => {
     const report = analyze(
       parseQuestionSet({
         drawers: [
-          { code: "B1", name: NAMES.B1, order: 0 },
-          { code: "B2", name: NAMES.B2, order: 1 },
+          { id: "B1", name: NAMES.B1 },
+          { id: "B2", name: NAMES.B2 },
         ],
         questions: [
-          { type: "item", drawer: "B1", reversed: false, text: "가" },
-          { type: "item", drawer: "B1", reversed: false, text: "나" },
-          { type: "item", drawer: "B2", reversed: false, text: "다" },
+          { drawer: "B1", text: "가" },
+          { drawer: "B1", text: "나" },
+          { drawer: "B2", text: "다" },
         ],
-        scoring: { type: "item-mean" },
-        baselines: [],
       }),
       seededRng(79),
     );
@@ -119,7 +116,6 @@ describe("analyze 구조", () => {
     expect(report.gate.warnings).toContainEqual({
       code: "item-count-imbalance",
       drawers: ["B2"],
-      baselines: [],
     });
   });
 
@@ -127,16 +123,14 @@ describe("analyze 구조", () => {
     const report = analyze(
       parseQuestionSet({
         drawers: [
-          { code: "B1", name: NAMES.B1, order: 0 },
-          { code: "B2", name: NAMES.B2, order: 1 },
-          { code: "B3", name: NAMES.B3, order: 2 },
+          { id: "B1", name: NAMES.B1 },
+          { id: "B2", name: NAMES.B2 },
+          { id: "B3", name: NAMES.B3 },
         ],
         questions: [
-          { type: "item", drawer: "B1", reversed: false, text: "가" },
-          { type: "item", drawer: "B2", reversed: false, text: "나" },
+          { drawer: "B1", text: "가" },
+          { drawer: "B2", text: "나" },
         ],
-        scoring: { type: "item-mean" },
-        baselines: [],
       }),
       seededRng(79),
     );
@@ -145,57 +139,7 @@ describe("analyze 구조", () => {
     expect(report.gate.failures).toContainEqual({
       code: "empty-drawer",
       drawers: ["B3"],
-      baselines: [],
     });
-  });
-
-  it("기준 응답의 실제 순위가 기대와 다르면 실패로 보고한다", () => {
-    const set = parseQuestionSet({
-      ...SEOYUN_SET_INPUT,
-      baselines: [
-        {
-          name: "서윤",
-          answers: [...SEOYUN_ANSWERS],
-          expected: { first: "B1", second: "B6" },
-        },
-      ],
-    });
-    const report = analyze(set, seededRng(79));
-
-    expect(report.structure.baselines).toStrictEqual([
-      {
-        name: "서윤",
-        expectedFirst: "B1",
-        expectedSecond: "B6",
-        actualFirst: "B6",
-        actualSecond: "B1",
-        matches: false,
-      },
-    ]);
-    expect(report.gate.failures).toContainEqual({
-      code: "baseline-mismatch",
-      drawers: ["B1", "B6"],
-      baselines: ["서윤"],
-    });
-  });
-
-  it("기준 응답의 실제 순위가 기대와 같으면 통과한다", () => {
-    const set = parseQuestionSet({
-      ...SEOYUN_SET_INPUT,
-      baselines: [
-        {
-          name: "서윤",
-          answers: [...SEOYUN_ANSWERS],
-          expected: { first: "B6", second: "B1" },
-        },
-      ],
-    });
-    const report = analyze(set, seededRng(79));
-
-    expect(report.structure.baselines[0]?.matches).toBe(true);
-    expect(report.gate.failures).not.toContainEqual(
-      expect.objectContaining({ code: "baseline-mismatch" }),
-    );
   });
 });
 

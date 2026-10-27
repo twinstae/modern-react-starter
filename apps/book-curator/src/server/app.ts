@@ -2,48 +2,37 @@ import { Elysia } from "elysia";
 import * as v from "valibot";
 
 import {
+  AdminDrawersSchema,
   AdminErrorSchema,
   AdminMeSchema,
-  AdminShelfSchema,
+  OwnerPinResultSchema,
   PublishBlockedSchema,
-  PublishQuestionSetResultSchema,
-  QuestionSetDraftReportSchema,
-  QuestionSetDraftSchema,
-  QuestionSetDraftSummarySchema,
-  PublishedQuestionSetVersionSchema,
-  toSetReportDto,
+  PublishCheckSchema,
+  PublishedVersionSummarySchema,
 } from "../admin-dto.ts";
-import type { EventStore } from "../application/event-store-ports.ts";
-import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
-import type { HandoverStore, PurchaseStore } from "../application/owner-record-ports.ts";
-import type { PublishedQuestionSetStore } from "../application/published-question-set-ports.ts";
-import type { QuestionSetDraftStore } from "../application/question-set-draft-ports.ts";
 import { checkHealth } from "../application/check-health.ts";
-import { setOwnerPin, unlockOwner } from "../application/owner-access.ts";
-import { recordHandover, recordPurchase } from "../application/owner-records.ts";
 import {
-  clonePublishedDraft,
-  createDraft,
-  DraftNotFoundError,
-  getDraft,
-  listDrafts,
-  publishDraft,
+  addBooks,
+  checkPublish,
+  createDrawer,
+  publish,
   PublishBlockedError,
-  readDraftReport,
-  saveDraft,
-} from "../application/question-set-admin.ts";
+  updateBook,
+  updateDrawer,
+  type PublishCheck,
+} from "../application/drawer-admin.ts";
 import {
   BookNotFoundError,
-  createBook,
-  listBooks,
-  NoPublishedQuestionSetError,
-  putDrawerBook,
-  readShelf,
-  removeDrawerBook,
-  updateBook,
-} from "../application/shelf-admin.ts";
-import type { BookStore, DrawerStockStore } from "../application/shelf-ports.ts";
-import { BookInputSchema, BookSchema, toBookDto } from "../domain/book.ts";
+  DrawerNotFoundError,
+  type DrawerStore,
+} from "../application/drawer-ports.ts";
+import type { EventStore } from "../application/event-store-ports.ts";
+import { generateOwnerPin, unlockOwner } from "../application/owner-access.ts";
+import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
+import type { HandoverStore } from "../application/owner-record-ports.ts";
+import { recordHandover } from "../application/owner-records.ts";
+import type { PublishedVersionStore } from "../application/published-version-ports.ts";
+import { BookInputSchema, DrawerSchema, toDrawerDto } from "../domain/drawer.ts";
 import { FunnelEventBatchSchema } from "../domain/funnel.ts";
 import { HealthSchema } from "../domain/health.ts";
 import { KioskCurrentSchema, toKioskCurrentDto } from "../domain/kiosk.ts";
@@ -51,28 +40,21 @@ import { OwnerPinSchema } from "../domain/owner-pin.ts";
 import {
   HandoverInputSchema,
   HandoverRecordSchema,
-  PurchaseInputSchema,
   toHandoverRecordDto,
 } from "../domain/owner-record.ts";
-import {
-  DrawerCodeSchema,
-  parseQuestionSet,
-  TextSchema,
-  toQuestionSetDto,
-  type QuestionSet,
-} from "../domain/question-set.ts";
-import { DrawerQuantitySchema } from "../domain/shelf.ts";
 import { createAuthGuard } from "./auth-guard.ts";
-import type { LogFailure } from "./failure-log.ts";
 import type { AppAuth } from "./auth.ts";
+import type { LogFailure } from "./failure-log.ts";
 import { createOwnerGuard } from "./owner-guard.ts";
 
 export interface AppDeps {
   /** 현재 시각 ISO 문자열. 테스트는 고정 시각을 넣는다. */
   now: () => string;
-  /** 공개 질문 세트 버전 저장소. 테스트는 메모리 구현을 넣는다. */
-  publishedQuestionSetStore: PublishedQuestionSetStore;
-  /** 추가 전용 퍼널 이벤트 저장소. 테스트는 메모리 구현을 넣는다. */
+  /** 운영자가 고치는 서랍·문항·책 저장소. */
+  drawerStore: DrawerStore;
+  /** 공개 버전 저장소. 손님에게는 가장 최근 버전이 나간다. */
+  publishedVersionStore: PublishedVersionStore;
+  /** 추가 전용 퍼널 이벤트 저장소. */
   eventStore: EventStore;
   /** 운영자 인증. 테스트는 메모리 DB 위의 실제 better-auth를 넣는다. */
   auth: AppAuth;
@@ -80,37 +62,26 @@ export interface AppDeps {
   ownerAccessStore: OwnerAccessStore;
   /** 주인이 실제로 건넨 서랍의 추가 전용 기록. */
   handoverStore: HandoverStore;
-  /** 주인이 기록한 산 책의 추가 전용 기록. */
-  purchaseStore: PurchaseStore;
-  /** 서가의 책 저장소. */
-  bookStore: BookStore;
-  /** 서랍 속 책과 수량 저장소. */
-  stockStore: DrawerStockStore;
-  /** 아직 공개하지 않은 질문 세트 초안 저장소. */
-  questionSetDraftStore: QuestionSetDraftStore;
-  /** 새 책 id를 만든다. 테스트는 고정 id 생성기를 넣는다. */
-  newBookId: () => string;
-  /** 새 질문 세트 초안 id를 만든다. */
-  newDraftId: () => string;
+  /** 새 서랍·책 id를 만든다. 테스트는 고정 id 생성기를 넣는다. */
+  newId: () => string;
+  /** 새 주인 PIN을 만든다. 테스트는 고정 PIN을 넣는다. */
+  newOwnerPin?: () => string;
   /** 서버 실패를 남긴다. 운영은 콘솔, 테스트는 배열에 모은다. */
   logFailure: LogFailure;
 }
 
 const OwnerPinBodySchema = v.strictObject({ pin: OwnerPinSchema });
 
-const CreateDraftBodySchema = v.strictObject({
-  name: TextSchema,
-  questionSet: v.optional(v.unknown()),
+const DrawerNameBodySchema = v.strictObject({ name: DrawerSchema.entries.name });
+
+const DrawerChangeBodySchema = v.strictObject({
+  name: v.optional(DrawerSchema.entries.name),
+  questions: v.optional(DrawerSchema.entries.questions),
 });
 
-const SaveDraftBodySchema = v.strictObject({
-  name: v.optional(TextSchema),
-  questionSet: v.unknown(),
+const BooksBodySchema = v.strictObject({
+  books: v.pipe(v.array(BookInputSchema), v.minLength(1)),
 });
-
-const InvalidQuestionSetSchema = v.strictObject({ code: v.literal("INVALID_QUESTION_SET") });
-
-const DrawerQuantityBodySchema = v.strictObject({ quantity: DrawerQuantitySchema });
 
 const OwnerUnlockSchema = v.strictObject({
   token: v.string(),
@@ -119,9 +90,20 @@ const OwnerUnlockSchema = v.strictObject({
 
 const OwnerCheckSchema = v.strictObject({ ok: v.literal(true) });
 
-const PurchaseResultSchema = v.strictObject({ quantity: DrawerQuantitySchema });
-
 const OwnerErrorSchema = v.strictObject({ code: v.string() });
+
+const toPublishCheckDto = (check: PublishCheck) => ({
+  canPublish: check.canPublish,
+  failures: check.failures.map(({ code, drawers }) => ({ code, drawers: [...drawers] })),
+  warnings: check.warnings.map(({ code, drawers }) => ({ code, drawers: [...drawers] })),
+});
+
+/** 없는 서랍·책은 404로 바꾸고, 그 밖의 오류는 그대로 던져 실패 로그에 남긴다. */
+const notFound = (error: unknown) => {
+  if (error instanceof DrawerNotFoundError) return { code: "DRAWER_NOT_FOUND" } as const;
+  if (error instanceof BookNotFoundError) return { code: "BOOK_NOT_FOUND" } as const;
+  throw error;
+};
 
 /**
  * 서버 앱. 저장소·시각·인증 같은 의존성은 인자로 받아, 테스트가 메모리 구현과 고정 시각을 주입할 수 있게 한다.
@@ -130,59 +112,16 @@ const OwnerErrorSchema = v.strictObject({ code: v.string() });
  */
 export function createApp({
   now,
-  publishedQuestionSetStore,
+  drawerStore,
+  publishedVersionStore,
   eventStore,
   auth,
   ownerAccessStore,
   handoverStore,
-  purchaseStore,
-  bookStore,
-  stockStore,
-  questionSetDraftStore,
-  newBookId,
-  newDraftId,
+  newId,
+  newOwnerPin,
   logFailure,
 }: AppDeps) {
-  const shelfSource = async () => ({
-    stock: await stockStore.list(),
-    books: await bookStore.list(),
-  });
-
-  const draftDto = (draft: {
-    readonly id: string;
-    readonly name: string;
-    readonly questionSet: QuestionSet;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-  }) => ({
-    id: draft.id,
-    name: draft.name,
-    questionSet: toQuestionSetDto(draft.questionSet),
-    createdAt: draft.createdAt,
-    updatedAt: draft.updatedAt,
-  });
-
-  const draftSummary = (draft: {
-    readonly id: string;
-    readonly name: string;
-    readonly questionSet: QuestionSet;
-    readonly updatedAt: string;
-  }) => ({
-    id: draft.id,
-    name: draft.name,
-    questionCount: draft.questionSet.questions.length,
-    updatedAt: draft.updatedAt,
-  });
-
-  /** 요청 본문의 질문 세트를 경계에서 엄격하게 파싱한다. 실패는 422로 돌려준다. */
-  const parseBodyQuestionSet = (value: unknown): { readonly set: QuestionSet } | null => {
-    try {
-      return { set: parseQuestionSet(value) };
-    } catch {
-      return null;
-    }
-  };
-
   return new Elysia({ prefix: "/api" })
     .onError(({ code, error, request }) => {
       // 요청 본문·경로가 틀린 것은 손님·운영자의 실수라 남기지 않는다. 응답 스키마가 어긋난 것은 서버 탓이다.
@@ -197,11 +136,9 @@ export function createApp({
     .get("/health", () => checkHealth({ now }), {
       response: HealthSchema,
     })
-    .get(
-      "/kiosk/current",
-      async () => toKioskCurrentDto(await publishedQuestionSetStore.current(), await shelfSource()),
-      { response: KioskCurrentSchema },
-    )
+    .get("/kiosk/current", async () => toKioskCurrentDto(await publishedVersionStore.current()), {
+      response: KioskCurrentSchema,
+    })
     .post(
       "/events",
       async ({ body }) => {
@@ -217,271 +154,126 @@ export function createApp({
     )
     .post(
       "/admin/owner-pin",
-      async ({ body }) => {
-        await setOwnerPin(ownerAccessStore, body.pin);
-        return new Response(null, { status: 204 });
-      },
-      { auth: true, body: OwnerPinBodySchema },
+      async () => ({ pin: await generateOwnerPin(ownerAccessStore, newOwnerPin) }),
+      { auth: true, response: OwnerPinResultSchema },
     )
-    .get("/admin/books", async () => (await listBooks(bookStore)).map(toBookDto), {
+    .get("/admin/drawers", async () => (await drawerStore.list()).map(toDrawerDto), {
       auth: true,
-      response: v.array(BookSchema),
+      response: AdminDrawersSchema,
     })
     .post(
-      "/admin/books",
+      "/admin/drawers",
       async ({ body, status }) =>
-        status(201, toBookDto(await createBook(bookStore, body, newBookId()))),
-      { auth: true, body: BookInputSchema, response: { 201: BookSchema } },
+        status(201, toDrawerDto(await createDrawer(drawerStore, body.name, newId()))),
+      { auth: true, body: DrawerNameBodySchema, response: { 201: DrawerSchema } },
     )
-    .put(
-      "/admin/books/:id",
+    .patch(
+      "/admin/drawers/:id",
       async ({ params, body, status }) => {
         try {
-          return toBookDto(await updateBook(bookStore, params.id, body));
+          return toDrawerDto(await updateDrawer(drawerStore, params.id, body));
         } catch (error) {
-          if (error instanceof BookNotFoundError) return status(404, { code: "BOOK_NOT_FOUND" });
-          throw error;
+          return status(404, notFound(error));
+        }
+      },
+      {
+        auth: true,
+        body: DrawerChangeBodySchema,
+        response: { 200: DrawerSchema, 404: AdminErrorSchema },
+      },
+    )
+    .delete(
+      "/admin/drawers/:id",
+      async ({ params, status }) => {
+        try {
+          await drawerStore.remove(params.id);
+          return new Response(null, { status: 204 });
+        } catch (error) {
+          return status(404, notFound(error));
+        }
+      },
+      { auth: true, response: { 404: AdminErrorSchema } },
+    )
+    .post(
+      "/admin/drawers/:id/books",
+      async ({ params, body, status }) => {
+        try {
+          return status(
+            201,
+            toDrawerDto(await addBooks(drawerStore, params.id, body.books, newId)),
+          );
+        } catch (error) {
+          return status(404, notFound(error));
+        }
+      },
+      {
+        auth: true,
+        body: BooksBodySchema,
+        response: { 201: DrawerSchema, 404: AdminErrorSchema },
+      },
+    )
+    .put(
+      "/admin/drawers/:id/books/:bookId",
+      async ({ params, body, status }) => {
+        try {
+          return toDrawerDto(await updateBook(drawerStore, params.id, params.bookId, body));
+        } catch (error) {
+          return status(404, notFound(error));
         }
       },
       {
         auth: true,
         body: BookInputSchema,
-        response: { 200: BookSchema, 404: OwnerErrorSchema },
-      },
-    )
-    .get(
-      "/admin/shelf",
-      async ({ status }) => {
-        try {
-          const shelf = await readShelf(bookStore, stockStore, publishedQuestionSetStore);
-          return {
-            drawers: shelf.drawers.map(({ code, name, mark }) => ({ code, name, mark })),
-            books: shelf.books.map(toBookDto),
-            stock: [...shelf.stock],
-            gate: shelf.gate,
-          };
-        } catch (error) {
-          if (error instanceof NoPublishedQuestionSetError) {
-            return status(409, { code: "NO_PUBLISHED_QUESTION_SET" });
-          }
-          throw error;
-        }
-      },
-      {
-        auth: true,
-        response: { 200: AdminShelfSchema, 409: OwnerErrorSchema },
-      },
-    )
-    .put(
-      "/admin/drawers/:drawer/books/:bookId",
-      async ({ params, body, status }) => {
-        const drawer = v.safeParse(DrawerCodeSchema, params.drawer);
-        if (!drawer.success) return status(404, { code: "UNKNOWN_DRAWER" });
-
-        try {
-          await putDrawerBook(bookStore, stockStore, drawer.output, params.bookId, body.quantity);
-        } catch (error) {
-          if (error instanceof BookNotFoundError) return status(404, { code: "BOOK_NOT_FOUND" });
-          throw error;
-        }
-        return new Response(null, { status: 204 });
-      },
-      {
-        auth: true,
-        body: DrawerQuantityBodySchema,
-        response: { 404: OwnerErrorSchema },
+        response: { 200: DrawerSchema, 404: AdminErrorSchema },
       },
     )
     .delete(
-      "/admin/drawers/:drawer/books/:bookId",
+      "/admin/drawers/:id/books/:bookId",
       async ({ params, status }) => {
-        const drawer = v.safeParse(DrawerCodeSchema, params.drawer);
-        if (!drawer.success) return status(404, { code: "UNKNOWN_DRAWER" });
-
         try {
-          await removeDrawerBook(bookStore, stockStore, drawer.output, params.bookId);
+          return toDrawerDto(await drawerStore.removeBook(params.id, params.bookId));
         } catch (error) {
-          if (error instanceof BookNotFoundError) return status(404, { code: "BOOK_NOT_FOUND" });
-          throw error;
+          return status(404, notFound(error));
         }
-        return new Response(null, { status: 204 });
       },
-      { auth: true, response: { 404: OwnerErrorSchema } },
+      { auth: true, response: { 200: DrawerSchema, 404: AdminErrorSchema } },
+    )
+    .get(
+      "/admin/publish-check",
+      async () => toPublishCheckDto(checkPublish(await drawerStore.list())),
+      { auth: true, response: PublishCheckSchema },
     )
     .post(
-      "/admin/question-sets/drafts",
-      async ({ body, status }) => {
-        let questionSet: unknown = body.questionSet;
-        if (questionSet !== undefined) {
-          const parsed = parseBodyQuestionSet(questionSet);
-          if (parsed === null) return status(422, { code: "INVALID_QUESTION_SET" as const });
-          questionSet = parsed.set;
-        }
-
-        const draft = await createDraft(
-          questionSetDraftStore,
-          { name: body.name, questionSet },
-          newDraftId(),
-          now(),
-        );
-        return status(201, draftDto(draft));
-      },
-      {
-        auth: true,
-        body: CreateDraftBodySchema,
-        response: {
-          201: QuestionSetDraftSchema,
-          422: InvalidQuestionSetSchema,
-        },
-      },
-    )
-    .post(
-      "/admin/question-sets/drafts/from-published",
+      "/admin/publish",
       async ({ status }) => {
         try {
-          const draft = await clonePublishedDraft(
-            questionSetDraftStore,
-            publishedQuestionSetStore,
-            newDraftId(),
-            now(),
-          );
-          return status(201, draftDto(draft));
+          const { version } = await publish(drawerStore, publishedVersionStore);
+          return status(201, { version });
         } catch (error) {
-          if (error instanceof NoPublishedQuestionSetError) {
-            return status(409, { code: "NO_PUBLISHED_QUESTION_SET" });
-          }
-          throw error;
-        }
-      },
-      {
-        auth: true,
-        response: { 201: QuestionSetDraftSchema, 409: AdminErrorSchema },
-      },
-    )
-    .get(
-      "/admin/question-sets/drafts",
-      async () => (await listDrafts(questionSetDraftStore)).map(draftSummary),
-      { auth: true, response: v.array(QuestionSetDraftSummarySchema) },
-    )
-    .get(
-      "/admin/question-sets/drafts/:id",
-      async ({ params, status }) => {
-        try {
-          return draftDto(await getDraft(questionSetDraftStore, params.id));
-        } catch (error) {
-          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
-          throw error;
-        }
-      },
-      { auth: true, response: { 200: QuestionSetDraftSchema, 404: AdminErrorSchema } },
-    )
-    .put(
-      "/admin/question-sets/drafts/:id",
-      async ({ params, body, status }) => {
-        const parsed = parseBodyQuestionSet(body.questionSet);
-        if (parsed === null) return status(422, { code: "INVALID_QUESTION_SET" as const });
-
-        try {
-          const draft = await saveDraft(
-            questionSetDraftStore,
-            params.id,
-            { name: body.name, questionSet: parsed.set },
-            now(),
-          );
-          return draftDto(draft);
-        } catch (error) {
-          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
-          throw error;
-        }
-      },
-      {
-        auth: true,
-        body: SaveDraftBodySchema,
-        response: {
-          200: QuestionSetDraftSchema,
-          404: AdminErrorSchema,
-          422: InvalidQuestionSetSchema,
-        },
-      },
-    )
-    .get(
-      "/admin/question-sets/drafts/:id/report",
-      async ({ params, status }) => {
-        try {
-          const checked = await readDraftReport(
-            questionSetDraftStore,
-            eventStore,
-            stockStore,
-            params.id,
-          );
-          return {
-            report: toSetReportDto(checked.report),
-            shelfGate: checked.shelfGate,
-            canPublish: checked.canPublish,
-            blockers: checked.blockers.map(({ code, drawers, baselines }) => ({
-              code,
-              drawers: [...drawers],
-              baselines: [...baselines],
-            })),
-          };
-        } catch (error) {
-          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
-          throw error;
+          if (!(error instanceof PublishBlockedError)) throw error;
+          return status(422, {
+            code: "PUBLISH_BLOCKED" as const,
+            check: toPublishCheckDto(error.check),
+          });
         }
       },
       {
         auth: true,
         response: {
-          200: QuestionSetDraftReportSchema,
-          404: AdminErrorSchema,
-        },
-      },
-    )
-    .post(
-      "/admin/question-sets/drafts/:id/publish",
-      async ({ params, status }) => {
-        try {
-          return await publishDraft(
-            questionSetDraftStore,
-            publishedQuestionSetStore,
-            eventStore,
-            stockStore,
-            params.id,
-          );
-        } catch (error) {
-          if (error instanceof DraftNotFoundError) return status(404, { code: "DRAFT_NOT_FOUND" });
-          if (error instanceof PublishBlockedError) {
-            return status(422, {
-              code: "PUBLISH_BLOCKED" as const,
-              blockers: error.blockers.map(({ code, drawers, baselines }) => ({
-                code,
-                drawers: [...drawers],
-                baselines: [...baselines],
-              })),
-              shelfGate: error.shelfGate,
-            });
-          }
-          throw error;
-        }
-      },
-      {
-        auth: true,
-        response: {
-          200: PublishQuestionSetResultSchema,
-          404: AdminErrorSchema,
+          201: v.strictObject({ version: PublishedVersionSummarySchema.entries.version }),
           422: PublishBlockedSchema,
         },
       },
     )
     .get(
-      "/admin/question-sets/versions",
+      "/admin/published-versions",
       async () =>
-        (await publishedQuestionSetStore.list()).map(({ version, questionSet }) => ({
+        (await publishedVersionStore.list()).map(({ version, questionSet }) => ({
           version,
           drawerCount: questionSet.drawers.length,
           questionCount: questionSet.questions.length,
         })),
-      { auth: true, response: v.array(PublishedQuestionSetVersionSchema) },
+      { auth: true, response: v.array(PublishedVersionSummarySchema) },
     )
     .post(
       "/owner/unlock",
@@ -516,18 +308,6 @@ export function createApp({
         ownerToken: true,
         body: HandoverInputSchema,
         response: { 201: HandoverRecordSchema },
-      },
-    )
-    .post(
-      "/owner/purchases",
-      async ({ body }) => {
-        const { quantity } = await recordPurchase(purchaseStore, stockStore, body);
-        return { quantity };
-      },
-      {
-        ownerToken: true,
-        body: PurchaseInputSchema,
-        response: PurchaseResultSchema,
       },
     );
 }

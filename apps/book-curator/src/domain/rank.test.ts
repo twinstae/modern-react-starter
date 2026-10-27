@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { drawerOrder, parseQuestionSet, type DrawerCode } from "./question-set.ts";
+import { drawerOrder, parseQuestionSet, type DrawerId } from "./question-set.ts";
 import { rank } from "./rank.ts";
 import { scoreItemMean } from "./scoring/item-mean.ts";
 import { parseDrawerScores } from "./scoring/index.ts";
 
-const scores = (...entries: [DrawerCode, number, number][]) =>
+const scores = (...entries: [DrawerId, number, number][]) =>
   parseDrawerScores({
     scoring: "item-mean",
     drawers: entries.map(([drawer, score, fives]) => ({
@@ -66,18 +66,17 @@ describe("rank", () => {
   it("실제 채점에서 점수가 같으면 5의 수로 깬다", () => {
     const set = parseQuestionSet({
       drawers: [
-        { code: "B2", name: "관계를 다시 생각하는 책", order: 0 },
-        { code: "B1", name: "나를 들여다보는 책", order: 1 },
+        { id: "B2", name: "관계를 다시 생각하는 책" },
+        { id: "B1", name: "나를 들여다보는 책" },
       ],
       questions: [
-        { type: "item", drawer: "B2", reversed: false, text: "관계를 생각한다" },
-        { type: "item", drawer: "B2", reversed: false, text: "사람이 궁금하다" },
-        { type: "item", drawer: "B2", reversed: false, text: "거리를 두고 싶다" },
-        { type: "item", drawer: "B1", reversed: false, text: "나를 들여다본다" },
-        { type: "item", drawer: "B1", reversed: false, text: "내 마음이 궁금하다" },
-        { type: "item", drawer: "B1", reversed: false, text: "내가 어떤 사람인지 안다" },
+        { drawer: "B2", text: "관계를 생각한다" },
+        { drawer: "B2", text: "사람이 궁금하다" },
+        { drawer: "B2", text: "거리를 두고 싶다" },
+        { drawer: "B1", text: "나를 들여다본다" },
+        { drawer: "B1", text: "내 마음이 궁금하다" },
+        { drawer: "B1", text: "내가 어떤 사람인지 안다" },
       ],
-      scoring: { type: "item-mean" },
     });
 
     expect(rank(scoreItemMean(set, [5, 4, 4, 5, 5, 3]), drawerOrder(set))).toStrictEqual({
@@ -90,14 +89,13 @@ describe("rank", () => {
   it("실제 채점에서 점수와 5의 수가 같으면 서랍 순서로 깬다", () => {
     const set = parseQuestionSet({
       drawers: [
-        { code: "B2", name: "관계를 다시 생각하는 책", order: 0 },
-        { code: "B1", name: "나를 들여다보는 책", order: 1 },
+        { id: "B2", name: "관계를 다시 생각하는 책" },
+        { id: "B1", name: "나를 들여다보는 책" },
       ],
       questions: [
-        { type: "item", drawer: "B2", reversed: false, text: "관계를 생각한다" },
-        { type: "item", drawer: "B1", reversed: false, text: "나를 들여다본다" },
+        { drawer: "B2", text: "관계를 생각한다" },
+        { drawer: "B1", text: "나를 들여다본다" },
       ],
-      scoring: { type: "item-mean" },
     });
 
     expect(rank(scoreItemMean(set, [4, 4]), drawerOrder(set))).toStrictEqual({

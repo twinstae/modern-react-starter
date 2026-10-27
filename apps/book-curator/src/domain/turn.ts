@@ -1,4 +1,4 @@
-import { answerValueFor, InvalidAnswerError, type AnswerValue } from "./answer.ts";
+import { InvalidAnswerError, parseAnswer, type AnswerValue } from "./answer.ts";
 import type { QuestionSet } from "./question-set.ts";
 
 /**
@@ -18,18 +18,17 @@ export function startTurn(nickname: string, sessionId: string): Turn {
 }
 
 /**
- * 지금 질문에 답하고 답 목록 뒤에 붙인다. 질문 형식에 맞지 않는 값은
+ * 지금 질문에 답하고 답 목록 뒤에 붙인다. 1~5 정수가 아니거나 이미 다 답했으면
  * `InvalidAnswerError`로 거부한다. 세션 id와 별명은 그대로 남는다.
  */
 export function answer(questionSet: QuestionSet, turn: Turn, value: unknown): Turn {
-  const question = questionSet.questions[turn.answers.length];
-  if (question === undefined) {
+  if (turn.answers.length >= questionSet.questions.length) {
     throw new InvalidAnswerError("모든 질문에 이미 답했습니다");
   }
   return {
     sessionId: turn.sessionId,
     nickname: turn.nickname,
-    answers: [...turn.answers, answerValueFor(question, value)],
+    answers: [...turn.answers, parseAnswer(value)],
   };
 }
 

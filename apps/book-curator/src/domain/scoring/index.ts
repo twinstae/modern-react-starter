@@ -1,12 +1,7 @@
 import * as v from "valibot";
 
-import { answerValueFor, InvalidAnswerError, type AnswerValue } from "../answer.ts";
-import {
-  DrawerCodeSchema,
-  type DrawerCode,
-  type Question,
-  type QuestionSet,
-} from "../question-set.ts";
+import { AnswerValueSchema, InvalidAnswerError, parseAnswer, type AnswerValue } from "../answer.ts";
+import { DrawerIdSchema, type DrawerId, type Question, type QuestionSet } from "../question-set.ts";
 
 /**
  * 한 답이 한 서랍 점수에 남긴 자리. `value`는 반대 문항을 뒤집은 뒤의 값이다.
@@ -14,11 +9,8 @@ import {
  */
 export const ContributionSchema = v.strictObject({
   question: v.pipe(v.number(), v.integer(), v.minValue(0)),
-  drawer: DrawerCodeSchema,
-  answer: v.union([
-    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5)),
-    v.pipe(v.string(), v.minLength(1)),
-  ]),
+  drawer: DrawerIdSchema,
+  answer: AnswerValueSchema,
   value: v.number(),
 });
 
@@ -26,7 +18,7 @@ export type Contribution = v.InferOutput<typeof ContributionSchema>;
 
 /** 서랍 하나의 점수와, 그 점수에 기여한 답, 동점 규칙에 쓰는 유효한 5의 수. */
 export const DrawerScoreSchema = v.strictObject({
-  drawer: DrawerCodeSchema,
+  drawer: DrawerIdSchema,
   score: v.number(),
   fives: v.pipe(v.number(), v.integer(), v.minValue(0)),
   contributions: v.array(ContributionSchema),
@@ -35,7 +27,7 @@ export const DrawerScoreSchema = v.strictObject({
 export type DrawerScore = v.InferOutput<typeof DrawerScoreSchema>;
 
 /** 채점 방식 이름. `learned`는 아직 채점기가 없지만 결과 모양은 받는다(I-6). */
-export const ScoringNameSchema = v.picklist(["item-mean", "choice-weight", "learned"]);
+export const ScoringNameSchema = v.picklist(["item-mean", "learned"]);
 
 export type ScoringName = v.InferOutput<typeof ScoringNameSchema>;
 
@@ -63,7 +55,7 @@ export function parseDrawerScores(value: unknown): DrawerScores {
   return v.parse(DrawerScoresSchema, value);
 }
 
-/** 답 목록을 질문과 짝지어 확인한다. 답이 질문보다 많거나 형식에 맞지 않으면 거부한다. */
+/** 답 목록을 질문과 짝지어 확인한다. 답이 질문보다 많거나 1~5가 아니면 거부한다. */
 export function answersWithQuestions(
   questionSet: QuestionSet,
   answers: readonly AnswerValue[],
@@ -77,7 +69,7 @@ export function answersWithQuestions(
     if (question === undefined) {
       throw new InvalidAnswerError("답에 해당하는 질문이 없습니다");
     }
-    return { question, answer: answerValueFor(question, answer), index };
+    return { question, answer: parseAnswer(answer), index };
   });
 }
 
@@ -90,8 +82,8 @@ export const NO_EVIDENCE_SCORE = 0;
  */
 export function drawerScoresFrom(
   scoring: ScoringName,
-  drawers: readonly DrawerCode[],
-  contributionsByDrawer: ReadonlyMap<DrawerCode, readonly Contribution[]>,
+  drawers: readonly DrawerId[],
+  contributionsByDrawer: ReadonlyMap<DrawerId, readonly Contribution[]>,
   scoreOf: (contributions: readonly Contribution[]) => number,
 ): DrawerScores {
   return parseDrawerScores({
@@ -111,8 +103,8 @@ export function drawerScoresFrom(
 /** 기여를 서랍별로 모은다. 답 순서를 그대로 지켜 결정적으로 만든다. */
 export function groupContributions(
   contributions: readonly Contribution[],
-): Map<DrawerCode, Contribution[]> {
-  const grouped = new Map<DrawerCode, Contribution[]>();
+): Map<DrawerId, Contribution[]> {
+  const grouped = new Map<DrawerId, Contribution[]>();
   for (const contribution of contributions) {
     const own = grouped.get(contribution.drawer);
     if (own === undefined) grouped.set(contribution.drawer, [contribution]);

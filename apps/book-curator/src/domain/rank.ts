@@ -1,4 +1,4 @@
-import type { DrawerCode } from "./question-set.ts";
+import type { DrawerId } from "./question-set.ts";
 import type { DrawerScores } from "./scoring/index.ts";
 
 /**
@@ -9,12 +9,12 @@ export const SIMILAR_SCORE_GAP = 0.5;
 
 /** 서랍 1·2순위와 "비슷함" 표시. 순위를 정하는 데 점수와 5의 수, 서랍 순서만 쓴다. */
 export interface Ranking {
-  readonly first: DrawerCode;
-  readonly second: DrawerCode;
+  readonly first: DrawerId;
+  readonly second: DrawerId;
   readonly similar: boolean;
 }
 
-const orderIndex = (order: readonly DrawerCode[], drawer: DrawerCode): number => {
+const orderIndex = (order: readonly DrawerId[], drawer: DrawerId): number => {
   const index = order.indexOf(drawer);
   return index === -1 ? order.length : index;
 };
@@ -24,7 +24,7 @@ const orderIndex = (order: readonly DrawerCode[], drawer: DrawerCode): number =>
  * 관리자가 정한 서랍 순서. 점수와 순서가 끝까지 같아도 서랍 코드로 안정 정렬해
  * 같은 입력이 늘 같은 순위를 낸다(I-2, I-4).
  */
-export function rank(scores: DrawerScores, order: readonly DrawerCode[]): Ranking {
+export function rank(scores: DrawerScores, order: readonly DrawerId[]): Ranking {
   const [first, second] = [...scores.drawers].sort(
     (a, b) =>
       b.score - a.score ||

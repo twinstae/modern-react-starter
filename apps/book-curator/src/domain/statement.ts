@@ -3,7 +3,7 @@ import * as v from "valibot";
 import { attachJosa, isJosaPair, type JosaPair } from "./josa.ts";
 
 /**
- * 상태 문장과 인용 문형. 템플릿은 질문 세트 데이터이고, 렌더링은 순수 함수다.
+ * 상태 문장과 인용 문형. 문형은 아래 상수 하나씩이고, 렌더링은 순수 함수다.
  *
  * 자리표시:
  * - `{nickname}`: 별명 + " 님". 템플릿에 바로 뒤따르는 " 님"은 겹치지 않게 한 번만 쓴다.
@@ -14,14 +14,14 @@ import { attachJosa, isJosaPair, type JosaPair } from "./josa.ts";
  * 모르는 자리표시나 조사는 조용히 넘기지 않고 이름 있는 오류로 거부한다.
  */
 
-export const DEFAULT_STATEMENT_TEMPLATE = "{nickname} 님에겐 지금, {drawer:이/가} 필요해 보여요";
+/** 1순위 서랍의 상태 문장. */
+export const STATEMENT_TEMPLATE = "{nickname} 님에겐 지금, {drawer:이/가} 필요해 보여요";
 
-export const DEFAULT_SECOND_STATEMENT_TEMPLATE = "{drawer:이/가} 함께 보이면 좋겠어요";
+/** 2순위 서랍의 상태 문장. */
+export const SECOND_STATEMENT_TEMPLATE = "{drawer:이/가} 함께 보이면 좋겠어요";
 
-export const DEFAULT_CITATION_TEMPLATES = {
-  item: "‘{quote}’라고 하셨죠",
-  choice: "‘{quote}’를 고르셨어요",
-} as const;
+/** 권하는 이유에 손님이 그렇다고 답한 문항을 인용하는 문형. */
+export const CITATION_TEMPLATE = "‘{quote}’라고 하셨죠";
 
 export const NICKNAME_MAX_LENGTH = 10;
 
@@ -151,16 +151,6 @@ const HONORIFIC_SUFFIX = /[ \t]*님$/u;
 export interface StatementContext {
   readonly drawerName: string;
   readonly nickname: string;
-}
-
-/** 상태 문장 템플릿의 자리표시 문법만 확인한다. 모르면 이름 있는 오류를 던진다. */
-export function assertStatementTemplate(template: string): void {
-  parseTemplate(template, ["nickname", "drawer"]);
-}
-
-/** 인용 문형의 자리표시 문법만 확인한다. 모르면 이름 있는 오류를 던진다. */
-export function assertCitationTemplate(template: string): void {
-  parseTemplate(template, ["quote"]);
 }
 
 /**

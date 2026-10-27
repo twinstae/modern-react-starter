@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createMemoryPublishedQuestionSetStore } from "../persistence/memory-published-question-set-store.ts";
+import { createMemoryPublishedVersionStore } from "../persistence/memory-published-version-store.ts";
 import type { FailureLog } from "./failure-log.ts";
 import { createLazyApp } from "./lazy-app.ts";
 import { createTestClient } from "./test-client.ts";
@@ -10,8 +10,8 @@ describe("실패 로그", () => {
     const logs: FailureLog[] = [];
     const broken = new Error("연결이 끊겼습니다");
     const client = createTestClient({
-      publishedQuestionSetStore: {
-        ...createMemoryPublishedQuestionSetStore(),
+      publishedVersionStore: {
+        ...createMemoryPublishedVersionStore(),
         current: () => Promise.reject(broken),
       },
       logFailure: (entry) => logs.push(entry),

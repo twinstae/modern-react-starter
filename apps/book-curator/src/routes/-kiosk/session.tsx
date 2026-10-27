@@ -11,7 +11,7 @@ export const PATH = {
   result: "/result",
   "owner-pin": "/owner/pin",
   "owner-check": "/owner/check",
-  "owner-books": "/owner/books",
+  handed: "/handed",
 } as const satisfies Record<KioskPage, string>;
 
 /**

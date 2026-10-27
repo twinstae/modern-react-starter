@@ -10,19 +10,59 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-import type { BookRelevance } from "../domain/book.ts";
 import type { FunnelEventPayload, FunnelEventType } from "../domain/funnel.ts";
-import type { DrawerCode, QuestionSetDto } from "../domain/question-set.ts";
+import type { PublishedSnapshot } from "../domain/kiosk.ts";
+import type { DrawerId } from "../domain/question-set.ts";
 
 // better-auth 표도 같은 마이그레이션에 들어가도록 여기서 다시 내보낸다.
 export * from "./auth-schema.ts";
 
-/** 책. 서랍별 관련도와 핵심 단어는 모양이 고정된 JSON으로 저장한다. */
+/**
+ * 서랍. `position`은 만든 순서이고 운영 화면 순서이자 동점 규칙의 순서다.
+ * 문항은 순서 있는 문장 목록이라 통째로 읽고 쓴다.
+ */
+export const drawers = pgTable("drawers", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  position: serial("position").notNull(),
+  questions: jsonb("questions").$type<string[]>().notNull(),
+});
+
+/** 서랍에 든 책. 한 책은 한 서랍에만 들고, 서랍을 지우면 함께 지워진다. */
+export const drawerBooks = pgTable("drawer_books", {
+  id: text("id").primaryKey(),
+  drawerId: text("drawer_id")
+    .notNull()
+    .references(() => drawers.id, { onDelete: "cascade" }),
+  position: serial("position").notNull(),
+  title: text("title").notNull(),
+  author: text("author").notNull(),
+  publisher: text("publisher").notNull(),
+});
+
+/**
+ * 공개 버전. 공개하는 순간의 질문 세트와 서랍 속 책을 통째로 얼린다(I-11).
+ * 가장 큰 버전이 손님에게 나간다. 버전 번호는 예전 표의 번호 뒤를 잇는다.
+ */
+export const publishedVersions = pgTable(
+  "published_versions",
+  {
+    version: integer("version").primaryKey(),
+    snapshot: jsonb("snapshot").$type<PublishedSnapshot>().notNull(),
+  },
+  (table) => [check("published_versions_version_positive", sql`${table.version} > 0`)],
+);
+
+// 아래 books·drawer_stock·question_set_drafts·published_question_sets·purchases 표는
+// 서랍별 관련도·수량·초안이 있던 예전 모델의 것이다. 운영 기록을 지우지 않으려 남기고,
+// 앱은 더 쓰지 않는다. 예전 공개 버전 번호만 새 버전 번호가 겹치지 않게 읽는다.
+
+/** 예전 모델의 책. */
 export const books = pgTable("books", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   author: text("author").notNull(),
-  relevance: jsonb("relevance").$type<BookRelevance>().notNull(),
+  relevance: jsonb("relevance").notNull(),
   keywords: jsonb("keywords").$type<string[]>().notNull(),
   reason: text("reason").notNull(),
   question: text("question").notNull(),
@@ -36,7 +76,7 @@ export const publishedQuestionSets = pgTable(
   "published_question_sets",
   {
     version: integer("version").primaryKey(),
-    questionSet: jsonb("question_set").$type<QuestionSetDto>().notNull(),
+    questionSet: jsonb("question_set").notNull(),
   },
   (table) => [check("published_question_sets_version_positive", sql`${table.version} > 0`)],
 );
@@ -54,7 +94,7 @@ export const publishedQuestionSetPointer = pgTable("published_question_set_point
 export const questionSetDrafts = pgTable("question_set_drafts", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  questionSet: jsonb("question_set").$type<QuestionSetDto>().notNull(),
+  questionSet: jsonb("question_set").notNull(),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -63,7 +103,7 @@ export const questionSetDrafts = pgTable("question_set_drafts", {
 export const drawerStock = pgTable(
   "drawer_stock",
   {
-    drawer: text("drawer").$type<DrawerCode>().notNull(),
+    drawer: text("drawer").$type<DrawerId>().notNull(),
     bookId: text("book_id").notNull(),
     quantity: integer("quantity").notNull(),
   },
@@ -123,8 +163,8 @@ export const handovers = pgTable(
     id: serial("id").primaryKey(),
     sessionId: text("session_id").notNull(),
     version: integer("version").notNull(),
-    recommended: text("recommended").$type<DrawerCode>().notNull(),
-    handed: text("handed").$type<DrawerCode>().notNull(),
+    recommended: text("recommended").$type<DrawerId>().notNull(),
+    handed: text("handed").$type<DrawerId>().notNull(),
   },
   (table) => [check("handovers_version_positive", sql`${table.version} > 0`)],
 );
@@ -136,7 +176,7 @@ export const purchases = pgTable(
     id: serial("id").primaryKey(),
     sessionId: text("session_id").notNull(),
     version: integer("version").notNull(),
-    drawer: text("drawer").$type<DrawerCode>().notNull(),
+    drawer: text("drawer").$type<DrawerId>().notNull(),
     bookId: text("book_id").notNull(),
   },
   (table) => [check("purchases_version_positive", sql`${table.version} > 0`)],

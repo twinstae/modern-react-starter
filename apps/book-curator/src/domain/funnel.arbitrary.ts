@@ -2,10 +2,10 @@ import fc from "fast-check";
 
 import type { AnswerValue } from "./answer.ts";
 import { type FunnelAction, questionIdAt } from "./funnel.ts";
-import type { DrawerCode } from "./question-set.ts";
+import type { DrawerId } from "./question-set.ts";
 import type { DrawerScores } from "./scoring/index.ts";
 
-const CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const satisfies readonly DrawerCode[];
+const CODES = ["B1", "B2", "B3", "B4", "B5", "B6", "B7"] as const satisfies readonly DrawerId[];
 
 const rankingArbitrary = fc
   .tuple(fc.constantFrom(...CODES), fc.constantFrom(...CODES))
@@ -30,10 +30,7 @@ const scoresArbitrary: fc.Arbitrary<DrawerScores> = fc
     })),
   }));
 
-const answerArbitrary: fc.Arbitrary<AnswerValue> = fc.oneof(
-  fc.integer({ min: 1, max: 5 }),
-  fc.constantFrom("a", "b"),
-);
+const answerArbitrary: fc.Arbitrary<AnswerValue> = fc.integer({ min: 1, max: 5 });
 
 const questionIndexArbitrary = fc.nat({ max: 12 });
 

@@ -1,49 +1,28 @@
 import * as v from "valibot";
 
-import { BookIdSchema, type Book } from "./book.ts";
+import type { Drawer } from "./drawer.ts";
 import {
-  CitationTemplatesSchema,
-  DrawerCodeSchema,
-  DrawerSchema,
+  DrawerIdSchema,
   parseQuestionSet,
-  QuestionSchema,
-  ScoringSchema,
+  QuestionSetSchema,
+  questionSetFrom,
   TextSchema,
   toQuestionSetDto,
   type QuestionSet,
 } from "./question-set.ts";
-import { DrawerQuantitySchema, MissingBookError, type DrawerStockEntry } from "./shelf.ts";
 
-/**
- * 손님 화면에 보내는 질문 세트. 관리자만 보는 `baselines`는 묶음에 넣지 않는다.
- * 서랍 이름·표시·권하는 이유는 결과 화면이 쓰므로 함께 보낸다.
- */
-export const PublicQuestionSetSchema = v.strictObject({
-  drawers: v.pipe(v.array(DrawerSchema), v.minLength(2)),
-  questions: v.pipe(v.array(QuestionSchema), v.minLength(1)),
-  scoring: ScoringSchema,
-  statementTemplate: TextSchema,
-  secondStatementTemplate: TextSchema,
-  citationTemplates: CitationTemplatesSchema,
-});
-
-export type PublicQuestionSetDto = v.InferOutput<typeof PublicQuestionSetSchema>;
-
-/** 손님에게 보이는 서랍 속 책. 관련도·서랍 코드·점수 같은 운영 값은 넣지 않는다(I-9). */
+/** 공개 서가의 책. 주인 확인이 건넬 서랍을 고를 때 본다. 무슨 책인지 알아볼 값만 있다. */
 export const PublicShelfBookSchema = v.strictObject({
-  bookId: BookIdSchema,
+  bookId: TextSchema,
   title: TextSchema,
   author: TextSchema,
-  reason: TextSchema,
-  question: TextSchema,
-  quantity: DrawerQuantitySchema,
+  publisher: v.string(),
 });
 
 export type PublicShelfBookDto = v.InferOutput<typeof PublicShelfBookSchema>;
 
-/** 공개 서가의 서랍 하나. 손님 화면은 건넨 서랍만 골라 그린다(TICKET-00012). */
 export const PublicShelfDrawerSchema = v.strictObject({
-  drawer: DrawerCodeSchema,
+  drawer: DrawerIdSchema,
   books: v.array(PublicShelfBookSchema),
 });
 
@@ -53,13 +32,66 @@ export const PublicShelfSchema = v.strictObject({
 
 export type PublicShelfDto = v.InferOutput<typeof PublicShelfSchema>;
 
+/**
+ * 공개 버전의 내용. 공개하는 순간의 질문 세트와 서랍 속 책을 함께 얼린다(I-11).
+ * 손님 차례 도중 운영자가 서랍을 고쳐도 시작한 버전으로 끝까지 간다.
+ */
+export const PublishedSnapshotSchema = v.strictObject({
+  questionSet: QuestionSetSchema,
+  shelf: PublicShelfSchema,
+});
+
+export interface PublishedSnapshot {
+  readonly questionSet: QuestionSet;
+  readonly shelf: PublicShelfDto;
+}
+
+/** 지금 서랍들로 공개할 내용을 만든다. 서랍 순서·문항 순서가 그대로 고정된다. */
+export function snapshotOf(drawers: readonly Drawer[]): PublishedSnapshot {
+  return {
+    questionSet: questionSetFrom(drawers),
+    shelf: {
+      drawers: drawers.map(({ id, books }) => ({
+        drawer: id,
+        books: books.map(({ id: bookId, title, author, publisher }) => ({
+          bookId,
+          title,
+          author,
+          publisher,
+        })),
+      })),
+    },
+  };
+}
+
+export function parsePublishedSnapshot(value: unknown): PublishedSnapshot {
+  return v.parse(PublishedSnapshotSchema, value);
+}
+
+/** 저장소와 API로 보내는 모양. 필요한 필드만 새 객체로 옮긴다. */
+export function toPublishedSnapshotDto(snapshot: PublishedSnapshot): PublishedSnapshot {
+  return {
+    questionSet: toQuestionSetDto(snapshot.questionSet),
+    shelf: {
+      drawers: snapshot.shelf.drawers.map(({ drawer, books }) => ({
+        drawer,
+        books: books.map(({ bookId, title, author, publisher }) => ({
+          bookId,
+          title,
+          author,
+          publisher,
+        })),
+      })),
+    },
+  };
+}
+
 const PreparingSchema = v.strictObject({ status: v.literal("preparing") });
 
 const ReadySchema = v.strictObject({
   status: v.literal("ready"),
   version: v.pipe(v.number(), v.integer(), v.minValue(1)),
-  questionSet: PublicQuestionSetSchema,
-  shelf: PublicShelfSchema,
+  ...PublishedSnapshotSchema.entries,
 });
 
 /** 손님 앱이 받는 공개 묶음의 응답 모양. */
@@ -67,94 +99,22 @@ export const KioskCurrentSchema = v.variant("status", [PreparingSchema, ReadySch
 
 export type KioskCurrentDto = v.InferOutput<typeof KioskCurrentSchema>;
 
-export interface ReadyKioskBundle {
+export interface ReadyKioskBundle extends PublishedSnapshot {
   readonly status: "ready";
   readonly version: number;
-  readonly questionSet: QuestionSet;
-  readonly shelf: PublicShelfDto;
 }
 
 export type KioskBundle = { readonly status: "preparing" } | ReadyKioskBundle;
 
-/** 공개 버전을 손님 묶음으로 옮긴다. 필요한 필드만 명시적으로 고른다. */
-export function toPublicQuestionSetDto(set: QuestionSet): PublicQuestionSetDto {
-  const { questions } = toQuestionSetDto(set);
-
-  return {
-    drawers: set.drawers.map(({ code, name, order, statement, mark, reason, keywords }) => ({
-      code,
-      name,
-      order,
-      statement,
-      mark,
-      reason,
-      keywords: [...keywords],
-    })),
-    questions,
-    scoring: { type: set.scoring.type },
-    statementTemplate: set.statementTemplate,
-    secondStatementTemplate: set.secondStatementTemplate,
-    citationTemplates: {
-      item: set.citationTemplates.item,
-      choice: set.citationTemplates.choice,
-    },
-  };
-}
-
-export interface PublicShelfSource {
-  readonly stock: readonly DrawerStockEntry[];
-  readonly books: readonly Book[];
-}
-
-/**
- * 공개 서가를 만든다. 질문 세트의 모든 서랍을 담고, 수량 0인 책도 "없음"으로 남긴다(R-9).
- * 책마다 손님에게 필요한 필드만 명시적으로 고른다. 관련도는 어디에도 넣지 않는다.
- */
-export function toPublicShelfDto(
-  questionSet: QuestionSet,
-  { stock, books }: PublicShelfSource,
-): PublicShelfDto {
-  const byId = new Map(books.map((book) => [book.id, book]));
-
-  return {
-    drawers: questionSet.drawers.map(({ code }) => ({
-      drawer: code,
-      books: stock
-        .filter((entry) => entry.drawer === code)
-        .map((entry) => {
-          const book = byId.get(entry.bookId);
-          if (book === undefined) throw new MissingBookError(entry.bookId, code);
-          return {
-            bookId: book.id,
-            title: book.title,
-            author: book.author,
-            reason: book.reason,
-            question: book.question,
-            quantity: entry.quantity,
-          };
-        }),
-    })),
-  };
-}
-
 /** 공개 버전이 없으면 "준비 중", 있으면 그 버전의 질문 세트와 서가를 묶는다. */
 export function toKioskCurrentDto(
-  published: { readonly version: number; readonly questionSet: QuestionSet } | null,
-  shelf: PublicShelfSource = { stock: [], books: [] },
+  published: ({ readonly version: number } & PublishedSnapshot) | null,
 ): KioskCurrentDto {
   if (published === null) return { status: "preparing" };
-  return {
-    status: "ready",
-    version: published.version,
-    questionSet: toPublicQuestionSetDto(published.questionSet),
-    shelf: toPublicShelfDto(published.questionSet, shelf),
-  };
+  return { status: "ready", version: published.version, ...toPublishedSnapshotDto(published) };
 }
 
-/**
- * 응답 경계에서 묶음을 파싱한다. 공개 묶음에는 `baselines`가 없으므로 손님 쪽
- * 질문 세트의 기준 응답은 빈 배열로 정규화된다.
- */
+/** 응답 경계에서 묶음을 파싱한다. */
 export function parseKioskCurrent(value: unknown): KioskBundle {
   const dto = v.parse(KioskCurrentSchema, value);
   if (dto.status === "preparing") return { status: "preparing" };

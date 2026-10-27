@@ -8,13 +8,13 @@ const WRONG_PIN = "0000";
 
 const plus = (iso: string, ms: number): string => new Date(Date.parse(iso) + ms).toISOString();
 
-/** 운영자 로그인으로 PIN을 정해 두고, 손님처럼 부르는 클라이언트를 함께 돌려준다. */
+/** 운영자 로그인으로 PIN을 생성해 두고, 손님처럼 부르는 클라이언트를 함께 돌려준다. */
 async function serverWithPin(clock: { now: string }) {
-  const server = createTestServer({ now: () => clock.now });
+  const server = createTestServer({ now: () => clock.now, newOwnerPin: () => PIN });
   const cookie = await signInOperator(server.auth);
   const admin = createApiClient(server.app, { headers: { cookie } });
-  const response = await admin.admin["owner-pin"].post({ pin: PIN });
-  if (response.status !== 204) throw new Error(`PIN 설정 실패: ${response.status}`);
+  const response = await admin.admin["owner-pin"].post();
+  if (response.data?.pin !== PIN) throw new Error(`PIN 생성 실패: ${response.status}`);
   return { ...server, admin };
 }
 
@@ -28,12 +28,26 @@ describe("주인 PIN과 짧은 토큰", () => {
     expect(response.error?.value).toStrictEqual({ code: "PIN_NOT_SET" });
   });
 
-  it("운영자 로그인 없이는 PIN을 정할 수 없다", async () => {
+  it("운영자 로그인 없이는 PIN을 만들 수 없다", async () => {
     const { api } = createTestServer();
 
-    const response = await api.admin["owner-pin"].post({ pin: PIN });
+    const response = await api.admin["owner-pin"].post();
 
     expect(response.status).toBe(401);
+  });
+
+  it("PIN을 다시 생성하면 새 PIN으로만 열린다", async () => {
+    const pins = ["111111", "222222"];
+    const server = createTestServer({ newOwnerPin: () => pins.shift() ?? "" });
+    const admin = createApiClient(server.app, {
+      headers: { cookie: await signInOperator(server.auth) },
+    });
+
+    expect((await admin.admin["owner-pin"].post()).data).toStrictEqual({ pin: "111111" });
+    expect((await admin.admin["owner-pin"].post()).data).toStrictEqual({ pin: "222222" });
+
+    expect((await server.api.owner.unlock.post({ pin: "111111" })).status).toBe(401);
+    expect((await server.api.owner.unlock.post({ pin: "222222" })).status).toBe(200);
   });
 
   it("맞는 PIN이면 10분짜리 주인 토큰을 준다", async () => {

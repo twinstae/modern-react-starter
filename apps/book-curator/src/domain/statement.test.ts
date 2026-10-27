@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  DEFAULT_CITATION_TEMPLATES,
-  DEFAULT_STATEMENT_TEMPLATE,
+  CITATION_TEMPLATE,
+  STATEMENT_TEMPLATE,
   InvalidNicknameError,
   parseNickname,
   renderCitation,
@@ -30,13 +30,13 @@ describe("renderStatement", () => {
   const drawerName = "삶의 방식을 바꾸는 책";
 
   it("별명 뒤에 늘 님을 붙이고 서랍 이름의 받침에 맞는 조사를 쓴다", () => {
-    expect(renderStatement(DEFAULT_STATEMENT_TEMPLATE, { drawerName, nickname: "토끼" })).toBe(
+    expect(renderStatement(STATEMENT_TEMPLATE, { drawerName, nickname: "토끼" })).toBe(
       "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
     );
   });
 
   it("별명에 님이 이미 있어도 두 번 붙이지 않는다", () => {
-    expect(renderStatement(DEFAULT_STATEMENT_TEMPLATE, { drawerName, nickname: "토끼 님" })).toBe(
+    expect(renderStatement(STATEMENT_TEMPLATE, { drawerName, nickname: "토끼 님" })).toBe(
       "토끼 님에겐 지금, 삶의 방식을 바꾸는 책이 필요해 보여요",
     );
   });
@@ -115,12 +115,9 @@ describe("renderStatement", () => {
 });
 
 describe("renderCitation", () => {
-  it("문항형과 선택형 문형에 인용 문장을 넣는다", () => {
-    expect(renderCitation(DEFAULT_CITATION_TEMPLATES.item, { quote: "바꾸고 싶다" })).toBe(
+  it("인용 문형에 문항 문장을 넣는다", () => {
+    expect(renderCitation(CITATION_TEMPLATE, { quote: "바꾸고 싶다" })).toBe(
       "‘바꾸고 싶다’라고 하셨죠",
-    );
-    expect(renderCitation(DEFAULT_CITATION_TEMPLATES.choice, { quote: "바꾸기" })).toBe(
-      "‘바꾸기’를 고르셨어요",
     );
   });
 

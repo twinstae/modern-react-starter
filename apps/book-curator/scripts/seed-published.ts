@@ -1,33 +1,36 @@
-import { SEED_QUESTION_SET } from "../src/domain/seed-question-set.ts";
-import { toQuestionSetDto } from "../src/domain/question-set.ts";
+import { publish } from "../src/application/drawer-admin.ts";
+import { SEED_DRAWERS } from "../src/domain/seed-question-set.ts";
 import { openConfiguredDatabase } from "../src/persistence/database.ts";
-import { createDrizzlePublishedQuestionSetStore } from "../src/persistence/drizzle-published-question-set-store.ts";
+import { createDrizzleDrawerStore } from "../src/persistence/drizzle-drawer-store.ts";
+import { createDrizzlePublishedVersionStore } from "../src/persistence/drizzle-published-version-store.ts";
 
 /**
- * 개발·데모용 공개 버전 시드. 공개 중인 버전이 없거나, 시드 질문 세트의 내용이
- * 달라졌을 때만 새 버전을 공개한다. 같은 내용을 다시 돌리면 아무것도 만들지 않는다.
- * 공개 버전은 고치지 않으므로(I-11), 시드가 바뀌면 새 버전 번호가 붙는다.
+ * 개발·데모용 시드. 서랍이 하나도 없으면 시드 서랍 7개(문항 2개, 예시 책 3권씩)를 만들고,
+ * 공개 버전이 없으면 지금 서랍으로 공개한다. 이미 있으면 아무것도 바꾸지 않는다.
  */
-const sameQuestionSet = (left: unknown, right: unknown) =>
-  JSON.stringify(left) === JSON.stringify(right);
-
 const { db, close } = await openConfiguredDatabase();
 
 try {
-  const store = createDrizzlePublishedQuestionSetStore(db);
-  const current = await store.current();
-  const seed = toQuestionSetDto(SEED_QUESTION_SET);
+  const drawers = createDrizzleDrawerStore(db);
+  const versions = createDrizzlePublishedVersionStore(db);
 
-  if (current === null) {
-    const published = await store.publish(SEED_QUESTION_SET);
-    console.log(`공개 버전 ${published.version}을 시드 질문 세트로 만들었습니다.`);
-  } else if (!sameQuestionSet(toQuestionSetDto(current.questionSet), seed)) {
-    const published = await store.publish(SEED_QUESTION_SET);
-    console.log(
-      `시드 내용이 바뀌어 공개 버전 ${published.version}을 새로 만들었습니다. (이전 ${current.version})`,
-    );
+  if ((await drawers.list()).length === 0) {
+    for (const { id, name, questions, books } of SEED_DRAWERS) {
+      await drawers.create({ id, name });
+      await drawers.update(id, { questions });
+      await drawers.addBooks(id, books);
+    }
+    console.log(`시드 서랍 ${SEED_DRAWERS.length}개를 만들었습니다.`);
   } else {
-    console.log(`이미 같은 내용의 공개 버전 ${current.version}이 있어 그대로 둡니다.`);
+    console.log("서랍이 이미 있어 그대로 둡니다.");
+  }
+
+  const current = await versions.current();
+  if (current === null) {
+    const published = await publish(drawers, versions);
+    console.log(`공개 버전 ${published.version}을 만들었습니다.`);
+  } else {
+    console.log(`공개 버전 ${current.version}이 이미 있어 그대로 둡니다.`);
   }
 } finally {
   await close();

@@ -1,0 +1,139 @@
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import * as v from "valibot";
+
+import { addBooks, deleteDrawer, removeBook, updateBook, updateDrawer } from "../admin-api.ts";
+import { BookCsvUpload } from "../components/book-csv-upload.tsx";
+import { DrawerBooksTable } from "../components/drawer-books-table.tsx";
+import { DrawerQuestionsEditor } from "../components/drawer-questions-editor.tsx";
+import { DrawerSchema } from "../domain/drawer.ts";
+import { adminQueries } from "../queries.ts";
+import {
+  Button,
+  MutedText,
+  Row,
+  Section,
+  SectionTitle,
+  SimpleForm,
+  SubmitButton,
+  TextField,
+  WarningText,
+} from "../ui/index.ts";
+import { LoadError, messageOf, pendingText } from "./-admin/view.tsx";
+
+const NameSchema = v.object({ name: DrawerSchema.entries.name });
+
+/** 서랍 하나. 이름·문항·책을 이 페이지에서 바로 고친다. */
+export const Route = createFileRoute("/admin/drawers/$drawerId")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(adminQueries.drawers()),
+  pendingComponent: pendingText("서랍을 읽고 있어요."),
+  errorComponent: LoadError,
+  notFoundComponent: () => (
+    <MutedText role="status">
+      없는 서랍이에요. <Link to="/admin/drawers">서랍 목록으로</Link>
+    </MutedText>
+  ),
+  component: DrawerPage,
+});
+
+function DrawerPage() {
+  const { drawerId } = Route.useParams();
+  const { data: drawers } = useSuspenseQuery(adminQueries.drawers());
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const drawer = drawers.find(({ id }) => id === drawerId);
+
+  /** 서랍을 고치면 목록과 공개 점검이 함께 바뀐다. */
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: adminQueries.drawers().queryKey }),
+      queryClient.invalidateQueries({ queryKey: adminQueries.publishCheck().queryKey }),
+    ]);
+  /** 폼 콜백 모양: 성공하면 undefined, 실패하면 화면에 보일 문구. */
+  const attempt = async (run: () => Promise<unknown>): Promise<string | undefined> => {
+    try {
+      await run();
+      await refresh();
+      return undefined;
+    } catch (error) {
+      return messageOf(error);
+    }
+  };
+
+  const remove = useMutation({
+    mutationFn: (bookId: string) => removeBook(drawerId, bookId),
+    onSuccess: refresh,
+  });
+  const removeDrawer = useMutation({
+    mutationFn: () => deleteDrawer(drawerId),
+    onSuccess: async () => {
+      await refresh();
+      await navigate({ to: "/admin/drawers" });
+    },
+  });
+
+  if (drawer === undefined) throw notFound();
+
+  return (
+    <Section mt="6" gap="5" aria-labelledby="drawer-title">
+      <Row justifyContent="space-between" flexWrap="wrap" gap="3">
+        <SectionTitle id="drawer-title">{drawer.name}</SectionTitle>
+        <Link to="/admin/drawers">서랍 목록으로</Link>
+      </Row>
+
+      <SimpleForm
+        key={drawer.name}
+        aria-label="서랍 이름"
+        schema={NameSchema}
+        defaultValues={{ name: drawer.name }}
+        onSubmit={({ name }: { name: string }) => attempt(() => updateDrawer(drawerId, { name }))}
+      >
+        <Row alignItems="flex-end" flexWrap="wrap">
+          <TextField name="name" label="서랍 이름" />
+          <SubmitButton tone="outline">이름 저장</SubmitButton>
+        </Row>
+      </SimpleForm>
+
+      <DrawerQuestionsEditor
+        key={drawer.questions.join("\n")}
+        questions={drawer.questions}
+        onSave={(questions) => attempt(() => updateDrawer(drawerId, { questions }))}
+      />
+
+      <Section gap="3" aria-labelledby="drawer-books-title">
+        <SectionTitle id="drawer-books-title">서랍 속 책 {drawer.books.length}권</SectionTitle>
+        {remove.isError ? <WarningText role="alert">{messageOf(remove.error)}</WarningText> : null}
+        <DrawerBooksTable
+          books={drawer.books}
+          onAdd={(book) => attempt(() => addBooks(drawerId, [book]))}
+          onUpdate={(bookId, book) => attempt(() => updateBook(drawerId, bookId, book))}
+          onRemove={(bookId) => remove.mutate(bookId)}
+        />
+        <BookCsvUpload onUpload={(books) => attempt(() => addBooks(drawerId, books))} />
+      </Section>
+
+      <Section gap="2" aria-labelledby="drawer-delete-title">
+        <SectionTitle id="drawer-delete-title">서랍 지우기</SectionTitle>
+        <MutedText>
+          서랍을 지우면 그 안의 책도 함께 지워져요. 공개한 버전은 그대로 남아요.
+        </MutedText>
+        {removeDrawer.isError ? (
+          <WarningText role="alert">{messageOf(removeDrawer.error)}</WarningText>
+        ) : null}
+        <Button
+          type="button"
+          tone="outline"
+          alignSelf="flex-start"
+          disabled={removeDrawer.isPending}
+          onClick={() => {
+            if (window.confirm(`“${drawer.name}” 서랍과 책 ${drawer.books.length}권을 지울까요?`)) {
+              removeDrawer.mutate();
+            }
+          }}
+        >
+          이 서랍 지우기
+        </Button>
+      </Section>
+    </Section>
+  );
+}

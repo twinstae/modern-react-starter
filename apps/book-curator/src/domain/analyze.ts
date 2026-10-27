@@ -1,7 +1,6 @@
 import type { AnswerValue } from "./answer.ts";
-import { drawerOrder, type DrawerCode, type Question, type QuestionSet } from "./question-set.ts";
+import { drawerOrder, type DrawerId, type QuestionSet } from "./question-set.ts";
 import { rank } from "./rank.ts";
-import { scoreChoiceWeight } from "./scoring/choice-weight.ts";
 import { scoreItemMean } from "./scoring/item-mean.ts";
 import type { DrawerScores } from "./scoring/index.ts";
 
@@ -11,13 +10,20 @@ import type { DrawerScores } from "./scoring/index.ts";
  */
 export const SAMPLE_SIZE = 4000;
 
-/** PRD 부록 A-3의 쏠림 기준. 서랍마다 1순위 비율이 이 범위 안이어야 한다. */
-export const FIRST_RATE_MIN = 0.1;
-export const FIRST_RATE_MAX = 0.18;
+/**
+ * 쏠림 기준. 서랍이 N개면 고르게 나올 때 1순위 비율은 1/N이다. 그 0.7배~1.26배 안이어야
+ * 한다. PRD 부록 A-3의 "서랍 7개에서 10~18%"를 서랍 수가 바뀌어도 같은 무게로 옮긴 값이다.
+ */
+export const FIRST_RATE_TOLERANCE = { min: 0.7, max: 1.26 } as const;
+
+export function firstRateRange(drawerCount: number): { min: number; max: number } {
+  const even = drawerCount === 0 ? 0 : 1 / drawerCount;
+  return { min: even * FIRST_RATE_TOLERANCE.min, max: even * FIRST_RATE_TOLERANCE.max };
+}
 
 /** 한 서랍의 표본 분포. 비율은 0~1이고 `count / samples`다. */
 export interface DrawerRate {
-  readonly drawer: DrawerCode;
+  readonly drawer: DrawerId;
   readonly firstCount: number;
   readonly firstRate: number;
   readonly topTwoCount: number;
@@ -40,29 +46,18 @@ export interface DistributionReport {
 
 /** 서랍 하나의 문항 수. 문항형만 센다(선택형은 별도 문항이다). */
 export interface DrawerStructure {
-  readonly drawer: DrawerCode;
+  readonly drawer: DrawerId;
   readonly itemCount: number;
 }
 
-/** 기준 응답의 기대 순위와 실제 순위. */
-export interface BaselineResult {
-  readonly name: string;
-  readonly expectedFirst: DrawerCode;
-  readonly expectedSecond: DrawerCode;
-  readonly actualFirst: DrawerCode;
-  readonly actualSecond: DrawerCode;
-  readonly matches: boolean;
-}
-
-/** 질문 세트의 구조. 문항 수 균형, 빈 서랍, 기준 응답 일치를 본다. */
+/** 질문 세트의 구조. 문항 수 균형과 문항 없는 서랍을 본다. */
 export interface StructureReport {
   readonly drawers: readonly DrawerStructure[];
-  readonly emptyDrawers: readonly DrawerCode[];
+  readonly emptyDrawers: readonly DrawerId[];
   readonly itemCountMin: number;
   readonly itemCountMax: number;
   readonly itemCountImbalance: number;
   readonly balanced: boolean;
-  readonly baselines: readonly BaselineResult[];
 }
 
 /** 점검에서 막는 이유와 경고의 종류. 화면은 코드로 문장을 고른다. */
@@ -72,15 +67,13 @@ export const GATE_ISSUE_CODES = [
   "recorded-skew",
   "empty-drawer",
   "item-count-imbalance",
-  "baseline-mismatch",
 ] as const;
 
 export type GateIssueCode = (typeof GATE_ISSUE_CODES)[number];
 
 export interface GateIssue {
   readonly code: GateIssueCode;
-  readonly drawers: readonly DrawerCode[];
-  readonly baselines: readonly string[];
+  readonly drawers: readonly DrawerId[];
 }
 
 /** 공개를 막는 실패와, 알리기만 하는 경고를 나눈다. 통과는 실패가 없을 때만이다. */
@@ -101,28 +94,11 @@ export interface SetReport {
 
 const ratio = (count: number, total: number): number => (total === 0 ? 0 : count / total);
 
-const score = (set: QuestionSet, answers: readonly AnswerValue[]): DrawerScores =>
-  set.scoring.type === "item-mean" ? scoreItemMean(set, answers) : scoreChoiceWeight(set, answers);
-
-const randomAnswer = (question: Question, rng: () => number): AnswerValue => {
-  if (question.type === "item") {
-    return 1 + Math.min(4, Math.max(0, Math.floor(rng() * 5)));
-  }
-
-  const index = Math.min(
-    question.options.length - 1,
-    Math.max(0, Math.floor(rng() * question.options.length)),
-  );
-  const option = question.options[index] ?? question.options[0];
-  if (option === undefined) throw new Error("선택형 질문에 선택지가 없습니다");
-  return option.id;
-};
-
-/** 질문마다 형식에 맞는 답을 하나씩 뽑는다. 소비하는 난수 순서는 질문 순서 그대로다. */
+/** 질문마다 1~5 답을 하나씩 뽑는다. 소비하는 난수 순서는 질문 순서 그대로다. */
 const sampleAnswers = (set: QuestionSet, rng: () => number): AnswerValue[] =>
-  set.questions.map((question) => randomAnswer(question, rng));
+  set.questions.map(() => 1 + Math.min(4, Math.max(0, Math.floor(rng() * 5))));
 
-const tieBrokenByOrder = (scores: DrawerScores, first: DrawerCode, second: DrawerCode): boolean => {
+const tieBrokenByOrder = (scores: DrawerScores, first: DrawerId, second: DrawerId): boolean => {
   const firstScore = scores.drawers.find(({ drawer }) => drawer === first);
   const secondScore = scores.drawers.find(({ drawer }) => drawer === second);
   if (firstScore === undefined || secondScore === undefined) return false;
@@ -138,14 +114,14 @@ const distribution = (
   answerLists: readonly (readonly AnswerValue[])[],
 ): DistributionReport => {
   const order = drawerOrder(set);
-  const firstCounts = new Map<DrawerCode, number>(set.drawers.map(({ code }) => [code, 0]));
-  const topTwoCounts = new Map<DrawerCode, number>(set.drawers.map(({ code }) => [code, 0]));
+  const firstCounts = new Map<DrawerId, number>(set.drawers.map(({ id }) => [id, 0]));
+  const topTwoCounts = new Map<DrawerId, number>(set.drawers.map(({ id }) => [id, 0]));
   let decided = 0;
   let tieOrder = 0;
   let similar = 0;
 
   for (const answers of answerLists) {
-    const scores = score(set, answers);
+    const scores = scoreItemMean(set, answers);
     const ranking = rank(scores, order);
     decided += 1;
     if (tieBrokenByOrder(scores, ranking.first, ranking.second)) tieOrder += 1;
@@ -168,11 +144,11 @@ const distribution = (
     tieBrokenByOrderRate: ratio(tieOrder, samples),
     similarCount: similar,
     similarRate: ratio(similar, samples),
-    byDrawer: set.drawers.map(({ code }) => {
-      const firstCount = firstCounts.get(code) ?? 0;
-      const topTwoCount = topTwoCounts.get(code) ?? 0;
+    byDrawer: set.drawers.map(({ id }) => {
+      const firstCount = firstCounts.get(id) ?? 0;
+      const topTwoCount = topTwoCounts.get(id) ?? 0;
       return {
-        drawer: code,
+        drawer: id,
         firstCount,
         firstRate: ratio(firstCount, samples),
         topTwoCount,
@@ -183,12 +159,9 @@ const distribution = (
 };
 
 const structureOf = (set: QuestionSet): StructureReport => {
-  const order = drawerOrder(set);
-  const drawers = set.drawers.map(({ code }) => ({
-    drawer: code,
-    itemCount: set.questions.filter(
-      (question) => question.type === "item" && question.drawer === code,
-    ).length,
+  const drawers = set.drawers.map(({ id }) => ({
+    drawer: id,
+    itemCount: set.questions.filter(({ drawer }) => drawer === id).length,
   }));
   const counts = drawers.map(({ itemCount }) => itemCount);
   const itemCountMin = counts.length === 0 ? 0 : Math.min(...counts);
@@ -201,24 +174,15 @@ const structureOf = (set: QuestionSet): StructureReport => {
     itemCountMax,
     itemCountImbalance: itemCountMax - itemCountMin,
     balanced: itemCountMin === itemCountMax,
-    baselines: set.baselines.map(({ name, answers, expected }) => {
-      const ranking = rank(score(set, answers), order);
-      return {
-        name,
-        expectedFirst: expected.first,
-        expectedSecond: expected.second,
-        actualFirst: ranking.first,
-        actualSecond: ranking.second,
-        matches: ranking.first === expected.first && ranking.second === expected.second,
-      };
-    }),
   };
 };
 
-const skewedDrawers = (report: DistributionReport): DrawerCode[] =>
-  report.byDrawer
-    .filter(({ firstRate }) => firstRate < FIRST_RATE_MIN || firstRate > FIRST_RATE_MAX)
+const skewedDrawers = (report: DistributionReport): DrawerId[] => {
+  const { min, max } = firstRateRange(report.byDrawer.length);
+  return report.byDrawer
+    .filter(({ firstRate }) => firstRate < min || firstRate > max)
     .map(({ drawer }) => drawer);
+};
 
 const gateOf = (
   sample: DistributionReport,
@@ -229,23 +193,25 @@ const gateOf = (
   const warnings: GateIssue[] = [];
 
   if (sample.undecidedCount > 0) {
-    failures.push({ code: "sample-undecided", drawers: [], baselines: [] });
+    failures.push({ code: "sample-undecided", drawers: [] });
   }
 
+  // 쏠림은 알리기만 한다. 서랍마다 문항이 2개면 동점 규칙 때문에 앞 서랍이 기준에
+  // 붙곤 하고, 운영자가 문항 순서만으로 고칠 수 없는 일로 공개를 막지 않는다.
   const sampleSkew = skewedDrawers(sample);
   if (sampleSkew.length > 0) {
-    failures.push({ code: "sample-skew", drawers: sampleSkew, baselines: [] });
+    warnings.push({ code: "sample-skew", drawers: sampleSkew });
   }
 
   if (recorded !== undefined && recorded.samples > 0) {
     const recordedSkew = skewedDrawers(recorded);
     if (recordedSkew.length > 0) {
-      warnings.push({ code: "recorded-skew", drawers: recordedSkew, baselines: [] });
+      warnings.push({ code: "recorded-skew", drawers: recordedSkew });
     }
   }
 
   if (structure.emptyDrawers.length > 0) {
-    failures.push({ code: "empty-drawer", drawers: structure.emptyDrawers, baselines: [] });
+    failures.push({ code: "empty-drawer", drawers: structure.emptyDrawers });
   }
 
   if (!structure.balanced) {
@@ -254,19 +220,6 @@ const gateOf = (
       drawers: structure.drawers
         .filter(({ itemCount }) => itemCount < structure.itemCountMax)
         .map(({ drawer }) => drawer),
-      baselines: [],
-    });
-  }
-
-  if (structure.baselines.some(({ matches }) => !matches)) {
-    const mismatched = structure.baselines.filter(({ matches }) => !matches);
-    failures.push({
-      code: "baseline-mismatch",
-      drawers: mismatched.flatMap(({ expectedFirst, expectedSecond }) => [
-        expectedFirst,
-        expectedSecond,
-      ]),
-      baselines: mismatched.map(({ name }) => name),
     });
   }
 

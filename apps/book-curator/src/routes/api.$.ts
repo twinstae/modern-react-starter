@@ -2,16 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 import { openConfiguredDatabase } from "../persistence/database.ts";
-import { createDrizzleBookStore } from "../persistence/drizzle-book-store.ts";
-import { createDrizzleDrawerStockStore } from "../persistence/drizzle-drawer-stock-store.ts";
+import { createDrizzleDrawerStore } from "../persistence/drizzle-drawer-store.ts";
 import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
 import { createDrizzleOwnerAccessStore } from "../persistence/drizzle-owner-access-store.ts";
-import {
-  createDrizzleHandoverStore,
-  createDrizzlePurchaseStore,
-} from "../persistence/drizzle-owner-record-store.ts";
-import { createDrizzlePublishedQuestionSetStore } from "../persistence/drizzle-published-question-set-store.ts";
-import { createDrizzleQuestionSetDraftStore } from "../persistence/drizzle-question-set-draft-store.ts";
+import { createDrizzleHandoverStore } from "../persistence/drizzle-owner-record-store.ts";
+import { createDrizzlePublishedVersionStore } from "../persistence/drizzle-published-version-store.ts";
 import { createApp } from "../server/app.ts";
 import { createAuth } from "../server/auth.ts";
 import { consoleFailureLog } from "../server/failure-log.ts";
@@ -36,17 +31,13 @@ const getApp = createLazyApp({
     return step("앱 조립", async () =>
       createApp({
         now: () => new Date().toISOString(),
-        publishedQuestionSetStore: createDrizzlePublishedQuestionSetStore(database),
+        drawerStore: createDrizzleDrawerStore(database),
+        publishedVersionStore: createDrizzlePublishedVersionStore(database),
         eventStore: createDrizzleEventStore(database),
         auth,
         ownerAccessStore: createDrizzleOwnerAccessStore(database),
         handoverStore: createDrizzleHandoverStore(database),
-        purchaseStore: createDrizzlePurchaseStore(database),
-        bookStore: createDrizzleBookStore(database),
-        stockStore: createDrizzleDrawerStockStore(database),
-        questionSetDraftStore: createDrizzleQuestionSetDraftStore(database),
-        newBookId: () => `book-${crypto.randomUUID()}`,
-        newDraftId: () => `draft-${crypto.randomUUID()}`,
+        newId: () => crypto.randomUUID(),
         logFailure: consoleFailureLog,
       }),
     );
