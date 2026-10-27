@@ -20,19 +20,9 @@ const toDomain = (row: PublishedRow): PublishedQuestionSet => ({
   questionSet: parseQuestionSet(row.questionSet),
 });
 
-/**
- * PGlite/Postgres 공개 버전 저장소. 라우트가 DB를 비동기로 열 수 있도록 완성된 DB와
- * 그 DB의 약속을 모두 받는다.
- */
-export function createDrizzlePublishedQuestionSetStore(
-  dbSource: Database | Promise<Database>,
-): PublishedQuestionSetStore {
-  let opened: Promise<Database> | undefined;
-  const database = (): Promise<Database> => (opened ??= Promise.resolve(dbSource));
-
+export function createDrizzlePublishedQuestionSetStore(db: Database): PublishedQuestionSetStore {
   return {
     async list() {
-      const db = await database();
       const rows = await db
         .select()
         .from(publishedQuestionSets)
@@ -40,7 +30,6 @@ export function createDrizzlePublishedQuestionSetStore(
       return rows.map(toDomain);
     },
     async get(version) {
-      const db = await database();
       const [row] = await db
         .select()
         .from(publishedQuestionSets)
@@ -49,7 +38,6 @@ export function createDrizzlePublishedQuestionSetStore(
       return row === undefined ? null : toDomain(row);
     },
     async current() {
-      const db = await database();
       const [row] = await db
         .select({
           version: publishedQuestionSets.version,
@@ -65,7 +53,6 @@ export function createDrizzlePublishedQuestionSetStore(
       return row === undefined ? null : toDomain(row);
     },
     async publish(questionSet) {
-      const db = await database();
       const dto = toQuestionSetDto(questionSet);
 
       return db.transaction(async (tx) => {

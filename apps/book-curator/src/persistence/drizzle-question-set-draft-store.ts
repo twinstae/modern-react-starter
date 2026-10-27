@@ -32,19 +32,9 @@ const toRow = (draft: QuestionSetDraft) => ({
   updatedAt: draft.updatedAt,
 });
 
-/**
- * PGlite/Postgres 질문 세트 초안 저장소. 라우트가 DB를 비동기로 열 수 있도록 완성된 DB와
- * 그 DB의 약속을 모두 받는다.
- */
-export function createDrizzleQuestionSetDraftStore(
-  dbSource: Database | Promise<Database>,
-): QuestionSetDraftStore {
-  let opened: Promise<Database> | undefined;
-  const database = (): Promise<Database> => (opened ??= Promise.resolve(dbSource));
-
+export function createDrizzleQuestionSetDraftStore(db: Database): QuestionSetDraftStore {
   return {
     async list() {
-      const db = await database();
       const rows = await db
         .select()
         .from(questionSetDrafts)
@@ -52,7 +42,6 @@ export function createDrizzleQuestionSetDraftStore(
       return rows.map(toDomain);
     },
     async get(id) {
-      const db = await database();
       const [row] = await db
         .select()
         .from(questionSetDrafts)
@@ -61,11 +50,9 @@ export function createDrizzleQuestionSetDraftStore(
       return row === undefined ? null : toDomain(row);
     },
     async create(draft) {
-      const db = await database();
       await db.insert(questionSetDrafts).values(toRow(draft));
     },
     async save(draft) {
-      const db = await database();
       const updated = await db
         .update(questionSetDrafts)
         .set(toRow(draft))
