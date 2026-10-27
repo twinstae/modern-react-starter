@@ -22,3 +22,31 @@ export async function openDatabase(dataDir?: string) {
 }
 
 export type LocalDatabase = Awaited<ReturnType<typeof openDatabase>>;
+
+/** 서버리스 인스턴스가 마이그레이션을 겹쳐 돌리지 않도록 운영 마이그레이션은 `db:migrate`만 한다. */
+export async function connectDatabase(url: string, { migrateFirst = false } = {}) {
+  const { default: postgres } = await import("postgres");
+  const { drizzle: drizzlePostgres } = await import("drizzle-orm/postgres-js");
+  // Supabase 트랜잭션 풀러는 prepared statement를 이어 쓰지 못한다.
+  const client = postgres(url, { prepare: false });
+  const db = drizzlePostgres({ client, schema });
+  if (migrateFirst) {
+    const { migrate: migratePostgres } = await import("drizzle-orm/postgres-js/migrator");
+    await migratePostgres(db, { migrationsFolder });
+  }
+  return db;
+}
+
+/** `POSTGRES_URL`이 있으면 운영 Postgres, 없으면 `.data/pglite`를 연다. */
+export async function openConfiguredDatabase(): Promise<{
+  db: Database;
+  close: () => Promise<void>;
+}> {
+  const url = process.env.POSTGRES_URL;
+  if (url !== undefined && url !== "") {
+    const db = await connectDatabase(url);
+    return { db, close: () => db.$client.end() };
+  }
+  const db = await openDatabase(".data/pglite");
+  return { db, close: () => db.$client.close() };
+}

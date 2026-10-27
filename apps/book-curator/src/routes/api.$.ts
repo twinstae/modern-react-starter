@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-import { openDatabase } from "../persistence/database.ts";
+import { openConfiguredDatabase } from "../persistence/database.ts";
 import { createDrizzleBookStore } from "../persistence/drizzle-book-store.ts";
 import { createDrizzleDrawerStockStore } from "../persistence/drizzle-drawer-stock-store.ts";
 import { createDrizzleEventStore } from "../persistence/drizzle-event-store.ts";
@@ -24,7 +24,7 @@ let appPromise: Promise<ReturnType<typeof createApp>> | undefined;
 
 function getApp() {
   appPromise ??= (async () => {
-    const database = await openDatabase(".data/pglite");
+    const { db: database } = await openConfiguredDatabase();
     return createApp({
       now: () => new Date().toISOString(),
       publishedQuestionSetStore: createDrizzlePublishedQuestionSetStore(database),
