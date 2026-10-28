@@ -87,17 +87,6 @@ export function BookCsvUpload({
   return (
     <Card tone="flat" p="4" gap="3" aria-labelledby={`${inputId}-title`}>
       <SectionTitle id={`${inputId}-title`}>CSV로 책 올리기</SectionTitle>
-      <List gap="1">
-        <ListItem>
-          첫 줄은 {BOOK_CSV_HEADER.join(",")} 입니다. 그 아래 한 줄에 책 한 권을 씁니다.
-        </ListItem>
-        <ListItem>출판사는 비워도 됩니다. 제목과 저자는 꼭 넣어 주세요.</ListItem>
-        <ListItem>
-          엑셀: 다른 이름으로 저장 → 파일 형식 “CSV UTF-8(쉼표로 분리)”. 구글 시트: 파일 → 다운로드
-          → 쉼표로 구분된 값(.csv).
-        </ListItem>
-        <ListItem>올린 책은 이 서랍에 더해집니다. 이미 있는 책은 그대로 남습니다.</ListItem>
-      </List>
       <ButtonAnchor
         href={EXAMPLE_CSV_HREF}
         download="책-예시.csv"

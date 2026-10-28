@@ -44,10 +44,6 @@ function QuestionFields() {
   );
 }
 
-/**
- * 서랍의 문항 편집. 이 서랍이 맞는 손님이라면 "그렇다"고 답할 문장을 하나씩 더한다.
- * 손님은 문항마다 1~5로 답하고, 서랍들의 문항이 섞여 질문 세트가 된다.
- */
 export function DrawerQuestionsEditor({
   questions,
   onSave,
@@ -62,10 +58,6 @@ export function DrawerQuestionsEditor({
       defaultValues={{ questions: questions.map((text) => ({ text })) }}
       onSubmit={({ questions: next }: QuestionsInput) => onSave(next.map(({ text }) => text))}
     >
-      <MutedText>
-        이 서랍이 맞는 손님이라면 “그렇다”고 답할 문장이에요. 예: 요즘 생활에서 뭔가를 바꾸고 싶다.
-        서랍마다 2~3개를 권해요.
-      </MutedText>
       <QuestionFields />
       <SaveActions submitLabel="문항 저장" />
     </SimpleForm>

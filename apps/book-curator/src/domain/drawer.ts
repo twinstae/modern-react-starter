@@ -21,10 +21,6 @@ export const DrawerBookSchema = v.strictObject({
 
 export type DrawerBook = v.InferOutput<typeof DrawerBookSchema>;
 
-/**
- * 서랍. 이름과, 이 서랍이 맞는 손님이라면 "그렇다"고 답할 문항, 서랍에 든 책을 가진다.
- * 손님에게 묻는 질문 세트는 서랍들의 문항을 모은 것이다.
- */
 export const DrawerSchema = v.strictObject({
   id: TextSchema,
   name: v.pipe(v.string(), v.trim(), v.minLength(1, "서랍 이름을 넣어 주세요")),
