@@ -14,8 +14,6 @@ import {
   DropZone,
   InlineText,
   Input,
-  List,
-  ListItem,
   MutedText,
   SectionTitle,
   Stack,

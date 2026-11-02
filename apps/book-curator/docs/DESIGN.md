@@ -71,6 +71,10 @@
 
 - 제목·결과 문장·큐레이터의 이유: **Noto Serif KR** (명조). 문장이 주인공인 곳.
 - 질문·버튼·라벨·입력: **Noto Sans KR** (고딕). 읽고 누르는 곳.
+- 기본 화면 글꼴은 **나눔손글씨 김유이체**다. 제목과 본문 모두에 쓴다. 운영자 화면의
+  **글꼴** 탭에서 **미생체** 또는 **Noto Sans KR**로 바꿀 수 있고, `Noto Sans KR`은 제목을
+  원래의 Noto Serif KR로, 본문을 Noto Sans KR로 되돌린다. 비교 결과는
+  `OPEN-QUESTIONS.md`에서 정한다.
 - 결과 첫 문장 `clamp(2.5rem, 5vw, 4rem)`, 질문 `clamp(1.75rem, 3vw, 2.5rem)`.
 - 본문 1.25rem, 캡션 1rem. 태블릿 세로·가로에서 줄 길이를 20~24자로 제한한다.
 - 결과 문장은 `word-break: keep-all`로 한국어 어절을 붙여 읽는다.

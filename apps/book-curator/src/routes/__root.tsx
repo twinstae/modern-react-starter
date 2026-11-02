@@ -3,6 +3,7 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 import { PageRoot } from "@repo/ui";
 
 import type { Kiosk } from "../kiosk-store.ts";
+import { FONT_BOOTSTRAP_SCRIPT } from "../lib/font-preference.ts";
 import appCss from "../styles.css?url";
 
 interface RouterContext {
@@ -35,6 +36,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="ko">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: FONT_BOOTSTRAP_SCRIPT }} />
       </head>
       <body>
         <PageRoot>{children}</PageRoot>

@@ -33,10 +33,17 @@ export const bookCuratorTheme = {
       },
       fonts: {
         heading: {
-          value: ['"Noto Serif KR"', '"Nanum Myeongjo"', '"Apple SD Gothic Neo"', "serif"],
+          value: [
+            '"KimYui"',
+            '"Noto Serif KR"',
+            '"Nanum Myeongjo"',
+            '"Apple SD Gothic Neo"',
+            "serif",
+          ],
         },
         body: {
           value: [
+            '"KimYui"',
             '"Noto Sans KR"',
             '"Pretendard Variable"',
             "Pretendard",
@@ -81,6 +88,7 @@ export const bookCuratorTheme = {
       fonts: {
         body: {
           value: [
+            '"KimYui"',
             '"Noto Sans KR"',
             '"Pretendard Variable"',
             "Pretendard",
@@ -89,7 +97,13 @@ export const bookCuratorTheme = {
           ],
         },
         heading: {
-          value: ['"Noto Serif KR"', '"Nanum Myeongjo"', '"Apple SD Gothic Neo"', "serif"],
+          value: [
+            '"KimYui"',
+            '"Noto Serif KR"',
+            '"Nanum Myeongjo"',
+            '"Apple SD Gothic Neo"',
+            "serif",
+          ],
         },
       },
     },

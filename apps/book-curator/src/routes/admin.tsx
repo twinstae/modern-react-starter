@@ -77,6 +77,7 @@ function AdminLayout() {
         <TabList as="nav" aria-label="운영자 화면">
           <TabLink to="/admin/drawers">서랍</TabLink>
           <TabLink to="/admin/pin">주인 PIN</TabLink>
+          <TabLink to="/admin/font">글꼴</TabLink>
         </TabList>
 
         <Outlet />

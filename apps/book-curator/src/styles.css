@@ -1,1 +1,46 @@
+@font-face {
+  font-family: "KimYui";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/naverfont_07@1.0/Kimyooyee.woff")
+    format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Microorganism";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SDMiSaeng.woff")
+    format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+/*
+ * 본문 글꼴 토큰(--fonts-body)을 운영자가 고른 글꼴로 바꾼다.
+ * 값은 src/lib/font-preference.ts의 FONT_IDS와 같아야 한다.
+ */
+:root {
+  --font-kimyui:
+    "KimYui", "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+  --font-microorganism:
+    "Microorganism", "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo",
+    sans-serif;
+  --font-noto: "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+  --font-noto-serif: "Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
+}
+
+[data-font="kimyui"] {
+  --fonts-body: var(--font-kimyui);
+  --fonts-heading: var(--font-kimyui);
+}
+
+[data-font="microorganism"] {
+  --fonts-body: var(--font-microorganism);
+  --fonts-heading: var(--font-microorganism);
+}
+
+[data-font="noto"] {
+  --fonts-body: var(--font-noto);
+  --fonts-heading: var(--font-noto-serif);
+}
+
 @layer reset, base, tokens, recipes, utilities;
