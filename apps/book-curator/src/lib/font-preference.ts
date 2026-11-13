@@ -7,7 +7,7 @@ const FontIdSchema = v.picklist(FONT_IDS);
 
 export type FontId = v.InferOutput<typeof FontIdSchema>;
 
-export const DEFAULT_FONT_ID: FontId = "kimyui";
+export const DEFAULT_FONT_ID: FontId = "noto";
 
 export const FONT_STORAGE_KEY = "book-curator.font";
 
