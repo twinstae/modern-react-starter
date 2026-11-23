@@ -5,10 +5,12 @@ import { describe, expect, it } from "vite-plus/test";
 import { sampleFunnelEvents } from "../domain/funnel.fixture.ts";
 import { snapshotOf } from "../domain/kiosk.ts";
 import { SEED_DRAWERS } from "../domain/seed-question-set.ts";
+import { adminAccessStoreContract } from "./admin-access-store.contract.ts";
 import { drawerStoreContract } from "./drawer-store.contract.ts";
 import { eventStoreContract } from "./event-store.contract.ts";
 import { openDeviceDatabase } from "./indexeddb-database.ts";
 import {
+  createIndexedDbAdminAccessStore,
   createIndexedDbDrawerStore,
   createIndexedDbEventStore,
   createIndexedDbHandoverStore,
@@ -31,6 +33,10 @@ eventStoreContract("IndexedDB", async () => createIndexedDbEventStore(await fres
 ownerRecordStoreContract("IndexedDB", async () => ({
   handovers: createIndexedDbHandoverStore(await freshDatabase()),
 }));
+
+adminAccessStoreContract("IndexedDB", async () =>
+  createIndexedDbAdminAccessStore(await freshDatabase()),
+);
 
 describe("IndexedDB 기기 DB", () => {
   it("DB를 닫고 다시 열어도 모든 저장소의 값이 남는다", async () => {

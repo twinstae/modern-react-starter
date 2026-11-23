@@ -1,3 +1,6 @@
+import * as v from "valibot";
+
+import type { AdminAccessStore } from "../application/admin-access-ports.ts";
 import {
   BookNotFoundError,
   DrawerNotFoundError,
@@ -152,6 +155,19 @@ export function createIndexedDbHandoverStore(db: DeviceDatabase): HandoverStore 
           ? await db.getAll("handovers")
           : await db.getAllFromIndex("handovers", "sessionId", sessionId);
       return rows.map(toRecord);
+    },
+  };
+}
+
+/** 운영 비밀번호 해시. `access` 표의 `admin` 칸 하나다. */
+export function createIndexedDbAdminAccessStore(db: DeviceDatabase): AdminAccessStore {
+  return {
+    async read() {
+      const value = await db.get("access", "admin");
+      return value === undefined ? null : v.parse(v.string(), value);
+    },
+    async save(passwordHash) {
+      await db.put("access", passwordHash, "admin");
     },
   };
 }
