@@ -1,4 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && bunx turbo run build --filter=@repo/book-curator"
+  "buildCommand": "cd ../.. && bunx turbo run build --filter=@repo/book-curator",
+  "outputDirectory": "dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

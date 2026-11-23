@@ -1,6 +1,5 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { Provider } from "jotai";
 
 import { device } from "./device.ts";
@@ -23,10 +22,12 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
-    Wrap: ({ children }) => <Provider store={kiosk.store}>{children}</Provider>,
+    Wrap: ({ children }) => (
+      <QueryClientProvider client={queryClient}>
+        <Provider store={kiosk.store}>{children}</Provider>
+      </QueryClientProvider>
+    ),
   });
-
-  setupRouterSsrQueryIntegration({ router, queryClient });
 
   return router;
 }

@@ -46,15 +46,3 @@ export function saveFontPreference(id: FontId) {
   }
   applyFontPreference(id);
 }
-
-/**
- * 첫 페인트 전에 저장된 글꼴을 붙이는 인라인 스크립트. 서버가 그린 HTML은 기본 글꼴이라
- * 화면이 잠깐 바뀌는 것을 막는다.
- */
-export const FONT_BOOTSTRAP_SCRIPT = `(function(){try{var id=localStorage.getItem(${JSON.stringify(
-  FONT_STORAGE_KEY,
-)});if(${JSON.stringify(FONT_IDS)}.indexOf(id)<0)id=${JSON.stringify(
-  DEFAULT_FONT_ID,
-)};document.documentElement.dataset.font=id;}catch(e){document.documentElement.dataset.font=${JSON.stringify(
-  DEFAULT_FONT_ID,
-)};}})();`;

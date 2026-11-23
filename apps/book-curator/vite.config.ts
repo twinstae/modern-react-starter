@@ -1,7 +1,6 @@
 import { defineConfig, lazyPlugins } from "vite-plus";
-import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import { nitro } from "nitro/vite";
 import { pandacss } from "@pandacss/vite";
 import { playwright } from "vite-plus/test/browser-playwright";
 
@@ -11,28 +10,23 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  // 서버 없는 정적 SPA다(ADR 0006). `vp build`는 dist/에 index.html과 자산만 낸다.
   plugins: lazyPlugins(() => [
-    // 테스트에는 서버 번들러가 필요 없다. vitest 안에서 nitro는 TanStack Start의 서버 진입점을
-    // 미리 불러오다가 CommonJS인 react를 ESM으로 평가해 "module is not defined"를 낸다.
-    process.env.VITEST ? [] : nitro(),
     pandacss(),
-    tanstackStart({ spa: { enabled: true } }),
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
     viteReact(),
   ]),
   test: {
-    // PGlite와 브라우저 프로젝트가 동시에 뜨면 메모리가 모자라 브라우저 iframe이
-    // 초기화되지 않는다. 한 워커로 순서대로 돌려 결과를 안정시킨다.
+    // node 프로젝트와 브라우저 프로젝트가 동시에 뜨면 브라우저 iframe이 초기화되지 않을 때가
+    // 있다. 한 워커로 순서대로 돌려 결과를 안정시킨다.
     maxWorkers: 1,
     projects: [
       {
         extends: true,
         test: {
-          // 순수 코어, 유스케이스, 저장소 계약 테스트
+          // 순수 코어, 유스케이스, 저장소 계약 테스트. IndexedDB는 fake-indexeddb로 돈다.
           name: "domain",
           environment: "node",
-          // PGlite를 띄우고 마이그레이션하는 데 몇 초가 걸린다. beforeAll도 여유를 둔다.
-          testTimeout: 15_000,
-          hookTimeout: 30_000,
           include: [
             "src/domain/**/*.test.ts",
             "src/application/**/*.test.ts",
@@ -42,19 +36,9 @@ export default defineConfig({
       },
       {
         extends: true,
-        test: {
-          // elysia 앱을 메모리 의존성으로 HTTP 요청 테스트한다. 인증 테스트만 PGlite를 쓴다.
-          name: "api",
-          environment: "node",
-          hookTimeout: 30_000,
-          include: ["src/server/**/*.test.ts"],
-        },
-      },
-      {
-        extends: true,
         resolve: { alias: fakeAliases },
         test: {
-          // 스토리 args로 렌더링한다. API와 서버 상태를 모른다.
+          // 스토리 args로 렌더링한다. 저장소와 기기 상태를 모른다.
           name: "component",
           setupFiles: ["src/setupTest.ts"],
           include: ["src/components/**/*.test.tsx", "src/lib/**/*.test.ts"],
