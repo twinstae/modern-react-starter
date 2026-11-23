@@ -20,12 +20,16 @@
  */
 :root {
   --font-kimyui:
-    "KimYui", "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+    "KimYui", "Noto Sans KR Variable", "Noto Sans KR", "Pretendard Variable", Pretendard,
+    "Apple SD Gothic Neo", sans-serif;
   --font-microorganism:
-    "Microorganism", "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo",
-    sans-serif;
-  --font-noto: "Noto Sans KR", "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
-  --font-noto-serif: "Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
+    "Microorganism", "Noto Sans KR Variable", "Noto Sans KR", "Pretendard Variable", Pretendard,
+    "Apple SD Gothic Neo", sans-serif;
+  --font-noto:
+    "Noto Sans KR Variable", "Noto Sans KR", "Pretendard Variable", Pretendard,
+    "Apple SD Gothic Neo", sans-serif;
+  --font-noto-serif:
+    "Noto Serif KR Variable", "Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
 }
 
 [data-font="kimyui"] {

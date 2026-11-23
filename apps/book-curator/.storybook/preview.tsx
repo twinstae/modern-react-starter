@@ -1,3 +1,5 @@
+import "@fontsource-variable/noto-sans-kr";
+import "@fontsource-variable/noto-serif-kr";
 import "../src/styles.css";
 import type { Preview } from "@storybook/react-vite";
 

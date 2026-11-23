@@ -17,6 +17,8 @@
     "check:layout": "bun scripts/check-layout.ts"
   },
   "dependencies": {
+    "@fontsource-variable/noto-sans-kr": "catalog:",
+    "@fontsource-variable/noto-serif-kr": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@pandacss/vite": "catalog:",
     "@repo/ui": "workspace:*",

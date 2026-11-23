@@ -5,6 +5,13 @@ import { pandacss } from "@pandacss/vite";
 import { playwright } from "vite-plus/test/browser-playwright";
 
 import { fakeAliases } from "./fake-aliases.ts";
+import { serviceWorker } from "./pwa/vite-plugin.ts";
+
+/** 손글씨 글꼴. `src/styles.css`의 @font-face와 같은 주소여야 오프라인에서도 그 글꼴이 나온다. */
+const CDN_FONTS = [
+  "https://cdn.jsdelivr.net/gh/projectnoonnu/naverfont_07@1.0/Kimyooyee.woff",
+  "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/SDMiSaeng.woff",
+];
 
 export default defineConfig({
   resolve: {
@@ -15,6 +22,7 @@ export default defineConfig({
     pandacss(),
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     viteReact(),
+    serviceWorker({ fonts: CDN_FONTS }),
   ]),
   test: {
     // node 프로젝트와 브라우저 프로젝트가 동시에 뜨면 브라우저 iframe이 초기화되지 않을 때가
