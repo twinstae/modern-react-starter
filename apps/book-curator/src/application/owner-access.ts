@@ -1,15 +1,12 @@
-import { createHash, randomBytes, randomInt, scrypt, timingSafeEqual } from "node:crypto";
-
 import { parseOwnerPin } from "../domain/owner-pin.ts";
 import type { OwnerAccessStore } from "./owner-access-ports.ts";
+import { hashSecret, matchesSecret, randomBelow } from "./secret-hash.ts";
 
 /** 주인 토큰은 10분만 산다. 태블릿 메모리에만 두고 저장소·쿠키에 넣지 않는다. */
 export const OWNER_TOKEN_TTL_MS = 10 * 60 * 1_000;
 /** 연속 5번 틀리면 60초 동안 잠근다. */
 export const OWNER_LOCK_FAILURES = 5;
 export const OWNER_LOCK_MS = 60 * 1_000;
-
-const SCRYPT_KEY_BYTES = 32;
 
 export type UnlockResult =
   | { status: "unlocked"; token: string; expiresAt: string }
@@ -21,38 +18,21 @@ const nowMs = (now: string) => Date.parse(now);
 
 const at = (ms: number): string => new Date(ms).toISOString();
 
-function scryptKey(password: string, salt: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    scrypt(password, salt, SCRYPT_KEY_BYTES, (error, key) => {
-      if (error) reject(error);
-      else resolve(key);
-    });
-  });
-}
-
-/** PIN은 salt를 붙여 scrypt로 해시한다. 저장 형식은 `scrypt$salt$hash`다. */
-async function hashOwnerPin(pin: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const key = await scryptKey(pin, salt);
-  return `scrypt$${salt}$${key.toString("hex")}`;
-}
-
-async function matchesOwnerPin(pin: string, stored: string): Promise<boolean> {
-  const [scheme, salt, expectedHex] = stored.split("$");
-  if (scheme !== "scrypt" || salt === undefined || expectedHex === undefined) return false;
-
-  const expected = Buffer.from(expectedHex, "hex");
-  const actual = await scryptKey(pin, salt);
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
-}
-
-const hashOwnerToken = (token: string): string => createHash("sha256").update(token).digest("hex");
+const hashOwnerToken = async (token: string): Promise<string> =>
+  Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))),
+    (byte) => byte.toString(16).padStart(2, "0"),
+  ).join("");
 
 /** 주인 토큰 원문. 32바이트 난수라 추측할 수 없고, 저장소에는 해시만 남는다. */
-const createOwnerToken = (): string => randomBytes(32).toString("base64url");
+const createOwnerToken = (): string =>
+  btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/, "");
 
 /** 새 주인 PIN. 숫자 6자리 난수다. */
-const createOwnerPin = (): string => randomInt(0, 1_000_000).toString().padStart(6, "0");
+const createOwnerPin = (): string => randomBelow(1_000_000).toString().padStart(6, "0");
 
 /**
  * 주인 PIN을 새로 만든다. 운영자가 정하지 않고 생성한 값을 한 번만 보여 준다.
@@ -71,7 +51,7 @@ export async function generateOwnerPin(
 export async function setOwnerPin(store: OwnerAccessStore, pin: string): Promise<void> {
   const parsed = parseOwnerPin(pin);
   await store.save({
-    pinHash: await hashOwnerPin(parsed),
+    pinHash: await hashSecret(parsed),
     failedAttempts: 0,
     lockedUntil: null,
   });
@@ -108,7 +88,7 @@ export async function unlockOwner(
     lockedUntil = null;
   }
 
-  if (!(await matchesOwnerPin(parsed, access.pinHash))) {
+  if (!(await matchesSecret(parsed, access.pinHash))) {
     failedAttempts += 1;
     if (failedAttempts >= OWNER_LOCK_FAILURES) {
       await store.save({
@@ -125,7 +105,7 @@ export async function unlockOwner(
   const token = generateToken();
   const expiresAt = at(currentMs + OWNER_TOKEN_TTL_MS);
   await store.save({ ...access, failedAttempts: 0, lockedUntil: null });
-  await store.addToken(hashOwnerToken(token), expiresAt);
+  await store.addToken(await hashOwnerToken(token), expiresAt);
   return { status: "unlocked", token, expiresAt };
 }
 
@@ -136,5 +116,5 @@ export async function verifyOwnerToken(
   now: string,
 ): Promise<boolean> {
   if (token === "") return false;
-  return store.hasValidToken(hashOwnerToken(token), now);
+  return store.hasValidToken(await hashOwnerToken(token), now);
 }
