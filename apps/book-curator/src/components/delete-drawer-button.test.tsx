@@ -5,7 +5,7 @@ import { DeleteDrawerButton } from "./delete-drawer-button.tsx";
 import * as Stories from "./delete-drawer-button.stories.tsx";
 
 describe("DeleteDrawerButton", () => {
-  it("지우기 전에 책도 함께 지워진다고 경고하고, 그만두면 지우지 않는다", async () => {
+  it("지우기 전에 책도 함께 지워진다고 경고하고 그만두기에 먼저 초점을 두며, 그만두면 지우지 않는다", async () => {
     let deleted = 0;
 
     await runSiheom(
@@ -18,6 +18,8 @@ describe("DeleteDrawerButton", () => {
         />,
       ),
       actions.click(query.button("서랍 지우기")),
+      // 창은 그린 다음 프레임에 초점을 옮긴다. 스냅숏은 한 번만 비교하므로 초점부터 기다린다.
+      assertions.focused(query.button("그만두기")),
       assertions.a11ySnapshot(
         query.alertdialog("“삶의 방식을 바꾸는 책” 서랍을 지울까요?"),
         "delete-drawer-button.confirm.snap",
