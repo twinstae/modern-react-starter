@@ -1,0 +1,10 @@
+article: "기록 내려받기"
+  - relations:
+    labelledby: "기록 내려받기" (#_r_0_-records)
+  heading: "기록 내려받기"
+    - properties: [level=2]
+  "손님 차례 기록 128개, 열쇠 건넴 9번이 이 태블릿에 있어요."
+  paragraph:
+    "기록은 이 태블릿에만 있어요. 브라우저 데이터를 지우거나 앱을 지우면 사라지니 자주 내려받아 두세요."
+  button: "기록 내려받기"
+    - interaction: [focusable=true] [tabbable=true]

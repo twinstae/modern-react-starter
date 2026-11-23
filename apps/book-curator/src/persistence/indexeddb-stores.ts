@@ -76,6 +76,14 @@ export function createIndexedDbDrawerStore(db: DeviceDatabase): DrawerStore {
           books: drawer.books.map((book) => (book.id === bookId ? { id: bookId, ...input } : book)),
         };
       }),
+    async replaceAll(next) {
+      const rows = next.map((drawer) => ({
+        drawer: toDrawerDto(parseDrawer(toDrawerDto(drawer))),
+      }));
+      // 지우기와 넣기를 한 트랜잭션에 둔다. id가 겹쳐 넣기가 실패하면 지운 것도 되돌아간다.
+      const tx = db.transaction("drawers", "readwrite");
+      await Promise.all([tx.store.clear(), ...rows.map((row) => tx.store.add(row)), tx.done]);
+    },
     removeBook: (drawerId, bookId) =>
       change(drawerId, (drawer) => {
         requireBook(drawer, bookId);

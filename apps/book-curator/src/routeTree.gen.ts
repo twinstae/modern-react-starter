@@ -20,6 +20,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminDrawersRouteImport } from './routes/admin.drawers'
 import { Route as AdminFontRouteImport } from './routes/admin.font'
 import { Route as AdminPinRouteImport } from './routes/admin.pin'
+import { Route as AdminRecordsRouteImport } from './routes/admin.records'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as TurnOwnerCheckRouteImport } from './routes/_turn.owner.check'
 import { Route as TurnOwnerPinRouteImport } from './routes/_turn.owner.pin'
@@ -80,6 +81,11 @@ const AdminPinRoute = AdminPinRouteImport.update({
   path: '/pin',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRecordsRoute = AdminRecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/admin/drawers': typeof AdminDrawersRouteWithChildren
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
+  '/admin/records': typeof AdminRecordsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/owner/check': typeof TurnOwnerCheckRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/result': typeof TurnResultRoute
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
+  '/admin/records': typeof AdminRecordsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
   '/owner/check': typeof TurnOwnerCheckRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/admin/drawers': typeof AdminDrawersRouteWithChildren
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
+  '/admin/records': typeof AdminRecordsRoute
   '/admin_/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/_turn/owner/check': typeof TurnOwnerCheckRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/admin/drawers'
     | '/admin/font'
     | '/admin/pin'
+    | '/admin/records'
     | '/admin/login'
     | '/admin/'
     | '/owner/check'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/result'
     | '/admin/font'
     | '/admin/pin'
+    | '/admin/records'
     | '/admin/login'
     | '/admin'
     | '/owner/check'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/admin/drawers'
     | '/admin/font'
     | '/admin/pin'
+    | '/admin/records'
     | '/admin_/login'
     | '/admin/'
     | '/_turn/owner/check'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPinRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/records': {
+      id: '/admin/records'
+      path: '/records'
+      fullPath: '/admin/records'
+      preLoaderRoute: typeof AdminRecordsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
@@ -382,6 +401,7 @@ interface AdminRouteChildren {
   AdminDrawersRoute: typeof AdminDrawersRouteWithChildren
   AdminFontRoute: typeof AdminFontRoute
   AdminPinRoute: typeof AdminPinRoute
+  AdminRecordsRoute: typeof AdminRecordsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -389,6 +409,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDrawersRoute: AdminDrawersRouteWithChildren,
   AdminFontRoute: AdminFontRoute,
   AdminPinRoute: AdminPinRoute,
+  AdminRecordsRoute: AdminRecordsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

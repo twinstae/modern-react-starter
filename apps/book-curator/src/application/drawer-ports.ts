@@ -31,4 +31,6 @@ export interface DrawerStore {
   addBooks(drawerId: string, books: readonly DrawerBook[]): Promise<Drawer>;
   updateBook(drawerId: string, bookId: string, input: BookInput): Promise<Drawer>;
   removeBook(drawerId: string, bookId: string): Promise<Drawer>;
+  /** 서랍을 모두 이 목록으로 바꾼다. 하나라도 틀리면 아무것도 바꾸지 않는다. */
+  replaceAll(drawers: readonly Drawer[]): Promise<void>;
 }

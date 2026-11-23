@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import {
   getAdminAccess,
   getPublishCheck,
+  getRecordCounts,
   listDrawers,
   listPublishedVersions,
 } from "./admin-api.ts";
@@ -45,6 +46,14 @@ export const adminQueries = {
     queryOptions({
       queryKey: ["admin", "publish-check"],
       queryFn: getPublishCheck,
+      retry: false,
+      staleTime: 0,
+    }),
+  /** 이 태블릿에 쌓인 이벤트·열쇠 건넴의 수. */
+  recordCounts: () =>
+    queryOptions({
+      queryKey: ["admin", "record-counts"],
+      queryFn: getRecordCounts,
       retry: false,
       staleTime: 0,
     }),

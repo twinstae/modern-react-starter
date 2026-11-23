@@ -67,6 +67,29 @@ export function drawerStoreContract(name: string, setup: () => Promise<DrawerSto
       ]);
     });
 
+    it("서랍을 모두 바꾸면 새 목록의 순서대로 남는다", async () => {
+      await store.create({ id: "a", name: "가 서랍" });
+      const next = [
+        { id: "c", name: "다 서랍", questions: ["다 문항"], books: [book("1", "첫 책")] },
+        { id: "b", name: "나 서랍", questions: [], books: [] },
+      ];
+
+      await store.replaceAll(next);
+
+      expect(await store.list()).toStrictEqual(next);
+    });
+
+    it("바꿀 목록에 id가 겹치면 앞 서랍이 그대로 남는다", async () => {
+      await store.create({ id: "a", name: "가 서랍" });
+      const twice = { id: "b", name: "나 서랍", questions: [], books: [] };
+
+      await expect(store.replaceAll([twice, twice])).rejects.toThrow();
+
+      expect(await store.list()).toStrictEqual([
+        { id: "a", name: "가 서랍", questions: [], books: [] },
+      ]);
+    });
+
     it("없는 서랍이나 다른 서랍의 책을 고치면 이름 있는 오류를 던진다", async () => {
       await store.create({ id: "a", name: "가 서랍" });
       await store.create({ id: "b", name: "나 서랍" });

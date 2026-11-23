@@ -72,6 +72,7 @@ function AdminLayout() {
           <TabLink to="/admin/drawers">서랍</TabLink>
           <TabLink to="/admin/pin">주인 PIN</TabLink>
           <TabLink to="/admin/font">글꼴</TabLink>
+          <TabLink to="/admin/records">기록</TabLink>
         </TabList>
 
         <Outlet />

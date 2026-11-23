@@ -63,6 +63,13 @@ export function createMemoryDrawerStore(): DrawerStore {
         books: drawer.books.map((book) => (book.id === bookId ? { id: bookId, ...input } : book)),
       });
     },
+    async replaceAll(next) {
+      const parsed = next.map((drawer) => parseDrawer(toDrawerDto(drawer)));
+      if (new Set(parsed.map(({ id }) => id)).size !== parsed.length) {
+        throw new Error("서랍 id가 겹칩니다");
+      }
+      drawers.splice(0, drawers.length, ...parsed);
+    },
     async removeBook(drawerId, bookId) {
       const drawer = find(drawerId);
       requireBook(drawer, bookId);

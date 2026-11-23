@@ -14,6 +14,11 @@ import {
   updateBook as updateDrawerBook,
   updateDrawer as updateStoredDrawer,
 } from "./application/drawer-admin.ts";
+import {
+  exportDrawers,
+  exportRecords,
+  importDrawers as replaceDrawers,
+} from "./application/device-transfer.ts";
 import { BookNotFoundError, DrawerNotFoundError } from "./application/drawer-ports.ts";
 import { generateOwnerPin as generateStoredOwnerPin } from "./application/owner-access.ts";
 import {
@@ -23,7 +28,9 @@ import {
   type PublishedVersionSummaryDto,
 } from "./admin-dto.ts";
 import { device } from "./device.ts";
+import { transferFileName } from "./domain/device-transfer.ts";
 import type { BookInput, Drawer } from "./domain/drawer.ts";
+import { downloadJson } from "./lib/download.ts";
 
 /**
  * 운영 화면이 부르는 일들. 서버 없이 이 기기의 저장소 위에서 유스케이스를 바로 부른다.
@@ -116,3 +123,32 @@ export const listPublishedVersions = async (): Promise<PublishedVersionSummaryDt
 /** 새 주인 PIN을 만든다. 해시만 남으므로 이때만 원문을 볼 수 있다. */
 export const generateOwnerPin = async (): Promise<string> =>
   generateStoredOwnerPin((await device()).ownerAccess);
+
+/** 이 태블릿에 쌓인 기록의 수. 기록 탭이 내려받기 전에 보여 준다. */
+export const getRecordCounts = async (): Promise<{ events: number; handovers: number }> => {
+  const { events, handovers } = await device();
+  return { events: (await events.list()).length, handovers: (await handovers.list()).length };
+};
+
+export const downloadRecords = async (): Promise<void> => {
+  const { events, handovers } = await device();
+  const now = new Date().toISOString();
+  downloadJson(transferFileName("기록", now), await exportRecords(events, handovers, now));
+};
+
+export const downloadDrawers = async (): Promise<void> => {
+  downloadJson(
+    transferFileName("서랍", new Date().toISOString()),
+    await exportDrawers((await device()).drawers),
+  );
+};
+
+/** 가져온 서랍으로 이 기기의 서랍을 모두 바꾼다. 실패하면 화면에 보일 까닭을 돌려준다. */
+export const importDrawers = async (drawers: readonly Drawer[]): Promise<string | undefined> => {
+  try {
+    await replaceDrawers((await device()).drawers, drawers);
+    return undefined;
+  } catch (error) {
+    return adminErrorMessage(error);
+  }
+};
