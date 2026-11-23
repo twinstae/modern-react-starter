@@ -6,8 +6,11 @@
 2. `docs/TICKET-XXXXX.md` — 지금 티켓의 인수 조건.
 3. `CONTEXT.md` — 용어. `docs/TECH_SPEC.md` — 경계와 불변식(필요한 절만).
 4. `docs/DESIGN.md` — 색·글꼴·문구·레이아웃 기준과 레퍼런스.
-5. `docs/RUNBOOK.md` — 시드, 개발 서버, Storybook, 테스트 명령.
+5. `docs/RUNBOOK.md` — 태블릿 설치, 개발 서버, Storybook, 테스트 명령.
 6. `docs/OPEN-QUESTIONS.md` — 사람이 정할 것. 새 `[가정]` 값이 생기면 여기에 먼저 더한다.
+
+서버는 없다. 데이터는 모두 태블릿 브라우저의 IndexedDB에 있고 앱은 오프라인 PWA다
+(`docs/adr/0006-local-first-indexeddb-pwa.md`).
 
 커밋 전 게이트는 `cd apps/book-curator && bun run check` 하나다. 루트 `bun run ci`는
 다른 앱의 기존 오류로 실패하므로 쓰지 않는다.

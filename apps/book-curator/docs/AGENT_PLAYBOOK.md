@@ -34,7 +34,7 @@
 `unknown`/DTO를 안쪽으로 들여보내지 않는다.
 
 - 스키마는 `domain/`에 한 번만 쓴다. 타입은 `v.InferOutput`으로 추론한다.
-- HTTP 요청/응답, 저장소 행, JSON 문서, URL 파라미터는 모두 경계다.
+- IndexedDB 행, 가져오는 파일, JSON 문서, URL 파라미터, localStorage 값은 모두 경계다.
 - 경계마다 **매퍼**를 둔다: DTO → 도메인(파싱), 도메인 → DTO(직렬화).
   매퍼는 `toDomain`/`toDto`처럼 이름을 붙이고, 파싱 실패는 타입이 있는 오류로 돌려준다.
 - 도메인 타입에 `any`, `unknown`, nullable 뭉치, 화면용 문자열을 넣지 않는다.
@@ -42,7 +42,7 @@
   (특히 이벤트: I-12).
 - 직렬화는 도메인 타입을 그대로 `JSON.stringify` 하지 않는다. 필요한 필드만 옮긴다.
 - **손님 DTO는 도메인 객체를 펼치지 않는다.** 명시적 mapper로 필요한 필드만 고르고,
-  빠져야 할 필드(기준 응답, 서랍 표시, 점수, 서랍 코드)의 부재를 API 테스트로 고정한다.
+  빠져야 할 필드(기준 응답, 서랍 표시, 점수, 서랍 코드)의 부재를 테스트로 고정한다.
 - 새 `[가정]` 값(문구, 시간, 표시, 색)을 만들면 `docs/OPEN-QUESTIONS.md`에 먼저 더한다.
   코드에만 두고 "주인이 확인하면 된다"고 보고하지 않는다.
 - **편집용 표시를 런타임 데이터에 넣지 않는다.** `[가정]`, `TODO`, `TBD` 같은 말은
@@ -54,19 +54,23 @@
 ```
 routes/        컨테이너: query/mutation/타이머를 컴포넌트에 연결. 분기 최소
 components/    표시만: props in, 콜백 out. fetch/저장소/도메인 계산 없음
-queries.ts     서버 상태 query option 한곳
-api-client.ts  eden treaty + unwrap
-server/        HTTP 모양(경로, 상태 코드, 인증). createApp(deps)
+queries.ts     기기 상태 query option 한곳
+admin-api.ts   운영 화면이 부르는 일. device() 위에서 유스케이스를 부르고 오류를 문구로
+owner-api.ts   주인 PIN 확인·열쇠 건넴
+device.ts      이 태블릿의 IndexedDB 저장소를 한 번 열고, 빈 기기면 시드를 공개
 application/   유스케이스: 포트를 받아 코어를 부르고 저장
-domain/        순수 코어. React·elysia·drizzle·Date.now·Math.random 금지
-persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
+domain/        순수 코어. React·IndexedDB·Date.now·Math.random 금지
+persistence/   포트 구현: memory, IndexedDB. 같은 계약 테스트
+pwa/           서비스 워커와 그걸 dist/sw.js로 내는 Vite 플러그인
 ```
 
+서버는 없다(ADR 0006). 모든 데이터는 태블릿 브라우저의 IndexedDB에 있고, 앱은 정적 PWA다.
+
 - 시각과 난수는 인자로 받는다. 테스트는 고정 시각·시드 난수를 넣는다.
-- `createApp(deps)`는 저장소, 시각, id 생성기, 인증을 인자로 받는다.
-- API 테스트는 `server/test-client.ts`의 메모리 의존성과 eden 클라이언트로 부른다.
-- 저장소는 포트 인터페이스 뒤에 숨기고, 메모리와 PGlite 구현에 같은 계약 테스트를
-  돌린다. 계약 테스트를 복사해 두 벌 쓰지 않는다.
+- 유스케이스는 저장소를 인자로 받는다. 테스트는 메모리 저장소로 부른다. 라우트는
+  `admin-api.ts`/`owner-api.ts`를 거쳐 `device()`의 저장소를 넘긴다.
+- 저장소는 포트 인터페이스 뒤에 숨기고, 메모리와 IndexedDB 구현에 같은 계약 테스트를
+  돌린다. 계약 테스트를 복사해 두 벌 쓰지 않는다. IndexedDB 저장소는 읽을 때 다시 파싱한다.
 - 손님 화면에 점수·서랍 코드·다른 서랍 책이 새지 않게 **타입으로** 막는다(I-9).
 - 별명은 손님 쪽 메모리에만 둔다. 이벤트·요청·저장소에 별명 자리를 만들지 않는다(I-12).
 
@@ -83,7 +87,7 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
   접근성 스냅샷으로 확인한다.** `document.body.textContent`를 긁는 `bodyText` 같은
   유틸리티를 만들지 않는다. `check:design`이 이 패턴을 막는다.
 - **스키마가 이미 막는 오류를 필드마다 반복해 테스트하지 않는다.** 폼마다 대표 오류
-  하나와 서버 실패 문구 하나면 충분하다. 성공 케이스는 제출된 값을 한 번에
+  하나와 실패 문구 하나면 충분하다. 성공 케이스는 제출된 값을 한 번에
   `toStrictEqual`로 비교하고, 길이나 필드별 단언으로 쪼개지 않는다.
 - **스토리 `args`가 기대값인지 테스트하지 않는다.** 스토리는 렌더링 픽스처일 뿐이다.
 - 테스트를 위한 `aria-label`을 새로 붙이지 않는다. 접근성 이름이 문맥상 모자랄 때만
@@ -149,30 +153,30 @@ persistence/   포트 구현: memory, drizzle(PGlite). 같은 계약 테스트
 - `application/event-queue.ts`: 메모리 큐. `enqueue` 뒤 라우트가 `void flush()`를 부르고,
   실패하면 pending을 유지해 다음 flush가 순서대로 다시 보낸다. 저장소를 쓰지 않는다.
 - `application/event-store-ports.ts` + `persistence/*event-store*`: 추가 전용 저장소.
-  `payload` jsonb에는 이벤트별 필드만, 공통 필드는 열로. 메모리·PGlite가 같은 계약을 쓴다.
-- `POST /api/events`는 `{ events }`만 받고 204. 헤더를 읽지 않는다. `kioskName`은
-  `VITE_KIOSK_NAME`(기본 "계산대 옆")이고 사람과 연결하지 않는다.
-- `server/auth.ts` + `server/auth-guard.ts`: better-auth 이메일 로그인과 `auth: true`
-  매크로. `/api/admin/*`은 반드시 이 매크로를 단다. 테스트는 메모리 어댑터가 아니라
-  PGlite 위 실제 better-auth로 로그인한다.
-- `application/owner-access.ts` + `server/owner-guard.ts`: PIN은 scrypt 해시, 주인
-  토큰은 sha256 해시만 저장한다. `POST /api/owner/unlock`이 10분 토큰을 주고,
-  `ownerToken: true` 매크로가 `Authorization: Bearer`를 확인한다. 토큰은 URL·쿠키·
-  localStorage에 두지 않는다. `POST /api/admin/owner-pin`은 로그인한 운영자만 부르고,
-  PIN을 숫자 6자리로 생성해 한 번 돌려준다.
-- `scripts/seed-operator.ts`: `ADMIN_EMAIL/ADMIN_PASSWORD/ADMIN_NAME`으로 계정 하나를
-  만든다. `/admin`은 로그인 화면, 서랍, 주인 PIN 생성을 제공한다.
-- `/api/admin/drawers`(+`/:id`, `/:id/books`, `/:id/books/:bookId`),
-  `/api/admin/publish-check`, `/api/admin/publish`, `/api/admin/published-versions`:
-  서랍·문항·책과 공개. 모두 `auth: true`다. 공개는 서버가 `checkPublish`를 다시 돌고,
-  막히면 422 `PUBLISH_BLOCKED`다. UI는 `/admin/drawers`, `/admin/drawers/$drawerId`와
+  넣을 때 받은 그대로 파싱해, 허용 목록 밖 필드가 하나라도 있으면 묶음 전체를 거부한다(I-12).
+  `kioskName`은 `VITE_KIOSK_NAME`(기본 "계산대 옆")이고 사람과 연결하지 않는다.
+- `application/secret-hash.ts`: PIN·운영 비밀번호 해시(Web Crypto PBKDF2-SHA256)와 고른 난수.
+  `node:crypto`를 쓰지 않는다. 브라우저와 node 테스트가 같은 코드를 돈다.
+- `application/admin-access.ts`: 운영 비밀번호. 처음 한 번 정하고(이미 있으면 덮어쓰지 않음)
+  그 비밀번호로 들어간다. 로그인 상태는 `admin-api.ts`의 탭 메모리에만 있다.
+  `/admin/login`은 비밀번호가 없으면 정하는 화면, 있으면 로그인 화면이다.
+- `application/owner-access.ts`: 주인 PIN 해시, 5번 틀리면 60초 잠금. 맞으면 10분 뒤의
+  `expiresAt`만 돌려준다. 주인 토큰은 없다. 열린 상태는 손님 차례 메모리에만 있다(I-15).
+  운영 화면의 **주인 PIN** 탭이 숫자 6자리 PIN을 생성해 한 번 보여 준다.
+- `application/drawer-admin.ts` + `admin-api.ts`: 서랍·문항·책과 공개. 공개는 `checkPublish`를
+  다시 돌고, 막히면 `PublishBlockedError`다. UI는 `/admin/drawers`, `/admin/drawers/$drawerId`와
   `components/{book-csv-upload,drawer-books-table,drawer-questions-editor,publish-panel}.tsx`.
+- `application/seed-device.ts`: 서랍도 공개 버전도 없는 빈 기기면 `SEED_DRAWERS`를 넣고
+  버전 1을 공개한다. `device()`가 처음 열 때 부른다.
+- `domain/device-transfer.ts` + `application/device-transfer.ts` + `/admin/records`:
+  기록(이벤트·열쇠 건넴) JSON 내려받기, 서랍 JSON 내보내기·가져오기(`DrawerStore.replaceAll`,
+  모두 바꾸거나 아무것도 안 바꿈). UI는 `components/device-data-panel.tsx`.
 - 키오스크 묶음의 `shelf`는 공개한 순간의 모든 서랍의 책(제목·저자·출판사)이다.
   주인 확인만 쓴다. 손님 화면에는 책을 보여 주지 않는다.
-- `application/owner-records.ts` + `/api/owner/handover`: 주인 토큰이 있어야 하고,
-  추천·건넨 서랍·버전을 추가 전용으로 남긴다. 산 책 기록은 없다.
+- `application/owner-records.ts` + `owner-api.ts`의 `saveHandover`: 주인 확인이 열려 있을 때만
+  라우트가 부르고, 추천·건넨 서랍·버전을 추가 전용으로 남긴다. 산 책 기록은 없다.
 - `/` 라우트의 주인 흐름: 결과 → `OwnerPinScreen` → `OwnerCheckScreen` → `DrawerBooksScreen`.
-  토큰은 라우트 메모리에만 두고, 만료되면 PIN으로 돌아가거나 산 책 기록만 잠근다.
+  주인 확인 만료 시각은 차례 메모리에만 두고, 만료되면 PIN으로 돌아간다.
   `ShelfBook`(id/title/author/reason/question)로 공개 서가에서 view를 만들고,
   손님 책 화면에는 건넨 서랍만 넘긴다. 이벤트는 funnel의 handover/book_view/purchase/reset.
 - 주인 확인은 7서랍을 모두 펼치면 세로로 길어진다. 추천·2순위를 먼저 보이고 나머지
@@ -222,9 +226,12 @@ cd apps/book-curator && bun run check
 - `solo-quest`의 `message-input` 매크로 라벨 테스트는 간헐 실패한다. 만나면 이름과
   재실행 결과만 보고한다.
 - `storybook-static/`은 `.gitignore`에 있으므로 커밋하지 않는다.
-- PGlite 테스트는 **파일당 DB 하나**를 `beforeAll`에서 열고, `beforeEach`에서 테이블을
-  비운다. 테스트마다 새 PGlite를 띄우면 느리고 메모리가 남는다. 저장소 계약은
-  `persistence/*.contract.ts` 하나를 메모리·PGlite 테스트가 함께 부른다.
+- IndexedDB 테스트는 `import "fake-indexeddb/auto"` 뒤 테스트마다 이름이 다른 DB를 연다.
+  저장소 계약은 `persistence/*.contract.ts` 하나를 메모리·IndexedDB 테스트가 함께 부른다.
+- IndexedDB 트랜잭션 안에서 `tx.abort()`를 부르지 않는다. 아직 쓰지 않았으면 그냥 던진다.
+  abort하면 `tx.done`이 처리되지 않은 거절로 남아 테스트가 실패한다.
+- 서비스 워커는 빌드에서만 켜진다. `pwa/service-worker.js`는 `__PWA__` 자리 하나에 파일
+  목록이 들어가는 템플릿이다.
 - 앱 포트는 3002, Storybook은 6008을 쓴다.
 - 패키지를 더하면 루트 `package.json`의 `catalog`에 넣고 `bun install` 한다.
 
