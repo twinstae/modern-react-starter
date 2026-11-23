@@ -6,13 +6,8 @@ export interface OwnerAccess {
   lockedUntil: string | null;
 }
 
-/**
- * 주인 PIN과 짧은 토큰의 저장소. 한 가게에 PIN은 하나이므로 접근 상태는 한 줄이다.
- * 토큰은 해시로만 넣고, 확인할 때도 해시를 받는다.
- */
+/** 주인 PIN의 저장소. 한 가게에 PIN은 하나이므로 접근 상태는 한 줄이다. */
 export interface OwnerAccessStore {
   read(): Promise<OwnerAccess | null>;
   save(access: OwnerAccess): Promise<void>;
-  addToken(tokenHash: string, expiresAt: string): Promise<void>;
-  hasValidToken(tokenHash: string, now: string): Promise<boolean>;
 }

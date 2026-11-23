@@ -12,10 +12,10 @@ import { ownerView, type OwnerView } from "./owner-view.ts";
 import type { DrawerId } from "./question-set.ts";
 import { answer, back, startTurn, type Turn } from "./turn.ts";
 
-/** 주인 확인 잠금. 토큰은 메모리에만 있고, 끝나면 `expired`로 남아 PIN 화면이 까닭을 알린다(I-15). */
+/** 주인 확인 잠금. 열린 시각은 메모리에만 있고, 끝나면 `expired`로 남아 PIN 화면이 까닭을 알린다(I-15). */
 export type OwnerAccess =
   | { readonly status: "locked" }
-  | { readonly status: "unlocked"; readonly token: string; readonly expiresAt: string }
+  | { readonly status: "unlocked"; readonly expiresAt: string }
   | { readonly status: "expired" };
 
 /** 열쇠를 건넨 뒤의 상태. 손님은 실제 서랍을 열어 책을 본다. */
@@ -25,7 +25,7 @@ export interface Handover {
 
 /**
  * 키오스크 한 차례의 메모리 상태. 어느 화면인지는 URL이 정하고, 이 값은 URL에 둘 수 없는
- * 것(별명, 답, 주인 토큰)만 가진다. 묶음은 세션을 열 때 고정한다(I-11).
+ * 것(별명, 답, 주인 확인 만료 시각)만 가진다. 묶음은 세션을 열 때 고정한다(I-11).
  *
  * - `closed`: 세션이 없다. 처음 화면이 새 묶음을 받으면 연다.
  * - `ready`: kiosk_ready를 남겼고 별명을 기다린다.
@@ -65,7 +65,7 @@ export type KioskAction =
   | { readonly type: "touch"; readonly now: number }
   | {
       readonly type: "unlock";
-      readonly owner: { readonly token: string; readonly expiresAt: string };
+      readonly owner: { readonly expiresAt: string };
       readonly now: number;
     }
   | { readonly type: "lock"; readonly now: number }

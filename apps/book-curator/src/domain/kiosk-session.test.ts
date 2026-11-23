@@ -26,7 +26,7 @@ const BUNDLE: ReadyKioskBundle = {
     })),
   ),
 };
-const TOKEN = { token: "owner-token", expiresAt: "2026-10-28T00:10:00.000Z" };
+const TOKEN = { expiresAt: "2026-10-28T00:10:00.000Z" };
 
 /** 액션을 차례로 적용하고 마지막 세션과 그동안 나간 이벤트 type을 돌려준다. */
 function run(actions: readonly KioskAction[], from: KioskSession = CLOSED) {

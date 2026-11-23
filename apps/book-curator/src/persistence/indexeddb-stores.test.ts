@@ -14,8 +14,10 @@ import {
   createIndexedDbDrawerStore,
   createIndexedDbEventStore,
   createIndexedDbHandoverStore,
+  createIndexedDbOwnerAccessStore,
   createIndexedDbPublishedVersionStore,
 } from "./indexeddb-stores.ts";
+import { ownerAccessStoreContract } from "./owner-access-store.contract.ts";
 import { ownerRecordStoreContract } from "./owner-record-store.contract.ts";
 import { publishedVersionStoreContract } from "./published-version-store.contract.ts";
 
@@ -37,6 +39,10 @@ ownerRecordStoreContract("IndexedDB", async () => ({
 adminAccessStoreContract("IndexedDB", async () =>
   createIndexedDbAdminAccessStore(await freshDatabase()),
 );
+
+describe("IndexedDB 주인 잠금 저장소", () => {
+  ownerAccessStoreContract(async () => createIndexedDbOwnerAccessStore(await freshDatabase()));
+});
 
 describe("IndexedDB 기기 DB", () => {
   it("DB를 닫고 다시 열어도 모든 저장소의 값이 남는다", async () => {

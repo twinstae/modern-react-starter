@@ -1,14 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { getAdminMe, getPublishCheck, listDrawers, listPublishedVersions } from "./admin-api.ts";
-import { api } from "./api-client.ts";
-import { parseKioskCurrent } from "./domain/kiosk.ts";
-import { unwrap } from "./unwrap.ts";
-
-/** 서버 상태 query option. 라우트 loader와 useSuspenseQuery가 같은 option을 쓴다. */
-export const healthQueries = {
-  current: () => queryOptions({ queryKey: ["health"], queryFn: () => unwrap(api.health.get()) }),
-};
+import {
+  getAdminAccess,
+  getPublishCheck,
+  listDrawers,
+  listPublishedVersions,
+} from "./admin-api.ts";
+import { currentKioskBundle } from "./application/kiosk-bundle.ts";
+import { device } from "./device.ts";
 
 /**
  * 손님이 시작할 때 받는 공개 묶음. 한 번 받으면 차례가 끝날 때까지 다시 부르지 않고,
@@ -18,17 +17,18 @@ export const kioskQueries = {
   current: () =>
     queryOptions({
       queryKey: ["kiosk", "current"],
-      queryFn: async () => parseKioskCurrent(await unwrap(api.kiosk.current.get())),
+      queryFn: async () => currentKioskBundle((await device()).versions),
       staleTime: Infinity,
     }),
 };
 
-/** 운영자 세션. 브라우저에서만 부르고, 401이면 `null`이라 로그인 화면을 보여 준다. */
+/** 운영 화면이 읽는 기기 상태. 고친 뒤에는 해당 query를 무효화한다. */
 export const adminQueries = {
-  me: () =>
+  /** 운영 비밀번호를 정했는지, 이 탭에서 로그인했는지. */
+  access: () =>
     queryOptions({
-      queryKey: ["admin", "me"],
-      queryFn: getAdminMe,
+      queryKey: ["admin", "access"],
+      queryFn: getAdminAccess,
       retry: false,
       staleTime: 0,
     }),

@@ -7,8 +7,14 @@ const noop = () => {};
 const submit = async () => undefined;
 
 export const adminLoginArgs = {
+  mode: "sign-in",
   onSubmit: submit,
   onSuccess: noop,
+} satisfies ComponentProps<typeof AdminLogin>;
+
+export const adminSetupArgs = {
+  ...adminLoginArgs,
+  mode: "setup",
 } satisfies ComponentProps<typeof AdminLogin>;
 
 const meta = {
@@ -19,13 +25,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = {
+export const SignIn: Story = {
   args: adminLoginArgs,
+};
+
+export const Setup: Story = {
+  args: adminSetupArgs,
 };
 
 export const Error: Story = {
   args: {
     ...adminLoginArgs,
-    initialError: "이메일이나 비밀번호가 맞지 않아요",
+    initialError: "비밀번호가 맞지 않아요",
   },
 };

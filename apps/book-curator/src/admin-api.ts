@@ -1,102 +1,118 @@
-import { parseAdminMe, type AdminCredentials, type AdminMe } from "./admin-dto.ts";
-import { api } from "./api-client.ts";
-import type { BookInput } from "./domain/drawer.ts";
-import { ApiError, unwrap } from "./unwrap.ts";
+import * as v from "valibot";
 
-const JSON_HEADERS = { "content-type": "application/json" };
+import {
+  hasAdminPassword,
+  setupAdminPassword,
+  verifyAdminPassword,
+} from "./application/admin-access.ts";
+import {
+  addBooks as addDrawerBooks,
+  checkPublish,
+  createDrawer as createStoredDrawer,
+  publish,
+  PublishBlockedError,
+  updateBook as updateDrawerBook,
+  updateDrawer as updateStoredDrawer,
+} from "./application/drawer-admin.ts";
+import { BookNotFoundError, DrawerNotFoundError } from "./application/drawer-ports.ts";
+import { generateOwnerPin as generateStoredOwnerPin } from "./application/owner-access.ts";
+import {
+  toPublishCheckDto,
+  type AdminAccess,
+  type PublishCheckDto,
+  type PublishedVersionSummaryDto,
+} from "./admin-dto.ts";
+import { device } from "./device.ts";
+import type { BookInput, Drawer } from "./domain/drawer.ts";
 
-/** 운영자 세션을 읽는다. 로그인하지 않았으면 401이라 null을 돌려준다. */
-export async function getAdminMe(): Promise<AdminMe | null> {
-  const response = await fetch("/api/admin/me", { credentials: "include" });
-  if (response.status === 401) return null;
-  if (!response.ok) throw new Error(`운영자 세션 오류 ${response.status}`);
-  return parseAdminMe(await response.json());
+/**
+ * 운영 화면이 부르는 일들. 서버 없이 이 기기의 저장소 위에서 유스케이스를 바로 부른다.
+ * 로그인 상태는 탭 메모리에만 있어, 새로 고치거나 앱을 다시 열면 다시 로그인한다.
+ */
+let signedIn = false;
+
+export async function getAdminAccess(): Promise<AdminAccess> {
+  if (!(await hasAdminPassword((await device()).adminAccess))) return "unset";
+  return signedIn ? "signed-in" : "signed-out";
 }
 
-/** better-auth 이메일 로그인. 쿠키는 httpOnly라 브라우저가 들고 있고, 화면은 다시 세션을 읽는다. */
-export async function signInAdmin({
-  email,
-  password,
-}: AdminCredentials): Promise<string | undefined> {
+/** 처음 한 번 운영 비밀번호를 정하고 바로 들어간다. 실패하면 화면에 보일 까닭을 돌려준다. */
+export async function setupAdmin(password: string): Promise<string | undefined> {
   try {
-    const response = await fetch("/api/auth/sign-in/email", {
-      method: "POST",
-      credentials: "include",
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ email, password }),
-    });
-    if (response.ok) return undefined;
-    if (response.status === 401) return "이메일이나 비밀번호가 맞지 않아요";
-    return "로그인하지 못했어요. 잠시 뒤 다시 해 주세요.";
-  } catch {
-    return "로그인하지 못했어요. 잠시 뒤 다시 해 주세요.";
+    const result = await setupAdminPassword((await device()).adminAccess, password);
+    if (result === "already-set")
+      return "이미 운영 비밀번호를 정했어요. 그 비밀번호로 들어가 주세요";
+    signedIn = true;
+    return undefined;
+  } catch (error) {
+    return adminErrorMessage(error);
   }
 }
 
-export async function signOutAdmin(): Promise<void> {
-  await fetch("/api/auth/sign-out", {
-    method: "POST",
-    credentials: "include",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({}),
-  });
+export async function signInAdmin(password: string): Promise<string | undefined> {
+  try {
+    const result = await verifyAdminPassword((await device()).adminAccess, password);
+    if (result === "unset") return "아직 운영 비밀번호를 정하지 않았어요";
+    if (result === "invalid") return "비밀번호가 맞지 않아요";
+    signedIn = true;
+    return undefined;
+  } catch {
+    return "비밀번호를 확인하지 못했어요. 다시 해 주세요";
+  }
 }
 
-/**
- * 운영 API 오류를 화면 문구로 바꾼다. 서버가 보낸 코드가 있으면 그 코드로 고르고,
- * 모르는 오류는 다시 해 보라고만 한다.
- */
+export function signOutAdmin(): void {
+  signedIn = false;
+}
+
+/** 운영 화면의 오류를 화면 문구로 바꾼다. 모르는 오류는 다시 해 보라고만 한다. */
 export function adminErrorMessage(error: unknown): string {
-  if (!(error instanceof ApiError)) return "잠시 뒤 다시 시도해 주세요";
-  if (error.status === 401) return "로그인이 풀렸어요. 다시 로그인해 주세요";
-  const code =
-    typeof error.value === "object" && error.value !== null && "code" in error.value
-      ? error.value.code
-      : undefined;
-  if (code === "DRAWER_NOT_FOUND") return "없는 서랍이에요. 목록을 다시 열어 주세요";
-  if (code === "BOOK_NOT_FOUND") return "이 서랍에 없는 책이에요";
-  if (code === "PUBLISH_BLOCKED") return "점검을 통과하지 못해 공개하지 않았어요";
-  if (error.status === 422) return "입력 값을 다시 확인해 주세요";
+  if (error instanceof DrawerNotFoundError) return "없는 서랍이에요. 목록을 다시 열어 주세요";
+  if (error instanceof BookNotFoundError) return "이 서랍에 없는 책이에요";
+  if (error instanceof PublishBlockedError) return "점검을 통과하지 못해 공개하지 않았어요";
+  if (error instanceof v.ValiError) return "입력 값을 다시 확인해 주세요";
   return "잠시 뒤 다시 시도해 주세요";
 }
 
-const drawer = (id: string) => api.admin.drawers({ id });
+export const listDrawers = async (): Promise<Drawer[]> => (await device()).drawers.list();
 
-export const listDrawers = () => unwrap(api.admin.drawers.get());
+export const createDrawer = async (name: string): Promise<Drawer> =>
+  createStoredDrawer((await device()).drawers, name, crypto.randomUUID());
 
-export const createDrawer = (name: string) => unwrap(api.admin.drawers.post({ name }));
-
-export const updateDrawer = (
+export const updateDrawer = async (
   id: string,
   change: { readonly name?: string; readonly questions?: readonly string[] },
-) =>
-  unwrap(
-    drawer(id).patch({
-      ...(change.name === undefined ? {} : { name: change.name }),
-      ...(change.questions === undefined ? {} : { questions: [...change.questions] }),
-    }),
-  );
+): Promise<Drawer> => updateStoredDrawer((await device()).drawers, id, change);
 
-export const deleteDrawer = async (id: string): Promise<void> => {
-  await unwrap(drawer(id).delete());
-};
+export const deleteDrawer = async (id: string): Promise<void> =>
+  (await device()).drawers.remove(id);
 
 /** 여러 권을 한 번에 올린다. CSV 업로드와 한 권 추가가 함께 쓴다. */
-export const addBooks = (id: string, books: readonly BookInput[]) =>
-  unwrap(drawer(id).books.post({ books: [...books] }));
+export const addBooks = async (id: string, books: readonly BookInput[]): Promise<Drawer> =>
+  addDrawerBooks((await device()).drawers, id, books, () => crypto.randomUUID());
 
-export const updateBook = (id: string, bookId: string, input: BookInput) =>
-  unwrap(drawer(id).books({ bookId }).put(input));
+export const updateBook = async (id: string, bookId: string, input: BookInput): Promise<Drawer> =>
+  updateDrawerBook((await device()).drawers, id, bookId, input);
 
-export const removeBook = (id: string, bookId: string) =>
-  unwrap(drawer(id).books({ bookId }).delete());
+export const removeBook = async (id: string, bookId: string): Promise<Drawer> =>
+  (await device()).drawers.removeBook(id, bookId);
 
-export const getPublishCheck = () => unwrap(api.admin["publish-check"].get());
+export const getPublishCheck = async (): Promise<PublishCheckDto> =>
+  toPublishCheckDto(checkPublish(await (await device()).drawers.list()));
 
-export const publishDrawers = () => unwrap(api.admin.publish.post());
+export const publishDrawers = async (): Promise<{ version: number }> => {
+  const { drawers, versions } = await device();
+  const { version } = await publish(drawers, versions);
+  return { version };
+};
 
-export const listPublishedVersions = () => unwrap(api.admin["published-versions"].get());
+export const listPublishedVersions = async (): Promise<PublishedVersionSummaryDto[]> =>
+  (await (await device()).versions.list()).map(({ version, questionSet }) => ({
+    version,
+    drawerCount: questionSet.drawers.length,
+    questionCount: questionSet.questions.length,
+  }));
 
-/** 새 주인 PIN을 만든다. 이 응답에서만 원문을 볼 수 있다. */
+/** 새 주인 PIN을 만든다. 해시만 남으므로 이때만 원문을 볼 수 있다. */
 export const generateOwnerPin = async (): Promise<string> =>
-  (await unwrap(api.admin["owner-pin"].post())).pin;
+  generateStoredOwnerPin((await device()).ownerAccess);

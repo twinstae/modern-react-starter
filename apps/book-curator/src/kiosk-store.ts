@@ -8,7 +8,7 @@ import {
   type KioskSession,
 } from "./domain/kiosk-session.ts";
 
-/** 손님 차례의 메모리 상태. 별명·답·주인 토큰은 여기에만 있고 URL·저장소에 쓰지 않는다(I-12, I-15). */
+/** 손님 차례의 메모리 상태. 별명·답·주인 만료 시각은 여기에만 있고 URL·저장소에 쓰지 않는다(I-12, I-15). */
 export const kioskSessionAtom = atom<KioskSession>(CLOSED);
 
 /**

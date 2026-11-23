@@ -21,7 +21,6 @@ import { Route as AdminDrawersRouteImport } from './routes/admin.drawers'
 import { Route as AdminFontRouteImport } from './routes/admin.font'
 import { Route as AdminPinRouteImport } from './routes/admin.pin'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
-import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as TurnOwnerCheckRouteImport } from './routes/_turn.owner.check'
 import { Route as TurnOwnerPinRouteImport } from './routes/_turn.owner.pin'
 import { Route as AdminDrawersIndexRouteImport } from './routes/admin.drawers.index'
@@ -86,11 +85,6 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSplatRoute = ApiSplatRouteImport.update({
-  id: '/api/$',
-  path: '/api/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TurnOwnerCheckRoute = TurnOwnerCheckRouteImport.update({
   id: '/check',
   path: '/check',
@@ -123,7 +117,6 @@ export interface FileRoutesByFullPath {
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/owner/check': typeof TurnOwnerCheckRoute
   '/owner/pin': typeof TurnOwnerPinRoute
@@ -139,7 +132,6 @@ export interface FileRoutesByTo {
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
   '/admin': typeof AdminIndexRoute
   '/owner/check': typeof TurnOwnerCheckRoute
   '/owner/pin': typeof TurnOwnerPinRoute
@@ -159,7 +151,6 @@ export interface FileRoutesById {
   '/admin/font': typeof AdminFontRoute
   '/admin/pin': typeof AdminPinRoute
   '/admin_/login': typeof AdminLoginRoute
-  '/api/$': typeof ApiSplatRoute
   '/admin/': typeof AdminIndexRoute
   '/_turn/owner/check': typeof TurnOwnerCheckRoute
   '/_turn/owner/pin': typeof TurnOwnerPinRoute
@@ -179,7 +170,6 @@ export interface FileRouteTypes {
     | '/admin/font'
     | '/admin/pin'
     | '/admin/login'
-    | '/api/$'
     | '/admin/'
     | '/owner/check'
     | '/owner/pin'
@@ -195,7 +185,6 @@ export interface FileRouteTypes {
     | '/admin/font'
     | '/admin/pin'
     | '/admin/login'
-    | '/api/$'
     | '/admin'
     | '/owner/check'
     | '/owner/pin'
@@ -214,7 +203,6 @@ export interface FileRouteTypes {
     | '/admin/font'
     | '/admin/pin'
     | '/admin_/login'
-    | '/api/$'
     | '/admin/'
     | '/_turn/owner/check'
     | '/_turn/owner/pin'
@@ -227,7 +215,6 @@ export interface RootRouteChildren {
   TurnRoute: typeof TurnRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
-  ApiSplatRoute: typeof ApiSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -314,13 +301,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/$': {
-      id: '/api/$'
-      path: '/api/$'
-      fullPath: '/api/$'
-      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_turn/owner/check': {
@@ -419,7 +399,6 @@ const rootRouteChildren: RootRouteChildren = {
   TurnRoute: TurnRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
-  ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

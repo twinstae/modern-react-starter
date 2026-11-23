@@ -10,9 +10,8 @@ export function createMemoryEventStore(): EventStore {
 
   return {
     async append(batch) {
-      for (const event of batch) {
-        events.push(parseFunnelEvent(toFunnelEventDto(event)));
-      }
+      // 모두 파싱한 뒤에 넣어, 틀린 이벤트가 하나라도 있으면 묶음 전체가 들어가지 않는다.
+      events.push(...batch.map((event) => parseFunnelEvent(event)));
     },
     async list(sessionId) {
       return events

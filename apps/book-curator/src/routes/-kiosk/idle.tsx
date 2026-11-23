@@ -6,7 +6,7 @@ import { useKiosk } from "./session.tsx";
 
 /**
  * 손님 화면의 유휴 타이머. 90초 조용하면 묻고, 120초면 처음으로 돌아간다.
- * 주인 화면에는 두지 않는다. 주인 모드에서는 10분 주인 토큰 만료가 안전장치다.
+ * 주인 화면에는 두지 않는다. 주인 모드에서는 주인 확인의 10분 만료가 안전장치다.
  */
 export function IdleGuard({ lastActivityAt }: { lastActivityAt: number }) {
   const kiosk = useKiosk();

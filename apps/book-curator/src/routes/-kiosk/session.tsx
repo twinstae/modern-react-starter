@@ -28,7 +28,7 @@ export const guard =
 type TurnSession = Extract<KioskSession, { status: "turn" }>;
 
 /**
- * 화면에 머무는 동안 세션이 바뀌면(답을 다 함, 처음으로, 토큰 만료) 그 화면에 있을 수
+ * 화면에 머무는 동안 세션이 바뀌면(답을 다 함, 처음으로, 주인 확인 만료) 그 화면에 있을 수
  * 없게 된다. 그때는 `redirect`를 그려 세션이 있어야 할 화면으로 옮긴다.
  */
 export function useKioskPage(

@@ -14,7 +14,6 @@ import {
   Button,
   Card,
   Eyebrow,
-  InlineText,
   MutedText,
   PageHeader,
   PageTitle,
@@ -28,14 +27,13 @@ import {
 const TabLink = createLink(Tab);
 
 /**
- * 운영자 화면의 틀. 로그인하지 않았으면 로그인 페이지로 보낸다. 서랍과 주인 PIN은
+ * 운영자 화면의 틀. 이 탭에서 운영 비밀번호로 들어오지 않았으면 로그인 페이지로 보낸다. 서랍과 주인 PIN은
  * 저마다 다른 페이지이고, 탭은 그 페이지로 가는 링크다.
  */
 export const Route = createFileRoute("/admin")({
   beforeLoad: async ({ context }) => {
-    const me = await context.queryClient.ensureQueryData(adminQueries.me());
-    if (me === null) throw redirect({ to: "/admin/login" });
-    return { me };
+    const access = await context.queryClient.ensureQueryData(adminQueries.access());
+    if (access !== "signed-in") throw redirect({ to: "/admin/login" });
   },
   pendingComponent: SessionPending,
   errorComponent: SessionError,
@@ -43,7 +41,6 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { me } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -54,9 +51,6 @@ function AdminLayout() {
           <div>
             <Eyebrow>BOOK SHOP 79-1</Eyebrow>
             <PageTitle fontSize="2xl">운영자 화면</PageTitle>
-            <InlineText display="block" weight="strong" overflowWrap="anywhere">
-              {me.user.email}
-            </InlineText>
           </div>
           <Row gap="3">
             <Button
@@ -64,8 +58,8 @@ function AdminLayout() {
               size="sm"
               type="button"
               onClick={async () => {
-                await signOutAdmin();
-                queryClient.removeQueries({ queryKey: adminQueries.me().queryKey });
+                signOutAdmin();
+                queryClient.removeQueries({ queryKey: adminQueries.access().queryKey });
                 await navigate({ to: "/admin/login" });
               }}
             >
@@ -90,7 +84,7 @@ function SessionPending() {
   return (
     <Screen tone="none" px="page" py="8">
       <Stack minH="calc(100dvh - 4rem)" alignItems="center" justifyContent="center" gap="0">
-        <MutedText role="status">운영자 세션을 확인하고 있어요.</MutedText>
+        <MutedText role="status">운영자 화면을 여는 중이에요.</MutedText>
       </Stack>
     </Screen>
   );
@@ -103,7 +97,7 @@ function SessionError() {
     <Screen tone="none" px="page" py="8">
       <Stack minH="calc(100dvh - 4rem)" alignItems="center" justifyContent="center" gap="0">
         <Card tone="paper" width="full" maxW="30rem" p="6" md={{ p: "8" }}>
-          <PageTitle fontSize="2xl">운영자 세션을 읽지 못했어요</PageTitle>
+          <PageTitle fontSize="2xl">이 기기의 저장소를 열지 못했어요</PageTitle>
           <MutedText>잠시 뒤 다시 열어 주세요.</MutedText>
           <Button tone="outline" size="sm" type="button" onClick={() => void router.invalidate()}>
             다시 시도

@@ -1,30 +1,34 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
-import { signInAdmin } from "../admin-api.ts";
+import { setupAdmin, signInAdmin } from "../admin-api.ts";
 import { AdminLogin } from "../components/admin-login.tsx";
 import { adminQueries } from "../queries.ts";
 
-/** 운영자 로그인. 이미 로그인했으면 운영자 화면으로 보낸다. */
+/** 운영 비밀번호를 정하거나 넣는 화면. 이미 들어왔으면 운영자 화면으로 보낸다. */
 export const Route = createFileRoute("/admin_/login")({
   beforeLoad: async ({ context }) => {
-    // 세션을 읽지 못해도 로그인 화면은 연다. 로그인이 실패하면 폼이 까닭을 알린다.
-    const me = await context.queryClient.ensureQueryData(adminQueries.me()).catch(() => null);
-    if (me !== null) throw redirect({ to: "/admin/drawers" });
+    const access = await context.queryClient.ensureQueryData(adminQueries.access());
+    if (access === "signed-in") throw redirect({ to: "/admin/drawers" });
+    return { access };
   },
   component: AdminLoginPage,
 });
 
 function AdminLoginPage() {
+  const { access } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const mode = access === "unset" ? "setup" : "sign-in";
 
   return (
     <AdminLogin
-      onSubmit={signInAdmin}
+      key={mode}
+      mode={mode}
+      onSubmit={mode === "setup" ? setupAdmin : signInAdmin}
       onSuccess={async () => {
-        // 로그인 전의 `null` 세션을 버려야 운영자 화면이 새 세션을 읽는다.
-        queryClient.removeQueries({ queryKey: adminQueries.me().queryKey });
+        // 들어오기 전의 상태를 버려야 운영자 화면이 로그인한 상태를 읽는다.
+        queryClient.removeQueries({ queryKey: adminQueries.access().queryKey });
         await navigate({ to: "/admin/drawers" });
       }}
     />

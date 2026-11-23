@@ -6,7 +6,7 @@ import { kioskSessionAtom } from "../kiosk-store.ts";
 import { useKiosk } from "./-kiosk/session.tsx";
 
 /**
- * 주인 화면들. 손님 유휴 타이머 대신 주인 토큰 만료 시각에 맞춰 한 번 깨워 잠근다.
+ * 주인 화면들. 손님 유휴 타이머 대신 주인 확인 만료 시각에 맞춰 한 번 깨워 잠근다.
  * 잠기면 확인 화면은 PIN으로 돌아가고, 서랍 속 책 화면은 남되 기록만 막힌다.
  */
 export const Route = createFileRoute("/_turn/owner")({

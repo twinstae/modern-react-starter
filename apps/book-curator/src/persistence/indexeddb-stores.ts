@@ -7,6 +7,7 @@ import {
   type DrawerStore,
 } from "../application/drawer-ports.ts";
 import type { EventStore } from "../application/event-store-ports.ts";
+import type { OwnerAccessStore } from "../application/owner-access-ports.ts";
 import type { HandoverStore } from "../application/owner-record-ports.ts";
 import type {
   PublishedVersion,
@@ -116,7 +117,7 @@ export function createIndexedDbEventStore(db: DeviceDatabase): EventStore {
     async append(batch) {
       if (batch.length === 0) return;
       const rows = batch.map((event) => {
-        const parsed = parseFunnelEvent(toFunnelEventDto(event));
+        const parsed = parseFunnelEvent(event);
         return { sessionId: parsed.sessionId, event: toFunnelEventDto(parsed) };
       });
       const tx = db.transaction("events", "readwrite");
@@ -168,6 +169,29 @@ export function createIndexedDbAdminAccessStore(db: DeviceDatabase): AdminAccess
     },
     async save(passwordHash) {
       await db.put("access", passwordHash, "admin");
+    },
+  };
+}
+
+const OwnerAccessSchema = v.strictObject({
+  pinHash: v.pipe(v.string(), v.minLength(1)),
+  failedAttempts: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  lockedUntil: v.nullable(v.string()),
+});
+
+/** 주인 PIN 해시와 실패 횟수. `access` 표의 `owner` 칸 하나다. */
+export function createIndexedDbOwnerAccessStore(db: DeviceDatabase): OwnerAccessStore {
+  return {
+    async read() {
+      const value = await db.get("access", "owner");
+      return value === undefined ? null : v.parse(OwnerAccessSchema, value);
+    },
+    async save({ pinHash, failedAttempts, lockedUntil }) {
+      await db.put(
+        "access",
+        v.parse(OwnerAccessSchema, { pinHash, failedAttempts, lockedUntil }),
+        "owner",
+      );
     },
   };
 }

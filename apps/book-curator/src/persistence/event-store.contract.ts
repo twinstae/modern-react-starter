@@ -44,6 +44,15 @@ export function eventStoreContract(name: string, setup: () => Promise<EventStore
       expect(await store.list("session-1")).toStrictEqual([]);
     });
 
+    it("별명 같은 허용 목록 밖 필드가 하나라도 있으면 묶음 전체를 넣지 않는다(I-12)", async () => {
+      const [ready, start] = sampleFunnelEvents("session-1");
+      const withNickname = { ...start!, nickname: "서윤" };
+
+      await expect(store.append([ready!, withNickname as never])).rejects.toThrow();
+
+      expect(await store.list()).toStrictEqual([]);
+    });
+
     it("kiosk_ready만 있는 세션도 순서대로 남는다", async () => {
       const ready = sampleFunnelEventOf("session-3", "kiosk_ready");
 
